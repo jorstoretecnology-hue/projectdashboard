@@ -1,0 +1,158 @@
+'use client';
+
+import { Search, Command, X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+
+import { MODULES_CONFIG } from '@/config/modules';
+import { useTenant } from '@/providers';
+
+interface CommandSearchProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const CommandSearch = ({ isOpen, onClose }: CommandSearchProps) => {
+  const [query, setQuery] = useState('');
+  const { currentTenant } = useTenant();
+
+  // Cerrar con la tecla Esc (NO manejar Ctrl+K aquí, eso lo hace Navbar)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      // Prevenir scroll del body cuando el modal está abierto
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  // Limpiar query al cerrar
+  useEffect(() => {
+    if (!isOpen) {
+      setQuery('');
+    }
+  }, [isOpen]);
+
+  // Filtrar módulos por tenant y query
+  const filteredModules = useMemo(() => {
+    // Primero filtrar por módulos del tenant
+    const tenantModules = MODULES_CONFIG.filter((module) =>
+      currentTenant?.activeModules.includes(module.id),
+    );
+
+    // Luego filtrar por query
+    const normalizedQuery = query.toLowerCase().trim();
+    if (!normalizedQuery) return tenantModules;
+
+    return tenantModules.filter(
+      (m) =>
+        m.name.toLowerCase().includes(normalizedQuery) ||
+        m.description?.toLowerCase().includes(normalizedQuery),
+    );
+  }, [query, currentTenant]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4">
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal de Búsqueda */}
+      <div
+        className="relative w-full max-w-xl bg-card border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="search-title"
+      >
+        {/* Header con Input */}
+        <div className="flex items-center p-4 border-b border-border">
+          <Search className="text-muted-foreground mr-3" size={20} aria-hidden="true" />
+          <input
+            autoFocus
+            className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
+            placeholder="¿Qué necesitas buscar?..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Buscar módulos"
+          />
+          <button
+            onClick={onClose}
+            aria-label="Cerrar búsqueda"
+            className="p-1 hover:bg-accent rounded text-muted-foreground"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Resultados */}
+        <div className="max-h-[300px] overflow-y-auto p-2">
+          <p
+            id="search-title"
+            className="text-[10px] font-medium text-muted-foreground px-3 py-2 uppercase tracking-wider"
+          >
+            Módulos disponibles
+            {currentTenant && (
+              <span className="ml-2 text-primary">({currentTenant.name})</span>
+            )}
+          </p>
+
+          {filteredModules.length > 0 ? (
+            filteredModules.map((module) => (
+              <a
+                key={module.id}
+                href={module.path}
+                onClick={onClose}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors group"
+              >
+                <div className="p-2 bg-muted rounded-md group-hover:bg-primary/20 transition-colors">
+                  <module.icon size={18} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-medium">{module.name}</span>
+                  {module.description && (
+                    <span className="text-xs text-muted-foreground">{module.description}</span>
+                  )}
+                </div>
+              </a>
+            ))
+          ) : (
+            <div className="p-8 text-center text-muted-foreground">
+              {query
+                ? `No se encontraron resultados para "${query}"`
+                : 'No hay módulos disponibles para este cliente'}
+            </div>
+          )}
+        </div>
+
+        {/* Footer con Atajos */}
+        <div className="bg-muted/50 p-3 flex justify-between items-center border-t border-border">
+          <div className="flex gap-4">
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <kbd className="border border-border bg-card px-1 rounded text-[9px]">Enter</kbd>
+              seleccionar
+            </span>
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <kbd className="border border-border bg-card px-1 rounded text-[9px]">ESC</kbd>
+              cerrar
+            </span>
+          </div>
+          <Command size={14} className="text-muted-foreground/50" aria-hidden="true" />
+        </div>
+      </div>
+    </div>
+  );
+};

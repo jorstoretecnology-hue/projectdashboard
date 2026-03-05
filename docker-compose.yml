@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n_main
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # URL pública (Ngrok) para que los webhooks externos funcionen
+      - WEBHOOK_URL=https://cauline-lacey-tempered.ngrok-free.dev/
+      - N8N_BASE_URL=https://cauline-lacey-tempered.ngrok-free.dev
+      # Configuración local
+      - GENERIC_TIMEZONE=America/Bogota
+      - N8N_EMAIL_MODE=internal
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - backend-network
+
+  # 2. Ngrok (Túnel hacia N8N)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok_tunnel
+    restart: unless-stopped
+    command:
+      - http
+      - n8n:5678
+      - --domain=cauline-lacey-tempered.ngrok-free.dev
+    environment:
+      # Debe leerse desde tu .env local
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    networks:
+      - backend-network
+    depends_on:
+      - n8n
+
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  n8n_data:
