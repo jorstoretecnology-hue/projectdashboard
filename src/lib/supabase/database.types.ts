@@ -58,6 +58,7 @@ export interface Database {
           updated_at?: string | null
           deleted_at?: string | null
         }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -87,6 +88,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       customers: {
         Row: {
@@ -106,6 +108,7 @@ export interface Database {
           created_at: string | null
           updated_at: string | null
           deleted_at: string | null
+          location_id: string | null
         }
         Insert: {
           id?: string
@@ -124,6 +127,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
         Update: {
           id?: string
@@ -142,7 +146,9 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
+        Relationships: []
       }
       products: {
         Row: {
@@ -167,6 +173,7 @@ export interface Database {
           created_at: string | null
           updated_at: string | null
           deleted_at: string | null
+          location_id: string | null
         }
         Insert: {
           id?: string
@@ -190,6 +197,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
         Update: {
           id?: string
@@ -213,7 +221,9 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
+        Relationships: []
       }
       sales: {
         Row: {
@@ -241,6 +251,7 @@ export interface Database {
           created_at: string | null
           updated_at: string | null
           deleted_at: string | null
+          location_id: string | null
         }
         Insert: {
           id?: string
@@ -267,6 +278,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
         Update: {
           id?: string
@@ -293,7 +305,9 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
+        Relationships: []
       }
       sale_items: {
         Row: {
@@ -332,6 +346,7 @@ export interface Database {
           discount?: number | null
           created_at?: string | null
         }
+        Relationships: []
       }
       purchase_orders: {
         Row: {
@@ -355,6 +370,7 @@ export interface Database {
           created_at: string | null
           updated_at: string | null
           deleted_at: string | null
+          location_id: string | null
         }
         Insert: {
           id?: string
@@ -377,6 +393,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
         Update: {
           id?: string
@@ -399,7 +416,9 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
+        Relationships: []
       }
       purchase_order_items: {
         Row: {
@@ -432,6 +451,7 @@ export interface Database {
           subtotal?: number
           created_at?: string | null
         }
+        Relationships: []
       }
       vehicles: {
         Row: {
@@ -449,6 +469,7 @@ export interface Database {
           created_at: string | null
           updated_at: string | null
           deleted_at: string | null
+          location_id: string | null
         }
         Insert: {
           id?: string
@@ -465,6 +486,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
         Update: {
           id?: string
@@ -481,7 +503,9 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
+        Relationships: []
       }
       services: {
         Row: {
@@ -560,6 +584,7 @@ export interface Database {
           updated_at?: string | null
           deleted_at?: string | null
         }
+        Relationships: []
       }
       inventory_items: {
         Row: {
@@ -575,6 +600,7 @@ export interface Database {
           created_at: string | null
           updated_at: string | null
           deleted_at: string | null
+          location_id: string | null
         }
         Insert: {
           id?: string
@@ -589,6 +615,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
         Update: {
           id?: string
@@ -603,7 +630,9 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
           deleted_at?: string | null
+          location_id?: string | null
         }
+        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -738,6 +767,258 @@ export interface Database {
           max_limit?: number
           updated_at?: string | null
         }
+        Relationships: []
+      }
+
+      locations: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          address: string | null
+          city: string | null
+          country: string | null
+          phone: string | null
+          timezone: string | null
+          opening_hours: Json | null
+          settings: Json | null
+          is_main: boolean | null
+          is_active: boolean | null
+          created_at: string | null
+          updated_at: string | null
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          name: string
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          phone?: string | null
+          timezone?: string | null
+          opening_hours?: Json | null
+          settings?: Json | null
+          is_main?: boolean | null
+          is_active?: boolean | null
+        }
+        Update: {
+          name?: string
+          address?: string | null
+          city?: string | null
+          phone?: string | null
+          timezone?: string | null
+          opening_hours?: Json | null
+          settings?: Json | null
+          is_main?: boolean | null
+          is_active?: boolean | null
+          updated_at?: string | null
+          deleted_at?: string | null
+        }
+        Relationships: []
+      }
+      user_locations: {
+        Row: {
+          id: string
+          user_id: string
+          location_id: string
+          role: 'OWNER' | 'ADMIN' | 'EMPLOYEE' | 'VIEWER'
+          can_read_sibling_locations: boolean | null
+          is_active: boolean | null
+          invited_by: string | null
+          invited_at: string | null
+          accepted_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          location_id: string
+          role?: 'OWNER' | 'ADMIN' | 'EMPLOYEE' | 'VIEWER'
+          can_read_sibling_locations?: boolean | null
+          is_active?: boolean | null
+          invited_by?: string | null
+          accepted_at?: string | null
+        }
+        Update: {
+          role?: 'OWNER' | 'ADMIN' | 'EMPLOYEE' | 'VIEWER'
+          can_read_sibling_locations?: boolean | null
+          is_active?: boolean | null
+          accepted_at?: string | null
+        }
+        Relationships: []
+      }
+      modules_catalog: {
+        Row: {
+          id: string
+          slug: string
+          name: string
+          description: string | null
+          compatible_types: string[] | null
+          is_available: boolean | null
+          version: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name: string
+          description?: string | null
+          compatible_types?: string[] | null
+          is_available?: boolean | null
+          version?: string | null
+        }
+        Update: {
+          name?: string
+          description?: string | null
+          compatible_types?: string[] | null
+          is_available?: boolean | null
+          version?: string | null
+        }
+        Relationships: []
+      }
+      tenant_modules: {
+        Row: {
+          id: string
+          tenant_id: string
+          module_slug: string
+          is_active: boolean | null
+          config: Json | null
+          activated_at: string | null
+          expires_at: string | null
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          module_slug: string
+          is_active?: boolean | null
+          config?: Json | null
+          expires_at?: string | null
+        }
+        Update: {
+          is_active?: boolean | null
+          config?: Json | null
+          expires_at?: string | null
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          id: string
+          slug: 'free' | 'starter' | 'professional' | 'enterprise'
+          name: string
+          description: string | null
+          price_monthly: number
+          price_yearly: number
+          currency: string
+          max_locations: number
+          max_users: number
+          max_customers: number
+          max_inventory: number
+          included_modules: string[] | null
+          is_active: boolean | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          slug: 'free' | 'starter' | 'professional' | 'enterprise'
+          name: string
+          price_monthly?: number
+          price_yearly?: number
+          currency?: string
+          max_locations?: number
+          max_users?: number
+          max_customers?: number
+          max_inventory?: number
+          included_modules?: string[] | null
+          is_active?: boolean | null
+        }
+        Update: {
+          name?: string
+          price_monthly?: number
+          price_yearly?: number
+          is_active?: boolean | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          id: string
+          tenant_id: string
+          plan_slug: 'free' | 'starter' | 'professional' | 'enterprise'
+          status: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'suspended'
+          billing_cycle: 'monthly' | 'yearly' | null
+          current_period_start: string | null
+          current_period_end: string | null
+          trial_ends_at: string | null
+          cancelled_at: string | null
+          cancel_reason: string | null
+          provider: 'mercadopago' | 'stripe' | 'manual' | null
+          provider_sub_id: string | null
+          provider_customer_id: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          plan_slug: 'free' | 'starter' | 'professional' | 'enterprise'
+          status?: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'suspended'
+          billing_cycle?: 'monthly' | 'yearly' | null
+          provider?: 'mercadopago' | 'stripe' | 'manual' | null
+          provider_sub_id?: string | null
+          provider_customer_id?: string | null
+        }
+        Update: {
+          plan_slug?: 'free' | 'starter' | 'professional' | 'enterprise'
+          status?: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'suspended'
+          billing_cycle?: 'monthly' | 'yearly' | null
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancelled_at?: string | null
+          cancel_reason?: string | null
+          provider_sub_id?: string | null
+          provider_customer_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          id: string
+          tenant_id: string
+          subscription_id: string | null
+          amount: number
+          currency: string
+          status: 'pending' | 'paid' | 'failed' | 'refunded'
+          provider: string | null
+          provider_payment_id: string | null
+          description: string | null
+          failure_reason: string | null
+          paid_at: string | null
+          refunded_at: string | null
+          metadata: Json | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          subscription_id?: string | null
+          amount: number
+          currency?: string
+          status?: 'pending' | 'paid' | 'failed' | 'refunded'
+          provider?: string | null
+          provider_payment_id?: string | null
+          description?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          status?: 'pending' | 'paid' | 'failed' | 'refunded'
+          provider_payment_id?: string | null
+          failure_reason?: string | null
+          paid_at?: string | null
+          refunded_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

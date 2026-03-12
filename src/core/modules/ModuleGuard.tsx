@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from "react"
-import { useModule } from "./module-registry."
+import { useModule } from "./module-registry"
 
 interface ModuleGuardProps {
   module: string

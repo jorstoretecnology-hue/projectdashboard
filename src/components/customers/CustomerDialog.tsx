@@ -47,10 +47,10 @@ export function CustomerDialog({
     try {
       let result: Customer
       if (isEdit && customer) {
-        result = await updateCustomerAction(customer.id, data, currentTenant.id)
+        result = await updateCustomerAction(customer.id, data)
         toast.success("Cliente actualizado correctamente")
       } else {
-        result = await createCustomerAction(data, currentTenant.id)
+        result = await createCustomerAction(data)
         toast.success("Cliente creado correctamente")
       }
       

@@ -10,7 +10,7 @@ type DBCustomer = Database['public']['Tables']['customers']['Row']
  * CustomersService Wrapper con Lógica de Negocio Extendida
  */
 export class EnhancedCustomersService {
-  constructor(private supabaseClient: SupabaseClient<Database>) {}
+  constructor(private supabaseClient: SupabaseClient<Database>, private tenantIdOverride?: string) {}
 
   async list(tenantId: string, page = 1, limit = 50): Promise<{ data: Customer[], total: number }> {
     const from = (page - 1) * limit
@@ -165,3 +165,8 @@ export class EnhancedCustomersService {
 
 // Exportamos la clase para inyección de dependencias
 // En Server Actions se debe instanciar con el cliente de servidor.
+
+// Singleton para uso en client-side – el tenantId se pasa por método
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { createClient } = require('@/lib/supabase/client')
+export const customersService = new EnhancedCustomersService(createClient())

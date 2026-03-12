@@ -13,7 +13,7 @@ export async function validateBody<T>(req: NextRequest, schema: z.ZodSchema<T>):
     if (error instanceof z.ZodError) {
       throw {
         isValidationError: true,
-        errors: error.issues || error.errors, // Versiones de Zod varían, aseguramos compatiblidad
+        errors: error.issues || (error as any).errors, // Versiones de Zod varían, aseguramos compatiblidad
       };
     }
     throw new Error('Invalid JSON body');
@@ -38,7 +38,7 @@ export function validateQuery<T>(
      if (error instanceof z.ZodError) {
       throw {
         isValidationError: true,
-        errors: error.issues || error.errors,
+        errors: error.issues || (error as any).errors,
       };
     }
     throw new Error('Invalid query parameters');

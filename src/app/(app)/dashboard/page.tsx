@@ -248,18 +248,18 @@ export default function HomePage() {
                   {contractedModules.map((m) => (
                     <Card key={m.id} className={cn(
                       "border-border/50 bg-card/50 backdrop-blur-sm transition-all hover:border-primary/50 group overflow-hidden",
-                      !modules[m.id] && "opacity-70 grayscale-[0.5]"
+                      !modules[m.id as keyof typeof modules] && "opacity-70 grayscale-[0.5]"
                     )}>
                       <CardContent className="p-5">
                         <div className="flex items-center justify-between mb-4">
                           <div className={cn(
                             "p-3 rounded-xl transition-colors",
-                            modules[m.id] ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-muted text-muted-foreground"
+                            modules[m.id as keyof typeof modules] ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-muted text-muted-foreground"
                           )}>
                             <m.icon size={20} />
                           </div>
                           <Switch 
-                            checked={modules[m.id]} 
+                            checked={!!modules[m.id as keyof typeof modules]} 
                             onCheckedChange={() => toggleModule(m.id)}
                             className="scale-90"
                           />

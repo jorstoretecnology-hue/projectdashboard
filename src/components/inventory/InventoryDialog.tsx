@@ -57,10 +57,10 @@ export function InventoryDialog({
 
     try {
       if (isEditing && item) {
-        await updateInventoryItemAction(item.id, data, currentTenant.id)
+        await updateInventoryItemAction(item.id, data)
         toast.success("Producto actualizado correctamente")
       } else {
-        await createInventoryItemAction(data, currentTenant.id)
+        await createInventoryItemAction(data)
         toast.success("Producto creado exitosamente")
       }
       

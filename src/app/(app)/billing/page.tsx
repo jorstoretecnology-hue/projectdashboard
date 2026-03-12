@@ -149,7 +149,7 @@ export default function BillingPage() {
             {Object.entries(PLAN_INFO).map(([key, info]) => (
               <PlanCard
                 key={key}
-                planKey={key}
+                planKey={key as PlanType}
                 planInfo={info}
                 isCurrent={key === effectivePlan}
                 onUpgrade={handleUpgradeClick}
@@ -178,7 +178,7 @@ export default function BillingPage() {
         <UpgradePlanDialog
           open={upgradeDialogOpen}
           onOpenChange={setUpgradeDialogOpen}
-          currentPlan={effectivePlan}
+          currentPlan={effectivePlan as PlanType}
           targetPlan={targetPlan}
           onConfirm={handleUpgradeConfirm}
         />

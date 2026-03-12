@@ -1,126 +1,50 @@
-import { ReactNode } from "react"
+export type ModuleStatus = 'ACTIVE' | 'INACTIVE' | 'RESTRICTED' | 'DORMANT' | 'ERROR'
 
-/**
- * Estados normalizados de un módulo
- * Deben reflejar el Module Engine
- */
-export type ModuleStatus =
-  | "ACTIVE"
-  | "INACTIVE"
-  | "RESTRICTED"
-  | "DORMANT"
-  | "ERROR"
-
-/**
- * Definición mínima de un módulo activo
- * Esta estructura NO debe contener lógica
- */
 export interface ActiveModule {
   key: string
   status: ModuleStatus
   permissions: string[]
-  navigation?: {
-    label: string
-    path: string
-    icon?: ReactNode
-  }[]
+  navigation?: { label: string; path: string; icon?: string }[]
 }
 
-/**
- * Registry temporal (mock)
- * En el futuro se alimenta desde backend (Supabase)
- */
-export const moduleRegistry: Record<string, ActiveModule> = {
-  dashboard: {
-    key: "dashboard",
-    status: "ACTIVE",
-    permissions: ["dashboard.view"],
-    navigation: [
-      {
-        label: "Dashboard",
-        path: "/dashboard",
-      },
-    ],
-  },
-
-  inventory: {
-    key: "inventory",
-    status: "ACTIVE",
-    permissions: [
-      "inventory.view",
-      "inventory.create",
-      "inventory.update",
-      "inventory.delete",
-    ],
-    navigation: [
-      {
-        label: "Inventario",
-        path: "/inventory",
-      },
-    ],
-  },
-
-  customers: {
-    key: "customers",
-    status: "ACTIVE",
-    permissions: [
-      "customers.view",
-      "customers.create",
-    ],
-    navigation: [
-      {
-        label: "Clientes",
-        path: "/customers",
-      },
-    ],
-  },
-
-  billing: {
-    key: "billing",
-    status: "ACTIVE",
-    permissions: ["billing.view", "billing.manage"],
-    navigation: [
-      {
-        label: "Facturación",
-        path: "/billing",
-      },
-    ],
-  },
-
-  users: {
-    key: "users",
-    status: "ACTIVE",
-    permissions: ["users.view", "users.manage"],
-    navigation: [
-      {
-        label: "Usuarios",
-        path: "/users",
-      },
-    ],
-  },
-
-  settings: {
-    key: "settings",
-    status: "ACTIVE",
-    permissions: ["settings.view", "settings.update"],
-    navigation: [
-      {
-        label: "Configuración",
-        path: "/settings",
-      },
-    ],
-  },
+export const MODULE_DEFINITIONS: Record<string, Omit<ActiveModule, 'status'>> = {
+  dashboard:    { key: 'dashboard',    permissions: ['dashboard.view'],                                                                navigation: [{ label: 'Dashboard',          path: '/dashboard'    }] },
+  inventory:    { key: 'inventory',    permissions: ['inventory.view','inventory.create','inventory.update','inventory.delete'],        navigation: [{ label: 'Inventario',          path: '/inventory'    }] },
+  customers:    { key: 'customers',    permissions: ['customers.view','customers.create','customers.update','customers.delete'],        navigation: [{ label: 'Clientes',            path: '/customers'    }] },
+  sales:        { key: 'sales',        permissions: ['sales.view','sales.create','sales.update','sales.cancel'],                        navigation: [{ label: 'Ventas',              path: '/sales'        }] },
+  purchases:    { key: 'purchases',    permissions: ['purchases.view','purchases.create','purchases.receive'],                          navigation: [{ label: 'Compras',             path: '/purchases'    }] },
+  work_orders:  { key: 'work_orders',  permissions: ['work_orders.view','work_orders.create','work_orders.update','work_orders.close'], navigation: [{ label: 'Órdenes de Trabajo', path: '/services'     }] },
+  vehicles:     { key: 'vehicles',     permissions: ['vehicles.view','vehicles.create','vehicles.update'],                             navigation: [{ label: 'Vehículos',           path: '/vehicles'     }] },
+  reservations: { key: 'reservations', permissions: ['reservations.view','reservations.create','reservations.cancel'],                 navigation: [{ label: 'Reservas',            path: '/reservations' }] },
+  memberships:  { key: 'memberships',  permissions: ['memberships.view','memberships.create','memberships.update'],                    navigation: [{ label: 'Membresías',          path: '/memberships'  }] },
+  reports:      { key: 'reports',      permissions: ['reports.view','reports.export'],                                                 navigation: [{ label: 'Reportes',            path: '/reports'      }] },
+  billing:      { key: 'billing',      permissions: ['billing.view','billing.manage'],                                                 navigation: [{ label: 'Facturación',         path: '/billing'      }] },
+  settings:     { key: 'settings',     permissions: ['settings.view','settings.update'],                                               navigation: [{ label: 'Configuración',       path: '/settings'     }] },
+  users:        { key: 'users',        permissions: ['users.view','users.invite','users.manage'],                                      navigation: [{ label: 'Usuarios',            path: '/users'        }] },
 }
 
-/**
- * Hooks de acceso
- * ❗ Toda la app debe usar SOLO estos
- */
+export function buildActiveModules(activeModuleSlugs: string[]): ActiveModule[] {
+  const slugsSet = new Set(activeModuleSlugs.map(s => s.toLowerCase()))
+  return Object.values(MODULE_DEFINITIONS).map(def => ({
+    ...def,
+    status: slugsSet.has(def.key) ? 'ACTIVE' : 'INACTIVE',
+  }))
+}
 
+export function isModuleActive(key: string, activeModuleSlugs: string[]): boolean {
+  return activeModuleSlugs.map(s => s.toLowerCase()).includes(key.toLowerCase())
+}
+
+export function getActivePermissions(activeModuleSlugs: string[]): string[] {
+  return buildActiveModules(activeModuleSlugs)
+    .filter(m => m.status === 'ACTIVE')
+    .flatMap(m => m.permissions)
+}
+
+// Hooks legacy — mantener por retrocompatibilidad
 export function useModules(): ActiveModule[] {
-  return Object.values(moduleRegistry)
+  return buildActiveModules(['dashboard','inventory','customers','sales','settings','billing'])
 }
-
 export function useModule(key: string): ActiveModule | undefined {
-  return moduleRegistry[key]
+  return useModules().find(m => m.key === key)
 }

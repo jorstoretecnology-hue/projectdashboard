@@ -172,3 +172,8 @@ export class InventoryService {
 
 // Exportamos la clase para inyección de dependencias
 // En Server Actions se debe instanciar con el cliente de servidor.
+
+// Singleton para uso en client-side – el tenantId se pasa por método
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { createClient } = require('@/lib/supabase/client')
+export const inventoryService = new InventoryService(createClient())

@@ -1,0 +1,48 @@
+src/app/(app)/billing/page.tsx(152,17): error TS2322: Type 'string' is not assignable to type 'PlanType'.
+src/app/(app)/billing/page.tsx(181,11): error TS2322: Type 'string' is not assignable to type 'PlanType'.
+src/app/(app)/customers/page.tsx(14,10): error TS2305: Module '"@/modules/customers/services/customers.service"' has no exported member 'customersService'.
+src/app/(app)/customers/page.tsx(109,55): error TS2554: Expected 1 arguments, but got 2.
+src/app/(app)/dashboard/page.tsx(251,32): error TS7015: Element implicitly has an 'any' type because index expression is not of type 'number'.
+src/app/(app)/dashboard/page.tsx(257,37): error TS7015: Element implicitly has an 'any' type because index expression is not of type 'number'.
+src/app/(app)/dashboard/page.tsx(262,46): error TS7015: Element implicitly has an 'any' type because index expression is not of type 'number'.
+src/app/(app)/inventory/page.tsx(12,10): error TS2724: '"@/modules/inventory/services/inventory.service"' has no exported member named 'inventoryService'. Did you mean 'InventoryService'?
+src/app/(app)/inventory/page.tsx(100,56): error TS2554: Expected 1 arguments, but got 2.
+src/app/(public)/layout.tsx(3,31): error TS2307: Cannot find module '@/components/ui/theme-provider' or its corresponding type declarations.
+src/components/customers/CustomerCard.tsx(3,15): error TS2459: Module '"@/modules/customers/actions"' declares 'Customer' locally, but it is not exported.
+src/components/customers/CustomerDialog.tsx(50,64): error TS2554: Expected 2 arguments, but got 3.
+src/components/customers/CustomerDialog.tsx(53,51): error TS2554: Expected 1 arguments, but got 2.
+src/components/inventory/DynamicInventoryForm.tsx(98,5): error TS2322: Type 'Resolver<Record<string, never>, any, Record<string, never>>' is not assignable to type 'Resolver<ProductFormData, any, ProductFormData>'.
+  Types of parameters 'values' and 'values' are incompatible.
+    Type 'ProductFormData' is not assignable to type 'Record<string, never>'.
+      Index signature for type 'string' is missing in type 'ProductFormData'.
+src/components/inventory/DynamicInventoryForm.tsx(161,55): error TS2322: Type 'string | FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined' is not assignable to type 'ReactNode'.
+  Type 'FieldError' is not assignable to type 'ReactNode'.
+    Type 'FieldError' is missing the following properties from type 'ReactPortal': children, props, key
+src/components/inventory/DynamicInventoryForm.tsx(181,55): error TS2322: Type 'string | FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined' is not assignable to type 'ReactNode'.
+  Type 'FieldError' is not assignable to type 'ReactNode'.
+    Type 'FieldError' is missing the following properties from type 'ReactPortal': children, props, key
+src/components/inventory/DynamicInventoryForm.tsx(209,55): error TS2322: Type 'string | FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined' is not assignable to type 'ReactNode'.
+  Type 'FieldError' is not assignable to type 'ReactNode'.
+    Type 'FieldError' is missing the following properties from type 'ReactPortal': children, props, key
+src/components/inventory/DynamicInventoryForm.tsx(228,55): error TS2322: Type 'string | FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined' is not assignable to type 'ReactNode'.
+  Type 'FieldError' is not assignable to type 'ReactNode'.
+    Type 'FieldError' is missing the following properties from type 'ReactPortal': children, props, key
+src/components/inventory/DynamicInventoryForm.tsx(262,38): error TS2345: Argument of type '(data: ProductFormData) => void' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type 'ProductFormData'.
+      Type 'FieldValues' is missing the following properties from type 'ProductFormData': name, price, stock, category, metadata
+src/components/inventory/InventoryDialog.tsx(60,56): error TS2554: Expected 2 arguments, but got 3.
+src/components/inventory/InventoryDialog.tsx(63,47): error TS2554: Expected 1 arguments, but got 2.
+src/components/sales/POSDialog.tsx(16,10): error TS2724: '"@/modules/inventory/services/inventory.service"' has no exported member named 'inventoryService'. Did you mean 'InventoryService'?
+src/core/modules/ModuleGuard.tsx(4,27): error TS2307: Cannot find module './module-registry.' or its corresponding type declarations.
+src/hooks/useLocation.ts(47,23): error TS2352: Conversion of type '{ id: any; tenant_id: any; name: any; address: any; city: any; is_main: any; is_active: any; }[]' to type 'Location' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: any; tenant_id: any; name: any; address: any; city: any; is_main: any; is_active: any; }[]' is missing the following properties from type 'Location': id, tenant_id, name, address, and 3 more.
+src/modules/admin/services/saas-metrics.service.ts(220,5): error TS2322: Type '{ id: any; name: any; plan: any; industryType: any; activeModules: any; branding: any; isActive: any; maxUsers: any; createdAt: any; customDomain: any; }[]' is not assignable to type 'TenantConfig[]'.
+  Property 'featureFlags' is missing in type '{ id: any; name: any; plan: any; industryType: any; activeModules: any; branding: any; isActive: any; maxUsers: any; createdAt: any; customDomain: any; }' but required in type 'TenantConfig'.
+src/modules/automation/services/webhook.service.ts(37,14): error TS2352: Conversion of type '(SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">)[]' to type '{ id: string; tenant_id: string; url: string; event_type: string; secret: string | null; is_active: boolean | null; created_at: string | null; updated_at: string | null; }[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">' is not comparable to type '{ id: string; tenant_id: string; url: string; event_type: string; secret: string | null; is_active: boolean | null; created_at: string | null; updated_at: string | null; }'.
+    Type '{ error: true; } & String' is missing the following properties from type '{ id: string; tenant_id: string; url: string; event_type: string; secret: string | null; is_active: boolean | null; created_at: string | null; updated_at: string | null; }': id, tenant_id, url, event_type, and 4 more.
+src/modules/customers/actions.ts(17,67): error TS2554: Expected 1 arguments, but got 2.
+src/modules/customers/actions.ts(33,67): error TS2554: Expected 1 arguments, but got 2.
+src/modules/customers/actions.ts(48,67): error TS2554: Expected 1 arguments, but got 2.
+src/modules/purchases/purchases.service.ts(6,3): error TS2305: Module '"@/lib/api/schemas/purchases"' has no exported member 'SupplierQueryDTO'.

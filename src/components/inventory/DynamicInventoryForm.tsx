@@ -95,7 +95,8 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
     watch,
     formState: { errors },
   } = useForm<ProductFormData>({
-    resolver: zodResolver(validationSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(validationSchema) as any,
     defaultValues: product ? {
       name: product.name,
       description: product.description || '',
@@ -158,7 +159,7 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
               className={fieldError ? 'border-destructive' : ''}
             />
             {fieldError && (
-              <p className="text-sm text-destructive">{fieldError.message}</p>
+              <p className="text-sm text-destructive">{(fieldError as any)?.message}</p>
             )}
           </div>
         );
@@ -178,7 +179,7 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
               className={fieldError ? 'border-destructive' : ''}
             />
             {fieldError && (
-              <p className="text-sm text-destructive">{fieldError.message}</p>
+              <p className="text-sm text-destructive">{(fieldError as any)?.message}</p>
             )}
           </div>
         );
@@ -206,7 +207,7 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
               </SelectContent>
             </Select>
             {fieldError && (
-              <p className="text-sm text-destructive">{fieldError.message}</p>
+              <p className="text-sm text-destructive">{(fieldError as any)?.message}</p>
             )}
           </div>
         );
@@ -225,7 +226,7 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
               className={fieldError ? 'border-destructive' : ''}
             />
             {fieldError && (
-              <p className="text-sm text-destructive">{fieldError.message}</p>
+              <p className="text-sm text-destructive">{(fieldError as any)?.message}</p>
             )}
           </div>
         );
@@ -259,7 +260,7 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(handleFormSubmit as any)} className="space-y-6">
           {/* Campos base del producto */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">

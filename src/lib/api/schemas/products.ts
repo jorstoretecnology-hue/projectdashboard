@@ -30,12 +30,13 @@ export const createProductSchema = z.object({
   // Campos opcionales
   sku: z.string().optional(),
   category_id: z.string().uuid().optional(),
+  location_id: z.string().uuid().optional(),
   image_url: z.string().url().optional(),
   bar_code: z.string().optional(),
   
   // Metadata flexible para industrias
   industry_type: IndustryTypeEnum,
-  metadata: z.record(z.unknown()).default({}),
+  metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
 // Schema para actualizar productos (Partial)

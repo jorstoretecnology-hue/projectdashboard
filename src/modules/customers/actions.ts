@@ -42,7 +42,7 @@ export async function updateCustomerAction(id: string, rawData: Partial<Customer
   return result
 }
 
-export async function deleteCustomerAction(id: string): Promise<void> {
+export async function deleteCustomerAction(id: string, _tenantId?: string): Promise<void> {
   const supabase = await createClient()
   const tenantId = await getRequiredTenantId()
   const customersService = new EnhancedCustomersService(supabase, tenantId)

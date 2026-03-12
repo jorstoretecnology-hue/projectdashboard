@@ -2,62 +2,81 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
-
-import { MODULES_CONFIG } from '@/config/modules';
-
-export type ModuleState = Record<string, boolean>;
+import { createClient } from '@/lib/supabase/client';
+import { buildActiveModules, type ActiveModule } from '@/core/modules/module-registry';
+import { useUser } from './AuthContext';
 
 interface ModuleContextValue {
-  modules: ModuleState;
+  modules: ActiveModule[];
+  activeModuleSlugs: string[];
+  isModuleActive: (slug: string) => boolean;
+  isLoading: boolean;
+  // Legacy support
   toggleModule: (id: string) => void;
-  isModuleActive: (id: string) => boolean;
   mounted: boolean;
 }
 
 const ModuleContext = createContext<ModuleContextValue | undefined>(undefined);
 
 export const ModuleProvider = ({ children }: { children: ReactNode }) => {
-  const [mounted, setMounted] = useState(false);
-  
-  // Inicializar con todos los módulos activos por defecto
-  const [modules, setModules] = useState<ModuleState>(() => {
-    const initial: ModuleState = {};
-    MODULES_CONFIG.forEach(m => {
-      initial[m.id] = true; // Todos activos por defecto
-    });
-    return initial;
-  });
+  const { user } = useUser();
+  const supabase = createClient();
+  const [activeModuleSlugs, setActiveModuleSlugs] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Marcar como montado y cargar estado guardado
   useEffect(() => {
-    setMounted(true);
-    
-    // Cargar desde localStorage si existe
-    const saved = localStorage.getItem('module-states');
-    if (saved) {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadModules = async () => {
+      setIsLoading(true);
       try {
-        setModules(JSON.parse(saved));
-      } catch (e) {
-        console.error('Error loading module states:', e);
+        // Leer módulos activos del tenant desde Supabase
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile?.tenant_id) {
+          setActiveModuleSlugs(['dashboard', 'settings', 'billing']);
+          return;
+        }
+
+        const { data: tenantModules } = await supabase
+          .from('tenant_modules')
+          .select('module_slug')
+          .eq('tenant_id', profile.tenant_id)
+          .eq('is_active', true);
+
+        const slugs = (tenantModules || []).map(m => m.module_slug);
+        setActiveModuleSlugs(slugs.length > 0 ? slugs : ['dashboard', 'settings', 'billing']);
+      } catch (err) {
+        console.error('[ModuleContext] Error loading modules:', err);
+        setActiveModuleSlugs(['dashboard', 'settings', 'billing']);
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, []);
+    };
 
-  // Guardar en localStorage cuando cambie el estado
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem('module-states', JSON.stringify(modules));
-    }
-  }, [modules, mounted]);
+    loadModules();
+  }, [user?.id]);
 
-  const toggleModule = (id: string) => {
-    setModules(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const isModuleActive = (id: string) => modules[id] ?? true;
+  const modules = buildActiveModules(activeModuleSlugs);
+  const isModuleActive = (slug: string) =>
+    activeModuleSlugs.map(s => s.toLowerCase()).includes(slug.toLowerCase());
 
   return (
-    <ModuleContext.Provider value={{ modules, toggleModule, isModuleActive, mounted }}>
+    <ModuleContext.Provider value={{
+      modules,
+      activeModuleSlugs,
+      isModuleActive,
+      isLoading,
+      toggleModule: () => {}, // legacy no-op
+      mounted: !isLoading,
+    }}>
       {children}
     </ModuleContext.Provider>
   );
@@ -65,8 +84,6 @@ export const ModuleProvider = ({ children }: { children: ReactNode }) => {
 
 export const useModuleContext = () => {
   const context = useContext(ModuleContext);
-  if (!context) {
-    throw new Error('useModuleContext must be used within ModuleProvider');
-  }
+  if (!context) throw new Error('useModuleContext must be used within ModuleProvider');
   return context;
 };

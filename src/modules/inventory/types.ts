@@ -12,7 +12,7 @@ export const inventoryItemSchema = z.object({
   price: z.number().min(0, "El precio no puede ser negativo"),
   stock: z.number().int().min(0, "El stock no puede ser negativo"),
   sku: z.string().optional(),
-  metadata: z.record(z.any()).optional(), // ✨ Permitir metadata dinámica por industria
+  metadata: z.record(z.string(), z.any()).optional(), // ✨ Permitir metadata dinámica por industria
 })
 
 export type InventoryFormValues = z.infer<typeof inventoryItemSchema>

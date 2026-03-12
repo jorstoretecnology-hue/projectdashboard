@@ -227,7 +227,8 @@ export class SaasMetricsService {
       isActive: t.is_active ?? true,
       maxUsers: t.max_users,
       createdAt: t.created_at,
-      customDomain: t.custom_domain
+      customDomain: t.custom_domain,
+      featureFlags: t.feature_flags || [],
     }))
   }
 

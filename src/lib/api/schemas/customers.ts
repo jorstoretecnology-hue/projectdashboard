@@ -31,6 +31,7 @@ export const createCustomerSchema = z.object({
   // Dirección y Ubicación
   address: z.string().optional(),
   city: z.string().optional(),
+  location_id: z.string().uuid().optional(),
   
   // Estado y Notas
   status: CustomerStatusEnum.default('active'),
@@ -38,7 +39,7 @@ export const createCustomerSchema = z.object({
   website: z.string().url('URL inválida').optional().or(z.literal('')),
   
   // Metadata flexible
-  metadata: z.record(z.unknown()).default({}),
+  metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
 export const updateCustomerSchema = createCustomerSchema.partial().extend({

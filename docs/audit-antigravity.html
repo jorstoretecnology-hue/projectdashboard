@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Audit — Antigravity / projectdashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2128;
+    --border: #30363d;
+    --border2: #21262d;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --green: #3fb950;
+    --green-bg: rgba(63,185,80,0.08);
+    --green-border: rgba(63,185,80,0.25);
+    --yellow: #d29922;
+    --yellow-bg: rgba(210,153,34,0.08);
+    --yellow-border: rgba(210,153,34,0.3);
+    --red: #f85149;
+    --red-bg: rgba(248,81,73,0.08);
+    --red-border: rgba(248,81,73,0.25);
+    --blue: #58a6ff;
+    --blue-bg: rgba(88,166,255,0.08);
+    --blue-border: rgba(88,166,255,0.25);
+    --orange: #ffa657;
+    --orange-bg: rgba(255,166,87,0.08);
+    --orange-border: rgba(255,166,87,0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    padding: 48px 32px 80px;
+    line-height: 1.6;
+  }
+
+  .page { max-width: 960px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .header-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+
+  .repo-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 100px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--blue);
+    margin-bottom: 24px;
+  }
+
+  /* Score card */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border2);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 48px;
+    border: 1px solid var(--border2);
+  }
+
+  .score-cell {
+    background: var(--surface);
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  .score-num {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .score-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1.4;
+  }
+
+  .s-green { color: var(--green); }
+  .s-yellow { color: var(--yellow); }
+  .s-red { color: var(--red); }
+  .s-blue { color: var(--blue); }
+
+  /* Section */
+  .section { margin-bottom: 48px; }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border2);
+  }
+
+  /* Finding cards */
+  .finding {
+    border: 1px solid;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .finding-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .finding-icon { font-size: 18px; min-width: 24px; }
+
+  .finding-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .finding-subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    margin-top: 3px;
+    opacity: 0.7;
+  }
+
+  .finding-severity {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    border: 1px solid;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+
+  .finding-toggle {
+    color: var(--muted);
+    font-size: 14px;
+    align-self: flex-start;
+    margin-top: 4px;
+    transition: transform 0.2s;
+  }
+
+  .finding.open .finding-toggle { transform: rotate(180deg); }
+
+  .finding-body {
+    display: none;
+    padding: 0 20px 20px;
+    border-top: 1px solid;
+  }
+
+  .finding.open .finding-body { display: block; }
+
+  .finding-desc {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 16px;
+    color: var(--muted);
+  }
+
+  /* Colors per severity */
+  .finding.critical { border-color: var(--red-border); }
+  .finding.critical .finding-header { background: var(--red-bg); }
+  .finding.critical .finding-body { border-color: var(--red-border); }
+  .finding.critical .finding-severity { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+
+  .finding.warning { border-color: var(--yellow-border); }
+  .finding.warning .finding-header { background: var(--yellow-bg); }
+  .finding.warning .finding-body { border-color: var(--yellow-border); }
+  .finding.warning .finding-severity { background: var(--yellow-bg); color: var(--yellow); border-color: var(--yellow-border); }
+
+  .finding.good { border-color: var(--green-border); }
+  .finding.good .finding-header { background: var(--green-bg); }
+  .finding.good .finding-body { border-color: var(--green-border); }
+  .finding.good .finding-severity { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+
+  .finding.info { border-color: var(--blue-border); }
+  .finding.info .finding-header { background: var(--blue-bg); }
+  .finding.info .finding-body { border-color: var(--blue-border); }
+  .finding.info .finding-severity { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-border); }
+
+  /* Code blocks */
+  pre {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+
+  .kw { color: #ff7b72; }
+  .str { color: #a5d6ff; }
+  .cmt { color: #484f58; font-style: italic; }
+  .fn { color: #79c0ff; }
+  .tbl { color: #56d364; }
+  .col { color: #ffa657; }
+  .num { color: #79c0ff; }
+
+  .fix-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin: 16px 0 8px;
+  }
+
+  /* Priority action plan */
+  .action-plan {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .action-header {
+    padding: 20px 24px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border2);
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .action-item {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 16px;
+    align-items: start;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border2);
+    transition: background 0.15s;
+  }
+
+  .action-item:last-child { border-bottom: none; }
+  .action-item:hover { background: var(--surface2); }
+
+  .action-num {
+    font-size: 22px;
+    font-weight: 800;
+    opacity: 0.3;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .action-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .action-desc {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .action-effort {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  hr { border: none; border-top: 1px solid var(--border2); margin: 48px 0; }
+
+  @media (max-width: 768px) {
+    body { padding: 24px 16px 60px; }
+    .score-grid { grid-template-columns: repeat(3, 1fr); }
+    .action-item { grid-template-columns: 36px 1fr; }
+    .action-effort { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-meta">Code Audit · Revisión técnica completa</div>
+    <h1>Antigravity — projectdashboard</h1>
+    <div class="repo-tag">⬡ jorstoretecnology-hue / projectdashboard</div>
+
+    <div class="score-grid">
+      <div class="score-cell">
+        <div class="score-num s-blue">7/10</div>
+        <div class="score-label">Score general</div>
+      </div>
+      <div class="score-cell">
+        <div class="score-num s-green">✓</div>
+        <div class="score-label">RLS activo en tablas críticas</div>
+      </div>
+      <div class="score-cell">
+        <div class="score-num s-green">✓</div>
+        <div class="score-label">TypeScript + Zod</div>
+      </div>
+      <div class="score-cell">
+        <div class="score-num s-red">9</div>
+        <div class="score-label">Archivos SQL de reparación</div>
+      </div>
+      <div class="score-cell">
+        <div class="score-num s-yellow">⚠</div>
+        <div class="score-label">Arquitectura limitada</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LO BUENO -->
+  <div class="section">
+    <div class="section-title">✅ Lo que está bien</div>
+
+    <div class="finding good open" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">🛡️</div>
+        <div>
+          <div class="finding-title">RLS está activado en las tablas críticas</div>
+          <div class="finding-subtitle">inventory_items, customers, con get_current_user_tenant_id()</div>
+        </div>
+        <div class="finding-severity">Bien hecho</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          Cada tabla tiene RLS habilitado y políticas de SELECT/INSERT con tenant_id. El patrón
+          get_current_user_tenant_id() como función helper centraliza la lógica correctamente.<br><br>
+          Esto es lo más importante de un SaaS multi-tenant y lo tienes implementado.
+        </div>
+      </div>
+    </div>
+
+    <div class="finding good" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">🔐</div>
+        <div>
+          <div class="finding-title">withAuth HOF — patrón sólido para APIs</div>
+          <div class="finding-subtitle">src/lib/auth/api-wrapper.ts</div>
+        </div>
+        <div class="finding-severity">Bien hecho</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          El Higher-Order Function que envuelve todos los endpoints es el patrón correcto.
+          Centraliza autenticación, extracción de tenant_id y verificación de roles en un solo lugar.
+          Cualquier endpoint que use withAuth está protegido automáticamente.
+        </div>
+      </div>
+    </div>
+
+    <div class="finding good" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">📋</div>
+        <div>
+          <div class="finding-title">Audit Log Service implementado</div>
+          <div class="finding-subtitle">src/core/security/audit.service.ts</div>
+        </div>
+        <div class="finding-severity">Avanzado</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          Tener un AuditLogService con acciones tipadas (CREATE, UPDATE, DELETE, PLAN_CHANGE, 
+          MODULE_TOGGLE, etc.) desde esta etapa es una decisión avanzada. 
+          La mayoría de SaaS lo implementa después de tener problemas de soporte.<br><br>
+          También tiene Sentry configurado (sentry.client.config.ts, server, edge). 
+          Esto es más maduro de lo esperado para una etapa MVP.
+        </div>
+      </div>
+    </div>
+
+    <div class="finding good" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">🧩</div>
+        <div>
+          <div class="finding-title">Billing Engine + Quota System bien estructurado</div>
+          <div class="finding-subtitle">src/core/billing/ · src/core/quotas/</div>
+        </div>
+        <div class="finding-severity">Bien hecho</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          Los planes están tipados correctamente con PlanLimits. El sistema de quotas 
+          (maxUsers, maxInventoryItems, maxCustomers) está separado del billing engine. 
+          Los hooks use-can, use-feature, use-permission, use-quota-error 
+          son el patrón correcto para el frontend.
+        </div>
+      </div>
+    </div>
+
+    <div class="finding good" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">✅</div>
+        <div>
+          <div class="finding-title">TypeScript estricto + Zod en schemas de API</div>
+          <div class="finding-subtitle">src/lib/api/schemas/ · src/lib/supabase/database.types.ts</div>
+        </div>
+        <div class="finding-severity">Bien hecho</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          Tienes schemas Zod para customers, products, purchases, sales, services.
+          El database.types.ts generado da tipado completo a las queries de Supabase.
+          Esto previene una categoría entera de bugs en producción.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- LO QUE HAY QUE ATENDER -->
+  <div class="section">
+    <div class="section-title">🔴 Problemas críticos</div>
+
+    <div class="finding critical open" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">🚨</div>
+        <div>
+          <div class="finding-title">9 archivos SQL de reparación en el repo</div>
+          <div class="finding-subtitle">NUKE_AND_REBIRTH.sql · REPARACION_ROBUSTA.sql · FIX_REGISTRATION_V2.sql · ...</div>
+        </div>
+        <div class="finding-severity">Crítico</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          Este es el hallazgo más preocupante del repo. Tener 9 archivos de reparación manual
+          del tenant_id en la raíz del proyecto significa que el sistema de autenticación
+          multi-tenant se ha roto repetidamente y se ha parcheado de forma manual.<br><br>
+          El archivo NUKE_AND_REBIRTH.sql es la señal más clara: en algún momento la base de datos 
+          se rompió tan mal que hubo que reconstruirla desde cero.<br><br>
+          Esto NO es un problema de código — es un problema de que el esquema de 
+          multi-tenancy está frágil. La raíz del problema probablemente es que 
+          tenant_id se está sincronizando en múltiples lugares (JWT metadata + tabla profiles + 
+          raw_app_meta_data) y cuando uno falla, el sistema colapsa.
+        </div>
+        <div class="fix-label">La solución</div>
+        <pre><span class="cmt">-- El tenant_id debe vivir en UN solo lugar: la tabla profiles.</span>
+<span class="cmt">-- El JWT metadata es cache. El source of truth es la DB.</span>
+
+<span class="cmt">-- Función get_current_user_tenant_id() CORRECTA:</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">get_current_user_tenant_id</span>()
+<span class="kw">RETURNS</span> uuid <span class="kw">AS</span> $$
+  <span class="kw">SELECT</span> <span class="col">tenant_id</span>
+  <span class="kw">FROM</span> <span class="tbl">profiles</span>
+  <span class="kw">WHERE</span> <span class="col">id</span> <span class="op">=</span> <span class="fn">auth.uid</span>()
+  <span class="kw">LIMIT</span> <span class="num">1</span>;
+$$ <span class="kw">LANGUAGE</span> sql <span class="kw">SECURITY DEFINER STABLE</span>;
+
+<span class="cmt">-- Mover estos archivos a /archive/ y crear migraciones limpias.</span>
+<span class="cmt">-- Nunca más parchar manualmente en producción.</span></pre>
+        <div class="fix-label">Acción inmediata</div>
+        <div class="finding-desc">
+          1. Mover todos los REPARACION*.sql a /docs/archive/<br>
+          2. Crear una migración limpia y definitiva en /supabase/migrations/<br>
+          3. Documentar exactamente cuándo y por qué ocurrían los fallos para no repetirlos.
+        </div>
+      </div>
+    </div>
+
+    <div class="finding critical" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">🏗️</div>
+        <div>
+          <div class="finding-title">Arquitectura 2 niveles — no soporta multi-sede ni multi-negocio</div>
+          <div class="finding-subtitle">tenants.industry_type es un campo único · No hay tabla locations</div>
+        </div>
+        <div class="finding-severity">Crítico</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          El schema actual es: User → Tenant. Un tenant tiene UN industry_type.<br><br>
+          Esto significa que si tu cliente del restaurante quiere agregar las cabañas 
+          y el glamping, necesitaría crear un tenant completamente nuevo, con login separado,
+          pagar por separado, y no habría forma de ver reportes unificados.<br><br>
+          Tampoco soporta múltiples sedes del mismo negocio — el taller con 2 locales
+          necesitaría 2 cuentas distintas.<br><br>
+          La buena noticia: el schema tiene industry_type como campo en tenants, 
+          lo que significa que ya piensas en multi-industria. Solo falta agregar la capa 
+          de locations.
+        </div>
+        <div class="fix-label">Lo que hay que agregar (no reescribir)</div>
+        <pre><span class="cmt">-- Agregar tabla locations (sin tocar lo que ya existe)</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">locations</span> (
+  <span class="col">id</span>          uuid <span class="kw">DEFAULT</span> <span class="fn">gen_random_uuid</span>() <span class="kw">PRIMARY KEY</span>,
+  <span class="col">tenant_id</span>   uuid <span class="kw">NOT NULL REFERENCES</span> <span class="tbl">tenants</span>(<span class="col">id</span>),
+  <span class="col">name</span>        text <span class="kw">NOT NULL</span>,
+  <span class="col">address</span>     text,
+  <span class="col">is_main</span>     boolean <span class="kw">DEFAULT</span> true,
+  <span class="col">is_active</span>   boolean <span class="kw">DEFAULT</span> true,
+  <span class="col">created_at</span>  timestamptz <span class="kw">DEFAULT</span> <span class="fn">now</span>()
+);
+
+<span class="cmt">-- Agregar location_id opcional en tablas operativas</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">inventory_items</span>
+<span class="kw">ADD COLUMN</span> <span class="col">location_id</span> uuid <span class="kw">REFERENCES</span> <span class="tbl">locations</span>(<span class="col">id</span>);
+
+<span class="cmt">-- Crear location "principal" automáticamente al crear tenant</span>
+<span class="cmt">-- Así el código existente sigue funcionando sin cambios.</span></pre>
+        <div class="finding-desc">
+          La estrategia: NO reescribir todo. Agregar locations como capa opcional.
+          El código actual con tenant_id sigue funcionando. Se agrega location_id 
+          donde hace falta (inventario, ventas, reservas) como nullable primero.
+        </div>
+      </div>
+    </div>
+
+    <div class="finding critical" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">🔧</div>
+        <div>
+          <div class="finding-title">Middleware no protege rutas — delega todo al cliente</div>
+          <div class="finding-subtitle">src/middleware.ts — solo llama updateSession, no verifica roles</div>
+        </div>
+        <div class="finding-severity">Crítico</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          El middleware actual solo refresca la sesión pero no verifica rutas protegidas.
+          Las rutas definidas como "protectedRoutes" y "superAdminRoutes" están comentadas 
+          pero nunca usadas. Cualquier usuario podría intentar acceder a /superadmin 
+          y la protección depende únicamente del frontend.
+        </div>
+        <div class="fix-label">Fix en middleware.ts</div>
+        <pre><span class="kw">export async function</span> <span class="fn">middleware</span>(request: NextRequest) {
+  <span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">updateSession</span>(request)
+  <span class="kw">const</span> { pathname } = request.nextUrl
+  <span class="kw">const</span> supabase = <span class="kw">await</span> <span class="fn">createClient</span>()
+  <span class="kw">const</span> { data: { user } } = <span class="kw">await</span> supabase.auth.<span class="fn">getUser</span>()
+
+  <span class="cmt">// Ruta superadmin sin usuario SUPER_ADMIN → redirect</span>
+  <span class="kw">if</span> (pathname.<span class="fn">startsWith</span>(<span class="str">'/superadmin'</span>)) {
+    <span class="kw">const</span> role = user?.app_metadata?.app_role
+    <span class="kw">if</span> (role !== <span class="str">'SUPER_ADMIN'</span>) {
+      <span class="kw">return</span> NextResponse.<span class="fn">redirect</span>(<span class="kw">new</span> <span class="fn">URL</span>(<span class="str">'/dashboard'</span>, request.url))
+    }
+  }
+
+  <span class="kw">return</span> response
+}</pre>
+      </div>
+    </div>
+
+  </div>
+
+  <hr>
+
+  <!-- ADVERTENCIAS -->
+  <div class="section">
+    <div class="section-title">⚠️ Advertencias</div>
+
+    <div class="finding warning" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">📦</div>
+        <div>
+          <div class="finding-title">Module registry es un mock hardcodeado</div>
+          <div class="finding-subtitle">src/core/modules/module-registry.ts — "Registry temporal (mock)"</div>
+        </div>
+        <div class="finding-severity">Atender pronto</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          El comentario en el archivo lo dice claramente: "Registry temporal (mock). 
+          En el futuro se alimenta desde backend."<br><br>
+          Actualmente los módulos están hardcodeados. Esto significa que activar/desactivar
+          un módulo por plan o por tenant no funciona realmente desde la base de datos —
+          el código de la app tiene módulos siempre "ACTIVE" sin importar qué diga Supabase.<br><br>
+          También: active_modules en tenants es un string[] (array plano). Esto funciona
+          para leer, pero no permite configuración por módulo ni fechas de expiración.
+        </div>
+        <div class="fix-label">Plan</div>
+        <div class="finding-desc">
+          Conectar el ModuleContext con los datos reales de tenants.active_modules de Supabase.
+          El TenantContext ya existe — solo falta que el ModuleContext lea de él 
+          en vez del registry estático.
+        </div>
+      </div>
+    </div>
+
+    <div class="finding warning" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">💳</div>
+        <div>
+          <div class="finding-title">Sin proveedor de pagos real — solo mock adapter</div>
+          <div class="finding-subtitle">src/core/billing/adapters/mock-billing.adapter.ts</div>
+        </div>
+        <div class="finding-severity">Atender pronto</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          El BillingAdapter está implementado como mock. No hay integración con Stripe
+          ni MercadoPago. Los planes y quotas existen en el código pero no hay
+          un ciclo de pago real: ningún cliente puede pagar en este momento.<br><br>
+          Para Colombia: considera MercadoPago como prioridad sobre Stripe.
+          Tiene mejor conversión local y el checkout es más familiar para los clientes.
+        </div>
+      </div>
+    </div>
+
+    <div class="finding warning" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">📁</div>
+        <div>
+          <div class="finding-title">Archivos de debug y test en la raíz del proyecto</div>
+          <div class="finding-subtitle">debug_purchases.log · force_error.js · test_db.js · check_tables.js</div>
+        </div>
+        <div class="finding-severity">Limpiar</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          Hay 6+ archivos de debug y test sueltos en la raíz. Algunos contienen
+          tu email real (ghostsnake27@gmail.com) en los scripts de reparación SQL.<br><br>
+          Esto no es un problema de seguridad grave, pero no debería estar en un repo
+          que eventualmente verán otros colaboradores o clientes.
+        </div>
+        <div class="fix-label">Acción</div>
+        <div class="finding-desc">
+          Agregar a .gitignore: *.log, debug_*.js, REPARACION*.sql<br>
+          Mover los SQL útiles a /docs/migrations/ con nombres semánticos.
+        </div>
+      </div>
+    </div>
+
+    <div class="finding warning" onclick="toggle(this)">
+      <div class="finding-header">
+        <div class="finding-icon">🔀</div>
+        <div>
+          <div class="finding-title">Servicios duplicados en customers y sales</div>
+          <div class="finding-subtitle">customers.service.ts aparece en 2 paths distintos</div>
+        </div>
+        <div class="finding-severity">Limpiar</div>
+        <div class="finding-toggle">▼</div>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">
+          Existe tanto <code>src/modules/customers/customers.service.ts</code> como
+          <code>src/modules/customers/services/customers.service.ts</code>.<br>
+          Lo mismo pasa con sales. Esto indica que el módulo fue refactorizado a mitad
+          y quedaron archivos viejos.<br><br>
+          Riesgo: si alguien importa el archivo incorrecto, tiene código desactualizado
+          sin saberlo.
+        </div>
+        <div class="fix-label">Acción</div>
+        <div class="finding-desc">
+          Revisar cuál es la versión activa (la de /services/ probablemente),
+          eliminar la duplicada, y hacer grep para asegurarse que todos los imports apuntan
+          al mismo archivo.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <hr>
+
+  <!-- VEREDICTO FINAL -->
+  <div class="section">
+    <div class="section-title">📊 Veredicto final</div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 28px; margin-bottom: 24px;">
+      <p style="font-size: 15px; line-height: 1.8; margin-bottom: 16px;">
+        <strong>El proyecto está más avanzado de lo que los 9 archivos de reparación sugieren.</strong>
+        Tienes decisiones arquitectónicas correctas: RLS activo, TypeScript estricto, 
+        withAuth centralizado, audit logs, billing engine con quotas, Sentry configurado.
+        Eso es el 70% del trabajo correcto de un SaaS multi-tenant.
+      </p>
+      <p style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--muted); line-height: 1.8;">
+        Los archivos de reparación no indican código malo — indican que el flujo de 
+        registro/onboarding tuvo problemas repetidos de sincronización de tenant_id. 
+        Ese problema específico hay que resolverlo con una migración limpia y definitiva.<br><br>
+        El problema más importante hacia adelante: la arquitectura 2 niveles (User → Tenant)
+        no soporta multi-sede. Hay que agregar la capa locations antes de que el 
+        primer cliente multi-sede la necesite — es más fácil ahora que con datos reales.
+      </p>
+    </div>
+  </div>
+
+  <!-- PLAN DE ACCIÓN -->
+  <div class="section">
+    <div class="section-title">🎯 Plan de acción priorizado</div>
+
+    <div class="action-plan">
+      <div class="action-header">Qué hacer y en qué orden</div>
+
+      <div class="action-item">
+        <div class="action-num">01</div>
+        <div>
+          <div class="action-title">Limpiar el repo y crear migración definitiva</div>
+          <div class="action-desc">
+            Mover todos los REPARACION*.sql y debug files a /docs/archive/ o .gitignore.<br>
+            Crear /supabase/migrations/001_core_schema.sql limpio y definitivo.<br>
+            Verificar que get_current_user_tenant_id() funciona sin parches manuales.
+          </div>
+        </div>
+        <div class="action-effort">1–2 días</div>
+      </div>
+
+      <div class="action-item">
+        <div class="action-num">02</div>
+        <div>
+          <div class="action-title">Agregar tabla locations (sin romper lo existente)</div>
+          <div class="action-desc">
+            Crear tabla locations con tenant_id FK.<br>
+            Al crear un tenant, crear automáticamente una location "Principal".<br>
+            Agregar location_id nullable en inventory_items y sales.<br>
+            El código existente NO necesita cambiar.
+          </div>
+        </div>
+        <div class="action-effort">2–3 días</div>
+      </div>
+
+      <div class="action-item">
+        <div class="action-num">03</div>
+        <div>
+          <div class="action-title">Conectar ModuleContext a datos reales de Supabase</div>
+          <div class="action-desc">
+            Reemplazar el moduleRegistry mock con lectura real de tenants.active_modules.<br>
+            El TenantContext ya existe — conectar ambos.<br>
+            Los hooks use-feature y use-can ya están listos, solo necesitan datos reales.
+          </div>
+        </div>
+        <div class="action-effort">1 día</div>
+      </div>
+
+      <div class="action-item">
+        <div class="action-num">04</div>
+        <div>
+          <div class="action-title">Proteger rutas en middleware</div>
+          <div class="action-desc">
+            Activar la verificación de rol para /superadmin en middleware.ts.<br>
+            Las rutas ya están definidas, solo falta descomentarlas y agregarles la lógica.
+          </div>
+        </div>
+        <div class="action-effort">2 horas</div>
+      </div>
+
+      <div class="action-item">
+        <div class="action-num">05</div>
+        <div>
+          <div class="action-title">Integrar MercadoPago (reemplazar mock adapter)</div>
+          <div class="action-desc">
+            La interfaz del BillingAdapter ya existe y está bien diseñada.<br>
+            Solo hay que implementar el MercadoPagoAdapter siguiendo el mismo contrato.<br>
+            Con esto el SaaS ya puede recibir pagos reales.
+          </div>
+        </div>
+        <div class="action-effort">3–5 días</div>
+      </div>
+
+      <div class="action-item">
+        <div class="action-num">06</div>
+        <div>
+          <div class="action-title">Limpiar servicios duplicados</div>
+          <div class="action-desc">
+            Resolver el duplicado en customers.service.ts y sales.service.ts.<br>
+            Mantener la versión en /services/, eliminar la raíz del módulo.<br>
+            Verificar todos los imports con grep.
+          </div>
+        </div>
+        <div class="action-effort">1 día</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggle(el) {
+    el.classList.toggle('open');
+  }
+</script>
+</body>
+</html>

@@ -34,7 +34,7 @@ export class WebhookService {
       throw new Error(`Error al listar webhooks: ${error.message}`)
     }
 
-    return ((data as WebhookSubscriptionRow[]) || []).map(this.mapToDomain)
+    return ((data as unknown as WebhookSubscriptionRow[]) || []).map(this.mapToDomain)
   }
 
   /**

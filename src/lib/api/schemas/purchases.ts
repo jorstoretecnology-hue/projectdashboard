@@ -65,5 +65,6 @@ export const purchaseQuerySchema = z.object({
 // Types
 export type CreateSupplierDTO = z.infer<typeof createSupplierSchema>;
 export type UpdateSupplierDTO = z.infer<typeof updateSupplierSchema>;
+export type SupplierQueryDTO = z.infer<typeof supplierQuerySchema>;
 export type CreatePurchaseDTO = z.infer<typeof createPurchaseOrderSchema>;
 export type PurchaseQueryDTO = z.infer<typeof purchaseQuerySchema>;

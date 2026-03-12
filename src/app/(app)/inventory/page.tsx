@@ -97,7 +97,7 @@ export default function InventoryPage() {
 
     setIsDeleting(true)
     try {
-      await deleteInventoryItemAction(selectedItem.id, currentTenant.id)
+      await deleteInventoryItemAction(selectedItem.id)
       toast.success("Producto eliminado correctamente")
       loadInventory()
       setIsDeleteDialogOpen(false)
