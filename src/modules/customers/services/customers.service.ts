@@ -145,6 +145,47 @@ export class EnhancedCustomersService {
     await quotaEngine.incrementUsage(tenantId, "maxCustomers")
   }
 
+  async getCustomers(query: any) {
+    return this.list(query.tenant_id || this.tenantIdOverride, query.page, query.limit);
+  }
+
+  async getCustomerById(id: string) {
+    const tenantId = this.tenantIdOverride;
+    if (!tenantId) throw new Error("Tenant ID required for getCustomerById");
+    
+    const { data, error } = await this.supabaseClient
+      .from("customers")
+      .select("*")
+      .eq("id", id)
+      .eq("tenant_id", tenantId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') throw new Error('Customer not found');
+      throw error;
+    }
+
+    return this.mapToDomain(data);
+  }
+
+  async createCustomer(data: any) {
+    const tenantId = this.tenantIdOverride;
+    if (!tenantId) throw new Error("Tenant ID required for createCustomer");
+    return this.create(data, tenantId);
+  }
+
+  async updateCustomer(id: string, data: any) {
+    const tenantId = this.tenantIdOverride;
+    if (!tenantId) throw new Error("Tenant ID required for updateCustomer");
+    return this.update(id, data, tenantId);
+  }
+
+  async deleteCustomer(id: string) {
+    const tenantId = this.tenantIdOverride;
+    if (!tenantId) throw new Error("Tenant ID required for deleteCustomer");
+    return this.delete(id, tenantId);
+  }
+
   private mapToDomain(dbItem: DBCustomer): Customer {
     return {
       id: dbItem.id,

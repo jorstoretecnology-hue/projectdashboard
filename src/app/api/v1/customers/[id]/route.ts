@@ -3,7 +3,7 @@ import { withAuth, AuthenticatedContext } from '@/lib/auth/api-wrapper';
 import { apiSuccess, apiError } from '@/lib/api/response';
 import { validateBody, validateQuery } from '@/lib/api/validation';
 import { updateCustomerSchema } from '@/lib/api/schemas/customers';
-import { CustomersService } from '@/modules/customers/customers.service';
+import { EnhancedCustomersService as CustomersService } from '@/modules/customers/services/customers.service';
 
 /**
  * GET /api/v1/customers/:id

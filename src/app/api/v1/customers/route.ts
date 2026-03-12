@@ -6,7 +6,7 @@ import {
   createCustomerSchema, 
   customerQuerySchema 
 } from '@/lib/api/schemas/customers';
-import { CustomersService } from '@/modules/customers/customers.service';
+import { EnhancedCustomersService as CustomersService } from '@/modules/customers/services/customers.service';
 
 /**
  * GET /api/v1/customers
