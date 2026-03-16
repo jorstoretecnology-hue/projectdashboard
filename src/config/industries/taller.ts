@@ -6,7 +6,7 @@ export const tallerConfig: IndustryConfig = {
   description: 'Reparación y mantenimiento de motos y carros',
   icon: '🔧',
   productTypes: ['repuesto', 'servicio', 'accesorio'],
-  defaultModules: ['Dashboard', 'Inventory', 'Customers', 'Billing', 'Settings'],
+  defaultModules: ['dashboard', 'inventory', 'customers', 'billing', 'settings'],
   fields: [
     // ... campos de productos existentes (omitidos por brevedad si fuera necesario, pero los mantendré)
     {

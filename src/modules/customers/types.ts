@@ -1,5 +1,19 @@
-import { z } from "zod"
 import { PERMISSIONS } from "@/config/permissions"
+// Re-exportar schemas y tipos unificados desde lib/api/schemas/customers
+export {
+  createCustomerSchema,
+  updateCustomerSchema,
+  customerQuerySchema,
+  CustomerStatusEnum,
+  IdentificationTypeEnum,
+  type CreateCustomerDTO,
+  type UpdateCustomerDTO,
+  type CustomerQueryDTO,
+  type Customer,
+  type CustomerFormValues,
+  toDbCustomer,
+  fromDbCustomer,
+} from '@/lib/api/schemas/customers'
 
 /**
  * Action Contract - Customers
@@ -12,39 +26,3 @@ export const CUSTOMERS_ACTIONS = {
     ui: "dialog",
   },
 } as const
-
-/**
- * Esquema de Validación (Zod)
- */
-export const customerSchema = z.object({
-  firstName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  phone: z.string().optional().or(z.literal('')),
-  companyName: z.string().optional().or(z.literal('')),
-  taxId: z.string().optional().or(z.literal('')),
-  address: z.string().optional().or(z.literal('')),
-  notes: z.string().optional().or(z.literal('')),
-  status: z.enum(["active", "inactive", "lead"]).default("active"),
-  website: z.string().url("URL inválida").optional().or(z.literal('')),
-  metadata: z.record(z.string(), z.any()).optional().default({}),
-})
-
-export type CustomerFormValues = {
-  firstName: string
-  lastName: string
-  email: string
-  phone?: string
-  companyName?: string
-  taxId?: string
-  address?: string
-  notes?: string
-  status: "active" | "inactive" | "lead"
-  website?: string
-  metadata?: Record<string, any>
-}
-
-export interface Customer extends CustomerFormValues {
-  id: string
-  createdAt?: string
-}

@@ -29,13 +29,13 @@ export function useEvents(tenantId: string | null) {
 
     const { data, error: fetchError } = await supabase
       .from('domain_events')
-      .select('*')
+      .select('id, tenant_id, event_type, entity_type, entity_id, old_data, new_data, user_id, created_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(50);
 
     if (fetchError) {
-      logger.error('[useEvents] Error fetching events', fetchError.message);
+      logger.error('[useEvents] Error fetching events', { error: fetchError.message });
       setError(fetchError.message);
     } else {
       setEvents((data ?? []) as Sale[]);

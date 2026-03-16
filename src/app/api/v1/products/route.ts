@@ -6,7 +6,7 @@ import {
   createProductSchema, 
   productQuerySchema 
 } from '@/lib/api/schemas/products';
-import { ProductsService } from '@/modules/products/products.service';
+import { ProductsService } from '@/modules/products/services/products.service';
 
 /**
  * GET /api/v1/products

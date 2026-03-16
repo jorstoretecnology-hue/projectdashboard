@@ -1,0 +1,21 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+TypeError [ERR_INVALID_ARG_VALUE]: The argument 'path' must be a string, Uint8Array, or URL without null bytes. Received 'E:\\ProyectDashboard\\!**\\s\x00c\x00r\x00i\x00p\x00t\x00s\x00\\\x00c\x00r\x00e\x00a\x00t\x00e\x00-\x00s\x00u\x00p\x00e\x00r\x0...
+    at Object.lstat (node:fs:1633:10)
+    at Object.read (E:\ProyectDashboard\node_modules\@nodelib\fs.stat\out\providers\async.js:5:17)
+    at ReaderStream.stat [as _stat] (E:\ProyectDashboard\node_modules\@nodelib\fs.stat\out\index.js:13:11)
+    at E:\ProyectDashboard\node_modules\fast-glob\out\readers\stream.js:49:18
+    at new Promise (<anonymous>)
+    at ReaderStream._getStat (E:\ProyectDashboard\node_modules\fast-glob\out\readers\stream.js:48:16)
+    at ReaderStream._getEntry (E:\ProyectDashboard\node_modules\fast-glob\out\readers\stream.js:38:21)
+    at stream._write (E:\ProyectDashboard\node_modules\fast-glob\out\readers\stream.js:20:25)
+    at doWrite (node:internal/streams/writable:598:12)
+    at clearBuffer (node:internal/streams/writable:783:7)
+    at onwrite (node:internal/streams/writable:653:7)
+    at E:\ProyectDashboard\node_modules\fast-glob\out\readers\stream.js:28:17 {
+  code: 'ERR_INVALID_ARG_VALUE'
+}
+
+Node.js v22.16.0

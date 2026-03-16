@@ -1,61 +1,138 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
-import { createClient } from '@/lib/supabase/server'
+import { ratelimit } from '@/lib/rate-limit'
 
 const PROTECTED_ROUTES = [
   '/dashboard', '/inventory', '/customers', '/sales',
   '/settings', '/users', '/billing', '/services', '/vehicles'
 ]
-const SUPER_ADMIN_ROUTES = ['/superadmin']
+const SUPER_ADMIN_ROUTES = ['/console']
 const PUBLIC_ROUTES = [
   '/login', '/auth/login', '/auth/register', '/auth/callback',
-  '/auth/reset-password', '/auth/forgot-password',
+  '/auth/reset-password', '/auth/forgot-password', '/auth/verify',
   '/post-auth', '/register', '/test-public', '/api/v1/public',
+  '/onboarding', // Onboarding es público para usuarios sin tenant
 ]
+
+/**
+ * Helper para ejecutar promesas con timeout
+ */
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+  let timeoutHandle: NodeJS.Timeout;
+  const timeoutPromise = new Promise<T>((resolve) => {
+    timeoutHandle = setTimeout(() => resolve(fallback), timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).then((result) => {
+    clearTimeout(timeoutHandle);
+    return result;
+  });
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const response = await updateSession(request)
+  const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
+
+  // 1. Rate Limiting con Timeout (No bloquear si Upstash tarda más de 600ms)
+  if (!pathname.includes('.') && !pathname.startsWith('/_next')) {
+    try {
+      const { success } = await withTimeout(
+        ratelimit.limit(ip),
+        600,
+        { success: true }
+      )
+      if (!success) {
+        return new NextResponse('Too Many Requests', { 
+          status: 429,
+          headers: { 'Content-Type': 'text/plain' }
+        })
+      }
+    } catch (e) {
+      console.warn('[RateLimit] Error or Timeout, skipping:', e)
+    }
+  }
+
+  // 2. Sincronizar Sesión y obtener datos base (UNA SOLA VEZ)
+  const { response, user, profile } = await updateSession(request)
 
   const isPublic = PUBLIC_ROUTES.some(r => pathname.startsWith(r))
-  if (isPublic) return response
-
   const isProtected = PROTECTED_ROUTES.some(r => pathname.startsWith(r))
-  const isSuperAdmin = SUPER_ADMIN_ROUTES.some(r => pathname.startsWith(r))
-  if (!isProtected && !isSuperAdmin) return response
+  const isSuperAdminRoute = SUPER_ADMIN_ROUTES.some(r => pathname.startsWith(r))
 
-  try {
-    const supabase = await createClient()
-    const { data: { user }, error } = await supabase.auth.getUser()
-
-    if (error || !user) {
+  // 3. Lógica para usuarios NO autenticados
+  if (!user) {
+    if (!isPublic && (isProtected || isSuperAdminRoute)) {
       const loginUrl = new URL('/auth/login', request.url)
       loginUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(loginUrl)
     }
+    return response
+  }
 
-    if (isSuperAdmin && user.app_metadata?.app_role !== 'SUPER_ADMIN') {
+  // 4. Lógica para usuarios autenticados
+  const rawRole = profile?.app_role || user.app_metadata?.app_role || 'VIEWER'
+  const role = (rawRole as string).toUpperCase()
+  const tenantId = profile?.tenant_id || user.app_metadata?.tenant_id
+
+  if (role === 'SUPER_ADMIN') {
+    // Redirigir SuperAdmin al dashboard global si intenta ir a rutas de usuario/onboarding
+    const restrictedForSuperAdmin = ['/', '/dashboard', '/onboarding', '/post-auth', '/auth/login']
+    if (restrictedForSuperAdmin.includes(pathname)) {
+      return NextResponse.redirect(new URL('/console/dashboard', request.url))
+    }
+  } else {
+    // Usuario Normal / Admin de Tenant
+
+    // Bloquear acceso a /console
+    if (isSuperAdminRoute) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
-    if (isProtected) {
-      const tenantId = user.app_metadata?.tenant_id
-      if (!tenantId) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('tenant_id')
-          .eq('id', user.id)
-          .single()
-        if (!profile?.tenant_id) {
-          return NextResponse.redirect(new URL('/onboarding', request.url))
-        }
-      }
+    // DEBUG: Bypass de onboarding para desarrollo (bypass_onboarding=1)
+    const bypassOnboarding = request.nextUrl.searchParams.get('bypass_onboarding') === '1'
+
+    // Check de Onboarding: Si no tiene tenant, mandarlo a onboarding (excepto si ya está allí o en login)
+    if (!tenantId && pathname !== '/onboarding' && !isPublic && !bypassOnboarding) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
     }
-  } catch (err) {
-    console.error('[Middleware] Error:', err)
+
+    // Si ya tiene tenant y está en onboarding, mandarlo al dashboard (excepto para SuperAdmin ya manejado)
+    if (tenantId && pathname === '/onboarding') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    // Redirigir desde raíz o login al dashboard
+    // EXCEPTO si force_login=1 (para testing de login con usuario existente)
+    const forceLogin = request.nextUrl.searchParams.get('force_login') === '1'
+    if (pathname === '/' || (pathname === '/auth/login' && !forceLogin)) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
   }
 
-  return response
+  // 5. Inyectar headers de contexto para Server Components
+  // Esto permite que los Server Components lean el usuario/tenant sin volver a consultar Supabase
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-user-id', user.id)
+  if (tenantId) requestHeaders.set('x-tenant-id', (tenantId as string))
+  requestHeaders.set('x-user-role', role)
+
+  // Creamos una nueva respuesta con los headers del request actualizados
+  const finalResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+
+  // Sincronizar cookies que updateSession pudo haber generado (refresh de sesión)
+  response.cookies.getAll().forEach(cookie => {
+    finalResponse.cookies.set(cookie.name, cookie.value, {
+      path: '/',
+      secure: true,
+      sameSite: 'lax',
+      ...cookie
+    })
+  })
+
+  return finalResponse
 }
 
 export const config = {

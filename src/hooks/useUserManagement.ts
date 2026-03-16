@@ -17,6 +17,13 @@ export type Tenant = {
   name: string;
 };
 
+interface ApiError extends Error {
+  details?: {
+    message?: string;
+    [key: string]: any;
+  };
+}
+
 export function useUserManagement() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -33,8 +40,9 @@ export function useUserManagement() {
         .order('name');
       if (err) throw err;
       setTenants(data || []);
-    } catch (err: any) {
-      logger.error('[useUserManagement] Error cargando empresas', err);
+    } catch (err) {
+      const error = err as ApiError;
+      logger.error('[useUserManagement] Error cargando empresas', { error });
     }
   }, [supabase]);
 
@@ -45,16 +53,17 @@ export function useUserManagement() {
     try {
       const { data, error: err } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, full_name, app_role, tenant_id, created_at')
         .order('created_at', { ascending: false });
 
       if (err) throw err;
-      
+
       setUsers(data as UserProfile[]);
       logger.log('[useUserManagement] Usuarios cargados exitosamente', { count: data.length });
-    } catch (err: any) {
-      setError(err.message);
-      logger.error('[useUserManagement] Error cargando usuarios', err);
+    } catch (err) {
+      const error = err as ApiError;
+      setError(error.message);
+      logger.error('[useUserManagement] Error cargando usuarios', { error });
       toast.error('Error al cargar la lista de usuarios');
     } finally {
       setIsLoading(false);
@@ -78,9 +87,10 @@ export function useUserManagement() {
       toast.success(`Rol actualizado a ${newRole}`);
       logger.log(`[useUserManagement] Rol actualizado para ${userId} -> ${newRole}`);
       await fetchUsers(); // Recargar lista
-    } catch (err: any) {
-      logger.error('[useUserManagement] Error actualizando rol', err);
-      toast.error(err.message);
+    } catch (err) {
+      const error = err as Error;
+      logger.error('[useUserManagement] Error actualizando rol', { error });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -104,9 +114,10 @@ export function useUserManagement() {
 
       toast.success('Empresa asignada correctamente');
       await fetchUsers();
-    } catch (err: any) {
-      logger.error('[useUserManagement] Error asignando empresa', err);
-      toast.error(err.message);
+    } catch (err) {
+      const error = err as Error;
+      logger.error('[useUserManagement] Error asignando empresa', { error });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -114,7 +125,7 @@ export function useUserManagement() {
 
   // Crear nuevo usuario
   const createUser = async (email: string, name: string, role: string, password?: string) => {
-    console.log('[Hook] Iniciando createUser para:', email);
+    logger.log('[Hook] Iniciando createUser para:', { email, role });
     setIsLoading(true);
     try {
       const res = await fetch('/api/admin/users', {
@@ -136,9 +147,10 @@ export function useUserManagement() {
       toast.success(`Usuario ${email} creado exitosamente.`);
       logger.log(`[useUserManagement] Usuario creado: ${email}`);
       await fetchUsers();
-    } catch (err: any) {
-      logger.error('[useUserManagement] Error creando usuario', err);
-      toast.error(err.message);
+    } catch (err) {
+      const error = err as Error;
+      logger.error('[useUserManagement] Error creando usuario', { error });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -161,9 +173,10 @@ export function useUserManagement() {
       toast.success('Usuario eliminado permanentemente');
       logger.log(`[useUserManagement] Usuario eliminado: ${userId}`);
       await fetchUsers();
-    } catch (err: any) {
-      logger.error('[useUserManagement] Error eliminando usuario', err);
-      toast.error(err.message);
+    } catch (err) {
+      const error = err as Error;
+      logger.error('[useUserManagement] Error eliminando usuario', { error });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }

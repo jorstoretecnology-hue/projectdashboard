@@ -6,7 +6,7 @@ export const glampingConfig: IndustryConfig = {
   description: 'Alojamiento de lujo en la naturaleza',
   icon: '🏕️',
   productTypes: ['habitacion', 'paquete', 'servicio_adicional', 'experiencia'],
-  defaultModules: ['Dashboard', 'Customers', 'Billing', 'Settings'],
+  defaultModules: ['dashboard', 'customers', 'billing', 'settings'],
   fields: [
     {
       key: 'tipo_alojamiento',

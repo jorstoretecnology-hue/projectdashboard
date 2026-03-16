@@ -93,7 +93,26 @@ export const TenantGuard: React.FC<TenantGuardProps> = ({
 export const useSecureCRUD = () => {
   const { currentTenant, isSuperAdmin } = useTenant();
 
-  const validateTenantAccess = (operation: string, resourceTenantId?: string) => {
+  interface ProductData {
+    tenantId?: string;
+    name: string;
+    price: number;
+    [key: string]: any;
+  }
+
+  interface ProductFilters {
+    category?: string;
+    status?: string;
+    [key: string]: any;
+  }
+
+  interface ValidationResult {
+    allowed: boolean;
+    reason: string;
+    error?: string;
+  }
+
+  const validateTenantAccess = (operation: string, resourceTenantId?: string): ValidationResult => {
     // Super admin tiene acceso total
     if (isSuperAdmin) {
       return { allowed: true, reason: 'Super admin access' };
@@ -120,7 +139,7 @@ export const useSecureCRUD = () => {
     return { allowed: true, reason: 'Valid tenant access' };
   };
 
-  const createProduct = async (productData: any) => {
+  const createProduct = async (productData: ProductData): Promise<ProductData> => {
     const validation = validateTenantAccess('create', productData.tenantId);
     if (!validation.allowed) {
       throw new Error(validation.error);
@@ -135,7 +154,7 @@ export const useSecureCRUD = () => {
     };
   };
 
-  const updateProduct = async (productId: string, updates: any, resourceTenantId?: string) => {
+  const updateProduct = async (productId: string, updates: Partial<ProductData>, resourceTenantId?: string): Promise<Partial<ProductData>> => {
     const validation = validateTenantAccess('update', resourceTenantId);
     if (!validation.allowed) {
       throw new Error(validation.error);
@@ -153,7 +172,7 @@ export const useSecureCRUD = () => {
     };
   };
 
-  const deleteProduct = async (productId: string, resourceTenantId?: string) => {
+  const deleteProduct = async (productId: string, resourceTenantId?: string): Promise<{ deleted: boolean; productId: string }> => {
     const validation = validateTenantAccess('delete', resourceTenantId);
     if (!validation.allowed) {
       throw new Error(validation.error);
@@ -163,7 +182,7 @@ export const useSecureCRUD = () => {
     return { deleted: true, productId };
   };
 
-  const getProducts = async (filters?: any) => {
+  const getProducts = async (filters?: ProductFilters): Promise<{ products: ProductData[]; total: number; filters: ProductFilters }> => {
     const validation = validateTenantAccess('read');
     if (!validation.allowed) {
       throw new Error(validation.error);

@@ -1,8 +1,9 @@
 import { SupabaseClient } from "@supabase/supabase-js"
 import { Database } from "@/lib/supabase/database.types"
-import { Customer, CustomerFormValues } from "../types"
+import { Customer, CustomerFormValues, toDbCustomer, fromDbCustomer } from "../types"
 import { quotaEngine } from "@/core/quotas/engine"
 import { auditLogService } from "@/core/security/audit.service"
+import { logger } from "@/lib/logger"
 
 type DBCustomer = Database['public']['Tables']['customers']['Row']
 
@@ -18,13 +19,13 @@ export class EnhancedCustomersService {
 
     const { data, count, error } = await this.supabaseClient
       .from("customers")
-      .select("*", { count: "exact" })
+      .select("id, first_name, last_name, name, email, phone, company_name, tax_id, address, notes, status, website, metadata, city, location_id, created_at, updated_at", { count: "exact" })
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .range(from, to)
 
     if (error) {
-      console.error("[CustomersService] List Error:", error)
+      logger.error("[CustomersService] List Error", { error })
       throw new Error(`Error al listar clientes: ${error.message}`)
     }
 
@@ -37,36 +38,30 @@ export class EnhancedCustomersService {
   async create(data: CustomerFormValues, tenantId: string): Promise<Customer> {
     await quotaEngine.assertCanConsume(tenantId, "maxCustomers")
 
+    // Convertir de camelCase (frontend) a snake_case (database)
+    const dbData = toDbCustomer(data);
+
     const { data: newCustomer, error } = await this.supabaseClient
       .from("customers")
       .insert({
-        first_name: data.firstName || null,
-        last_name: data.lastName || null,
+        ...dbData,
         name: `${data.firstName || ""} ${data.lastName || ""}`.trim() || null,
-        email: data.email,
-        phone: data.phone || null,
-        company_name: data.companyName || null,
-        tax_id: data.taxId || null,
-        address: data.address || null,
-        notes: data.notes || null,
-        status: data.status || "active",
-        website: data.website || null,
         tenant_id: tenantId,
       })
       .select()
       .single()
 
     if (error) {
-      console.error("[CustomersService] Create Error:", error)
+      logger.error("[CustomersService] Create Error", { error })
       throw new Error(`No se pudo crear el cliente: ${error.message}`)
     }
 
     await Promise.all([
       quotaEngine.incrementUsage(tenantId, "maxCustomers"),
       auditLogService.logResourceCreate(
-        tenantId, 
-        'CUSTOMER', 
-        newCustomer.id, 
+        tenantId,
+        'CUSTOMER',
+        newCustomer.id,
         newCustomer
       )
     ])
@@ -187,20 +182,7 @@ export class EnhancedCustomersService {
   }
 
   private mapToDomain(dbItem: DBCustomer): Customer {
-    return {
-      id: dbItem.id,
-      firstName: dbItem.first_name || "",
-      lastName: dbItem.last_name || "",
-      email: dbItem.email,
-      phone: dbItem.phone || "",
-      companyName: dbItem.company_name || "",
-      taxId: dbItem.tax_id || "",
-      address: dbItem.address || "",
-      notes: dbItem.notes || "",
-      status: (dbItem.status as any) || "active",
-      website: dbItem.website || "",
-      createdAt: dbItem.created_at || undefined,
-    }
+    return fromDbCustomer(dbItem);
   }
 }
 

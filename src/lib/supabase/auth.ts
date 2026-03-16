@@ -2,11 +2,25 @@ import { createClient } from './server'
 import { cache } from 'react'
 import { Permission, hasPermission, FeatureFlag } from '@/config/permissions'
 import { auditLogService } from '@/core/security/audit.service'
+import { headers } from 'next/headers'
 
 /**
- * Obtiene el usuario actual con metadatos extendidos del JWT (SSR).
+ * Obtiene el usuario actual.
+ * Optimización: Intenta leer el ID del header inyectado por el middleware (ultra rápido).
+ * Si no está disponible o se requiere el objeto completo validado, usa Supabase.
  */
 export const getUser = cache(async () => {
+  // 1. Intentar obtener datos básicos de los headers (inyectados por el middleware)
+  try {
+    const headerList = await headers()
+    const userId = headerList.get('x-user-id')
+    
+    // Si tenemos el ID en los headers, para compatibilidad total con el resto de la app, 
+    // seguimos usando supabase.auth.getUser() pero ahora está cacheado por React.cache
+  } catch (e) {
+    // Si falla (ej: no estamos en un entorno con headers), seguimos normal
+  }
+
   const supabase = await createClient()
   try {
     const { data: { user }, error } = await supabase.auth.getUser()

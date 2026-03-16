@@ -3,7 +3,7 @@ import { withAuth, AuthenticatedContext } from '@/lib/auth/api-wrapper';
 import { apiSuccess, apiError } from '@/lib/api/response';
 import { validateBody } from '@/lib/api/validation';
 import { createServiceItemSchema, updateServiceOrderSchema } from '@/lib/api/schemas/services'; // Check schema export
-import { ServicesService } from '@/modules/services/services.service';
+import { ServicesService } from '@/modules/services/services/services.service';
 
 /**
  * POST /api/v1/services/orders/:id/items

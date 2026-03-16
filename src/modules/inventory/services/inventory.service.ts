@@ -30,6 +30,7 @@ export class InventoryService {
         stock: data.stock,
         sku: data.sku || null,
         tenant_id: tenantId, 
+        images: [] // ✨ Inicializar array vacio
       })
       .select()
       .single()
@@ -65,6 +66,7 @@ export class InventoryService {
         price: data.price,
         stock: data.stock,
         sku: data.sku,
+        images: (data as any).images, // ✨ Permitir actualización de imágenes
       })
       .eq("id", id)
       .eq("tenant_id", tenantId)
@@ -165,6 +167,7 @@ export class InventoryService {
       price: Number(dbItem.price),
       stock: Number(dbItem.stock),
       sku: dbItem.sku || undefined,
+      images: (dbItem as any).images || [], // ✨ Mapear array de imágenes
       createdAt: dbItem.created_at || undefined,
     }
   }

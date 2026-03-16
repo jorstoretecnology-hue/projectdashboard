@@ -3,6 +3,8 @@
 import { NextResponse } from 'next/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
+import crypto from 'crypto';
+import { logger } from '@/lib/logger';
 
 // Helper para validar seguridad
 async function validateSuperadmin() {
@@ -34,15 +36,15 @@ export async function POST(request: Request) {
     const supabaseAdmin = getAdminClient();
     const body = await request.json();
     const { email, password, name, role = 'USER' } = body;
-    console.log(`[API/Admin/Users] Solicitud para crear usuario: ${email} con rol ${role}. Password length: ${password?.length || 0}`);
+    logger.log(`[API/Admin/Users] Creando usuario`, { email, role, passwordLength: password?.length || 0 });
 
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password: password || 'Password123!',
+      password: password || crypto.randomBytes(16).toString('hex'),
       email_confirm: true,
-      user_metadata: { 
+      user_metadata: {
         full_name: name,
-        app_role: role 
+        app_role: role
       },
       app_metadata: {
         role: role.toUpperCase(),
@@ -51,18 +53,18 @@ export async function POST(request: Request) {
     });
 
     if (createError) {
-      console.error('[API/Admin/Users] Full Auth Error:', createError);
-      return NextResponse.json({ 
+      logger.error('[API/Admin/Users] Full Auth Error', { error: createError });
+      return NextResponse.json({
         error: createError.message,
-        details: createError 
+        details: createError
       }, { status: 400 });
     }
 
     return NextResponse.json({ success: true, user: { id: newUser?.user?.id, email: newUser?.user?.email } }, { status: 201 });
   } catch (err: any) {
-    console.error('[API/Admin/Users] Excepción Crítica en Servidor:', err);
-    return NextResponse.json({ 
-      error: 'Error interno de servidor', 
+    logger.error('[API/Admin/Users] Excepción Crítica en Servidor', { error: err });
+    return NextResponse.json({
+      error: 'Error interno de servidor',
       message: err.message
     }, { status: 500 });
   }

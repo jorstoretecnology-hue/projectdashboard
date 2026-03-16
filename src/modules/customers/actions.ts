@@ -5,7 +5,7 @@ import { can, getRequiredTenantId } from "@/lib/supabase/auth"
 import { PERMISSIONS } from "@/config/permissions"
 import { EnhancedCustomersService } from "./services/customers.service"
 import { revalidatePath } from "next/cache"
-import { CustomerFormValues, Customer, customerSchema } from "./types"
+import { CustomerFormValues, Customer, createCustomerSchema } from "./types"
 
 /**
  * SERVER ACTIONS - Módulo de Clientes
@@ -20,9 +20,9 @@ export async function createCustomerAction(rawData: CustomerFormValues): Promise
     throw new Error("ACCESO_DENEGADO: No tienes permiso para crear clientes.")
   }
 
-  const data = customerSchema.parse(rawData)
+  const data = createCustomerSchema.parse(rawData)
   const result = await customersService.create(data, tenantId)
-  
+
   revalidatePath('/customers')
   return result
 }
@@ -36,7 +36,7 @@ export async function updateCustomerAction(id: string, rawData: Partial<Customer
     throw new Error("ACCESO_DENEGADO: No tienes permiso para editar clientes.")
   }
 
-  const data = customerSchema.partial().parse(rawData)
+  const data = createCustomerSchema.partial().parse(rawData)
   const result = await customersService.update(id, data, tenantId)
   revalidatePath('/customers')
   return result

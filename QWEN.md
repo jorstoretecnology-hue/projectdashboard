@@ -1,0 +1,3 @@
+## Qwen Added Memories
+- El usuario está implementando el plan de Claude para activación automática de módulos en su proyecto Dashboard Universal SaaS. El usuario es de Colombia y prefiere comunicación en español.
+- Proyecto Dashboard Universal - Estado: Migraciones SQL de activación de módulos creadas pero pendientes de ejecutar en Supabase. Archivos clave: supabase/migrations/20260314000000_activate_modules_for_tenants.sql, IMPLEMENTATION_STEPS.md. Próximo paso: Ejecutar 5 bloques SQL en Supabase SQL Editor en orden (DROP/CREATE función, INSERT suscripciones, DO activación, DELETE duplicados, SELECT verificación).

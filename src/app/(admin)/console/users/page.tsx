@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useUserManagement, UserProfile } from '@/hooks/useUserManagement';
 import { Users, ShieldAlert, Trash2, UserPlus } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 export default function AdminUsersPage() {
   const { users, tenants, isLoading, fetchUsers, fetchTenants, assignTenant, updateUserRole, createUser, deleteUser } = useUserManagement();
@@ -40,7 +41,7 @@ export default function AdminUsersPage() {
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmail) return;
-    console.log('[UI] Intentando crear usuario:', { email: newEmail, role: newRole });
+    logger.log('[UI] Intentando crear usuario', { email: newEmail, role: newRole });
     try {
       await createUser(newEmail, newName, newRole, newPassword);
       setShowModal(false);

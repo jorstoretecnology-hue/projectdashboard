@@ -46,6 +46,12 @@ export default function HomePage() {
   const { theme, setTheme } = useTheme();
   const { modules, toggleModule } = useModuleContext();
   const { currentTenant } = useTenant();
+  const [mounted, setMounted] = React.useState(false);
+
+  // Solucionar desajuste de hidratación para el tema
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [metrics, setMetrics] = React.useState<TenantDashboardMetrics | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -326,7 +332,7 @@ export default function HomePage() {
                        onClick={() => setTheme(t.id)}
                        className={cn(
                          "flex items-center justify-between px-4 py-3 rounded-2xl border transition-all font-bold text-sm",
-                         theme === t.id 
+                         mounted && theme === t.id 
                           ? "bg-primary/5 border-primary/50 text-primary shadow-sm" 
                           : "border-transparent bg-muted/30 hover:bg-muted/50 text-muted-foreground"
                        )}
@@ -335,7 +341,7 @@ export default function HomePage() {
                           <t.icon size={18} />
                           {t.name}
                        </div>
-                       {theme === t.id && <CheckCircle2 size={16} />}
+                       {mounted && theme === t.id && <CheckCircle2 size={16} />}
                      </button>
                    ))}
                 </div>

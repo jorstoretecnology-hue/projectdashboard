@@ -10,11 +10,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Mail, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { useRouter } from 'next/navigation'
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
   const supabase = createClient()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,17 +24,15 @@ export default function ForgotPasswordPage() {
 
     setLoading(true)
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-      })
+      const { error } = await supabase.auth.resetPasswordForEmail(email)
 
       if (error) {
         toast.error(error.message)
         return
       }
 
-      setSent(true)
-      toast.success('¡Enlace enviado!')
+      toast.success('¡Código enviado!')
+      router.push(`/auth/verify?email=${encodeURIComponent(email)}&type=recovery`)
     } catch (err) {
       console.error(err)
       toast.error('Error inesperado.')
@@ -53,56 +53,43 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-white">
-            {sent ? '¡Revisa tu correo!' : 'Recuperar Contraseña'}
+            Recuperar Contraseña
           </CardTitle>
           <CardDescription className="text-slate-400">
-            {sent
-              ? `Hemos enviado un enlace de recuperación a ${email}. Revisa también tu bandeja de spam.`
-              : 'Ingresa tu correo electrónico y te enviaremos un enlace para crear una nueva contraseña.'
-            }
+            Ingresa tu correo electrónico y te enviaremos un código para crear una nueva contraseña.
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {!sent ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-200">Correo Electrónico</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="nombre@ejemplo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoFocus
-                  className="border-slate-700 bg-slate-950 text-white"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  'Enviar Enlace de Recuperación'
-                )}
-              </Button>
-            </form>
-          ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-slate-200">Correo Electrónico</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="nombre@ejemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+                className="border-slate-700 bg-slate-950 text-white"
+              />
+            </div>
             <Button
-              variant="outline"
-              className="w-full border-slate-700 text-white hover:bg-slate-800"
-              onClick={() => { setSent(false); setEmail('') }}
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
+              disabled={loading}
             >
-              Enviar a otro correo
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando código...
+                </>
+              ) : (
+                'Enviar Código de Recuperación'
+              )}
             </Button>
-          )}
+          </form>
         </CardContent>
 
         <CardFooter className="flex justify-center border-t border-slate-800 pt-4">

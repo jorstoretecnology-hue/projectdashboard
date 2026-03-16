@@ -23,6 +23,8 @@ import { Badge } from "@/components/ui/badge"
 import { getIndustryConfig } from "@/config/industries"
 import { InspectionChecklist } from "./InspectionChecklist"
 import { InspectionCamera } from "./InspectionCamera"
+import { useDebounce } from 'use-debounce'
+import { createClient } from '@/lib/supabase/client'
 
 interface POSDialogProps {
   open: boolean
@@ -35,6 +37,7 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
   const [search, setSearch] = useState("")
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [debouncedSearch] = useDebounce(search, 300)
   
   // Estado del pedido
   const [selectedItems, setSelectedItems] = useState<(CreateSaleItemDTO & { name: string })[]>([])
@@ -50,10 +53,40 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
   const industryConfig = currentTenant?.industryType ? getIndustryConfig(currentTenant.industryType) : null;
   const metadataSchema = (currentTenant as any)?.settings?.metadata_schema?.sale || [];
 
-  // Cargar inventario al abrir
   useEffect(() => {
-    if (open) {
-      loadInventory()
+    if (!open) return
+
+    const fetchData = async () => {
+      setIsLoading(true)
+      const supabase = createClient()
+
+      try {
+        const { data, error } = await supabase
+          .from('inventory_items')
+          .select('id, name, price, stock, sku, type')
+          .eq('tenant_id', tenantId)
+          .ilike('name', `%${debouncedSearch}%`)
+          .gt('stock', 0)
+          .limit(20)
+
+        if (error) throw error
+        setInventory((data as any) ?? [])
+      } catch (err) {
+        console.error("Error loading inventory:", err)
+        toast.error("Error al cargar productos")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [debouncedSearch, open, tenantId])
+
+  // Limpiar al cerrar
+  useEffect(() => {
+    if (!open) {
+      setInventory([])
+      setSearch('')
       setStep(1)
       setSelectedItems([])
       setMetadata({})
@@ -61,18 +94,6 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
       setChecklistItems([])
     }
   }, [open])
-
-  const loadInventory = async () => {
-    setIsLoading(true)
-    try {
-      const { data } = await inventoryService.list(tenantId)
-      setInventory(data)
-    } catch (error) {
-      toast.error("Error al cargar productos")
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const addItem = (item: InventoryItem) => {
     const existing = selectedItems.find(i => i.product_id === item.id)
@@ -96,10 +117,6 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
     setSelectedItems(selectedItems.filter(i => i.product_id !== productId))
   }
 
-  const filteredInventory = inventory.filter(i => 
-    i.name.toLowerCase().includes(search.toLowerCase()) || 
-    i.sku?.toLowerCase().includes(search.toLowerCase())
-  )
 
   const handleMetadataChange = (key: string, value: string) => {
     setMetadata(prev => ({ ...prev, [key]: value }))
@@ -200,7 +217,7 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
                 <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 gap-3 content-start">
                   {isLoading ? (
                     <div className="col-span-2 py-20 text-center"><Loader2 className="animate-spin mx-auto" /></div>
-                  ) : filteredInventory.map(item => (
+                  ) : inventory.map(item => (
                     <button
                       key={item.id}
                       onClick={() => addItem(item)}

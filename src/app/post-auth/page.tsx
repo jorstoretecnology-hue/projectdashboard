@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getUser, getUserRole } from '@/lib/supabase/auth'
+import { logger } from '@/lib/logger'
+import { createClient } from '@/lib/supabase/server'
 
 /**
  * PAGE: POST-AUTH ROUTER
@@ -10,9 +12,18 @@ export default async function PostAuthPage({ searchParams }: { searchParams: Pro
   const user = await getUser()
   const params = await searchParams
   const token = params.token as string | undefined
-  
+  const forceLogin = params.force_login === '1'
+
+  // DEBUG: Si force_login=1, cerrar sesión y redirigir al login
+  if (forceLogin) {
+    logger.log("[PostAuth] Force login requested, clearing session")
+    const supabase = await createClient()
+    await supabase.auth.signOut({ scope: 'local' })
+    redirect('/auth/login')
+  }
+
   if (!user) {
-    console.log("[PostAuth] No user found, redirecting to login")
+    logger.log("[PostAuth] No user found, redirecting to login")
     redirect(`/auth/login${token ? `?token=${token}` : ''}`)
   }
 
@@ -30,34 +41,41 @@ export default async function PostAuthPage({ searchParams }: { searchParams: Pro
   const jwtRole = user.app_metadata?.app_role || user.app_metadata?.role
   const rawRole = dbRole || jwtRole || 'VIEWER'
   const role = rawRole.toUpperCase() // Normalizar a MAYÚSCULAS para comparar con 'SUPER_ADMIN'
-  
+
   const tenantId = profile?.tenant_id || user.app_metadata?.tenant_id
 
-  console.log(`[PostAuth] User: ${user.email}, ID: ${user.id}, DB Role: ${dbRole}, Tenant ID: ${tenantId}, Final Role (UPPER): ${role}`)
-  
+  logger.log(`[PostAuth] User authenticated`, { email: user.email, id: user.id, dbRole, role })
+
   // 1.5 Si hay un token explícito de invitación, redirigir allí prioritariamente
   if (token) {
-    console.log(`[PostAuth] Token found (${token}), redirecting to invitation page`)
+    logger.log(`[PostAuth] Token found, redirecting to invitation page`, { token })
     redirect(`/auth/invite?token=${token}`)
   }
 
   // 2. REGLA SUPREMA: El SUPER_ADMIN SIEMPRE va a su consola central, tenga tenant o no.
   if (role === 'SUPER_ADMIN') {
-    console.log("[PostAuth] SUPER_ADMIN detected, redirecting to central console")
-    redirect('/superadmin/dashboard')
+    logger.log("[PostAuth] SUPER_ADMIN detected, redirecting to central console")
+    redirect('/console/dashboard')
   }
 
   // 3. Regla 2: Si es usuario regular y NO tiene Tenant, va a Onboarding o Invitación
   if (!tenantId) {
-    console.log("[PostAuth] No tenant_id found, checking for pending invitations for:", user.email)
-    
+    logger.log("[PostAuth] No tenant_id found, checking for pending invitations", { email: user.email })
+
+    // DEBUG: Si bypass_onboarding=1, permitir acceso al dashboard sin tenant (solo desarrollo)
+    const bypassOnboarding = params.bypass_onboarding === '1'
+    if (bypassOnboarding) {
+      logger.log("[PostAuth] Bypass onboarding enabled (DEBUG MODE)")
+      redirect('/dashboard')
+    }
+
     // Buscar invitación pendiente para este email
     const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
 
     const { data: invitation } = await supabase
       .from('invitations')
-      .select('*')
+      .select('id, tenant_id, app_role, email, status')
       .eq('email', user.email)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -65,12 +83,12 @@ export default async function PostAuthPage({ searchParams }: { searchParams: Pro
       .single()
 
     if (invitation) {
-      console.log(`[PostAuth] Pending invitation found for ${user.email} from tenant ${invitation.tenant_id}. Auto-accepting...`)
-      
+      logger.log(`[PostAuth] Pending invitation found, auto-accepting`, { email: user.email, tenantId: invitation.tenant_id })
+
       // Actualizar perfil
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           tenant_id: invitation.tenant_id,
           app_role: invitation.app_role
         })
@@ -79,20 +97,20 @@ export default async function PostAuthPage({ searchParams }: { searchParams: Pro
       if (!profileError) {
         // Marcar como aceptada
         await supabase.from('invitations').update({ status: 'accepted' }).eq('id', invitation.id)
-        
+
         // Redirigir al Dashboard
-        console.log("[PostAuth] Invitation accepted successfully, redirecting to dashboard")
+        logger.log("[PostAuth] Invitation accepted successfully, redirecting to dashboard")
         redirect('/dashboard')
       } else {
-        console.error("[PostAuth] Error auto-accepting invitation:", profileError)
+        logger.error("[PostAuth] Error auto-accepting invitation", { error: profileError })
       }
     }
 
-    console.log("[PostAuth] No invitation found, redirecting to onboarding")
+    logger.log("[PostAuth] No invitation found, redirecting to onboarding")
     redirect('/onboarding')
   }
 
   // 4. Regla 3: Usuario normal con Tenant va al Dashboard regular
-  console.log("[PostAuth] Active session with Tenant, redirecting to dashboard")
+  logger.log("[PostAuth] Active session with Tenant, redirecting to dashboard")
   redirect('/dashboard')
 }

@@ -6,7 +6,7 @@ export const restauranteConfig: IndustryConfig = {
   description: 'Gestión de platos, menús y servicios gastronómicos',
   icon: '🍽️',
   productTypes: ['plato', 'bebida', 'menu', 'postre'],
-  defaultModules: ['Dashboard', 'Inventory', 'Customers', 'Billing', 'Settings'],
+  defaultModules: ['dashboard', 'inventory', 'customers', 'billing', 'settings'],
   fields: [
     {
       key: 'tipo_cocina',

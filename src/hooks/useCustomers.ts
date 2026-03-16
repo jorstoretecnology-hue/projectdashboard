@@ -29,9 +29,10 @@ export function useCustomers(tenantId: string | null, searchTerm?: string) {
 
     let dbQuery = supabase
       .from('customers')
-      .select('*')
+      .select('id, first_name, last_name, name, email, phone, company_name, tax_id, address, notes, status, website, metadata, city, location_id, created_at')
       .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     if (searchTerm && searchTerm.length > 0) {
       dbQuery = dbQuery.or(
@@ -42,10 +43,26 @@ export function useCustomers(tenantId: string | null, searchTerm?: string) {
     const { data, error: fetchError } = await dbQuery;
 
     if (fetchError) {
-      logger.error('[useCustomers] Error fetching customers', fetchError.message);
+      logger.error('[useCustomers] Error fetching customers', { error: fetchError.message });
       setError(fetchError.message);
     } else {
-      setCustomers((data ?? []) as Customer[]);
+      // Convert snake_case DB fields to camelCase Customer interface
+      const customers = (data ?? []).map(item => ({
+        id: item.id,
+        firstName: item.first_name,
+        lastName: item.last_name,
+        email: item.email,
+        phone: item.phone,
+        companyName: item.company_name,
+        taxId: item.tax_id,
+        address: item.address,
+        notes: item.notes,
+        status: item.status,
+        website: item.website,
+        metadata: item.metadata,
+        createdAt: item.created_at,
+      }))
+      setCustomers(customers)
     }
 
     setIsLoading(false);

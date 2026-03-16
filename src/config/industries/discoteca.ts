@@ -6,7 +6,7 @@ export const discotecaConfig: IndustryConfig = {
   description: 'Eventos nocturnos, bebidas y entretenimiento',
   icon: '🕺',
   productTypes: ['entrada', 'bebida', 'evento_privado', 'reservacion'],
-  defaultModules: ['Dashboard', 'Inventory', 'Customers', 'Billing', 'Settings'],
+  defaultModules: ['dashboard', 'inventory', 'customers', 'billing', 'settings'],
   fields: [
     {
       key: 'tipo_evento',

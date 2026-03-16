@@ -21,6 +21,14 @@ export async function POST(
 
     if (fetchError || !sale) return apiError("Orden no encontrada", "NOT_FOUND", 404)
 
+    if (!['REPARADO', 'PAGADO', 'ENTREGADO'].includes(sale.state)) {
+      return apiError("La orden no está lista para entrega", "INVALID_STATE", 422)
+    }
+
+    if (typeof signature === 'string' && signature.length > 500_000) {
+      return apiError("Firma demasiado grande", "PAYLOAD_TOO_LARGE", 413)
+    }
+
     // 2. Procesar la firma (base64 a Buffer)
     const base64Data = signature.replace(/^data:image\/\w+;base64,/, "")
     const buffer = Buffer.from(base64Data, 'base64')
@@ -40,13 +48,22 @@ export async function POST(
       return apiError("Error al guardar la firma", "STORAGE_ERROR", 500)
     }
 
-    // 4. Obtener URL pública
-    const { data: { publicUrl } } = supabase.storage.from('signatures').getPublicUrl(fileName)
+    // 4. Obtener URL firmada (24 horas)
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from('signatures')
+      .createSignedUrl(fileName, 86400) // 24 horas
+
+    if (signedError) {
+      console.error("Signed URL error:", signedError)
+      return apiError("Error generando URL de firma", "STORAGE_ERROR", 500)
+    }
+
+    const signatureUrl = signedData.signedUrl
 
     // 5. Actualizar la venta
     const updatedMetadata = {
       ...(sale.metadata || {}),
-      delivery_signature_url: publicUrl,
+      delivery_signature_url: signatureUrl,
       delivery_document: document,
       delivered_at: delivered_at
     }
@@ -62,7 +79,7 @@ export async function POST(
 
     if (updateError) return apiError("Error al actualizar la orden", "DB_ERROR", 500)
 
-    return apiSuccess({ success: true, url: publicUrl })
+    return apiSuccess({ success: true, url: signatureUrl })
 
   } catch (error: any) {
     return apiError(error.message, "INTERNAL_ERROR", 500)

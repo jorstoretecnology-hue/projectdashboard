@@ -3,7 +3,7 @@ import { withAuth, AuthenticatedContext } from '@/lib/auth/api-wrapper';
 import { apiSuccess, apiError } from '@/lib/api/response';
 import { validateBody } from '@/lib/api/validation';
 import { receivePurchaseSchema } from '@/lib/api/schemas/purchases';
-import { PurchasesService } from '@/modules/purchases/purchases.service';
+import { PurchasesService } from '@/modules/purchases/services/purchases.service';
 
 /**
  * POST /api/v1/purchases/:id/receive

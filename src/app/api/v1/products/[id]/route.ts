@@ -3,7 +3,7 @@ import { withAuth, AuthenticatedContext } from '@/lib/auth/api-wrapper';
 import { apiSuccess, apiError } from '@/lib/api/response';
 import { validateBody, validateQuery } from '@/lib/api/validation';
 import { updateProductSchema } from '@/lib/api/schemas/products';
-import { ProductsService } from '@/modules/products/products.service';
+import { ProductsService } from '@/modules/products/services/products.service';
 
 /**
  * GET /api/v1/products/:id

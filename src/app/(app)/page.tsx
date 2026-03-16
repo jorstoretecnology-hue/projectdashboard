@@ -118,7 +118,7 @@ export default function DashboardPage() {
   useEffect(() => {
     setMountedPage(true);
     if (!isLoading && isSuperAdmin) {
-      router.push('/superadmin');
+      router.push('/console');
     }
   }, [isLoading, isSuperAdmin, router]);
 

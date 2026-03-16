@@ -6,7 +6,7 @@ import {
   createPurchaseOrderSchema, // Renamed in schemas/purchases.ts? Verify
   purchaseQuerySchema 
 } from '@/lib/api/schemas/purchases';
-import { PurchasesService } from '@/modules/purchases/purchases.service';
+import { PurchasesService } from '@/modules/purchases/services/purchases.service';
 
 /**
  * GET /api/v1/purchases

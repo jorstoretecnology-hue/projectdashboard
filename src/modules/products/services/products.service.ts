@@ -8,6 +8,8 @@ export class ProductsService {
     private tenantId: string
   ) {}
 
+  private readonly PRODUCT_FIELDS = 'id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, state, category_id, created_at, updated_at';
+
   /**
    * Listar productos con filtros y paginación
    */
@@ -18,7 +20,7 @@ export class ProductsService {
 
     let q = this.supabase
       .from('products')
-      .select('*', { count: 'exact' })
+      .select(this.PRODUCT_FIELDS, { count: 'exact' })
       .eq('tenant_id', this.tenantId);
 
     // Filtros dinámicos
@@ -59,7 +61,7 @@ export class ProductsService {
   async getProductById(id: string) {
     const { data, error } = await this.supabase
       .from('products')
-      .select('*')
+      .select(this.PRODUCT_FIELDS)
       .eq('id', id)
       .eq('tenant_id', this.tenantId)
       .single();

@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { customerSchema, type CustomerFormValues } from "@/modules/customers/types"
+import { createCustomerSchema, type CustomerFormValues } from "@/modules/customers/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -41,22 +41,22 @@ export function CustomerForm({
 
   // Construir esquema de validación dinámico combinando el base con los metadatos de la industria
   const dynamicSchema = useMemo(() => {
-    if (customerFields.length === 0) return customerSchema;
+    if (customerFields.length === 0) return createCustomerSchema;
 
     const metadataShape: Record<string, z.ZodTypeAny> = {};
     customerFields.forEach(field => {
       // Usar la validación definida en la config o z.any() por defecto
       let fieldSchema = field.validation || z.any();
-      
+
       // Si el campo no es requerido, hacerlo opcional en el esquema
       if (!field.required) {
         fieldSchema = fieldSchema.optional().or(z.literal(''));
       }
-      
+
       metadataShape[field.key] = fieldSchema;
     });
 
-    return customerSchema.extend({
+    return createCustomerSchema.extend({
       metadata: z.object(metadataShape).optional().default({}),
     });
   }, [customerFields]);

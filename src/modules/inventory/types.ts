@@ -30,7 +30,7 @@ export interface InventoryItem {
   price: number
   stock: number
   sku?: string
-  image?: string
+  images: string[] // ✨ Cambio de image?: string a images: string[]
   metadata?: Record<string, any> // ✨ Campos específicos de la industria
   createdAt?: string
 }

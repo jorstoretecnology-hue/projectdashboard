@@ -90,7 +90,7 @@ export const TenantSelector = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <a
-                href="/superadmin"
+                href="/console"
                 className="flex items-center gap-2 text-primary cursor-pointer"
               >
                 <Crown size={16} />

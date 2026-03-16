@@ -3,7 +3,7 @@ import { withAuth, AuthenticatedContext } from '@/lib/auth/api-wrapper';
 import { apiSuccess } from '@/lib/api/response';
 import { validateBody, validateQuery } from '@/lib/api/validation';
 import { createVehicleSchema, vehicleQuerySchema } from '@/lib/api/schemas/services';
-import { ServicesService } from '@/modules/services/services.service';
+import { ServicesService } from '@/modules/services/services/services.service';
 
 /**
  * GET /api/v1/services/vehicles

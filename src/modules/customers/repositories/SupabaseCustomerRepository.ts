@@ -18,9 +18,11 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
+    const CUSTOMER_FIELDS = 'id, first_name, last_name, name, email, phone, company_name, tax_id, address, notes, status, website, metadata, city, location_id, created_at, updated_at';
+
     let q = this.supabase
       .from('customers')
-      .select('*', { count: 'exact' })
+      .select(CUSTOMER_FIELDS, { count: 'exact' })
       .eq('tenant_id', tenantId);
 
     // Búsqueda "Fuzzy" en múltiples campos
@@ -58,9 +60,11 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
   }
 
   async findById(id: string, tenantId: string): Promise<Customer | null> {
+    const CUSTOMER_FIELDS = 'id, first_name, last_name, name, email, phone, company_name, tax_id, address, notes, status, website, metadata, city, location_id, created_at';
+
     const { data, error } = await this.supabase
       .from('customers')
-      .select('*')
+      .select(CUSTOMER_FIELDS)
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .single();
@@ -74,9 +78,11 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
   }
 
   async findByEmail(email: string, tenantId: string): Promise<Customer | null> {
+    const CUSTOMER_FIELDS = 'id, first_name, last_name, name, email, phone, company_name, tax_id, address, notes, status, website, metadata, city, location_id, created_at';
+
     const { data, error } = await this.supabase
       .from('customers')
-      .select('*')
+      .select(CUSTOMER_FIELDS)
       .eq('tenant_id', tenantId)
       .eq('email', email)
       .maybeSingle();

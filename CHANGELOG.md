@@ -6,6 +6,43 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 
+## [4.6.0] - 2026-03-15
+### 🛡️ Seguridad & Auditoría (Hardened)
+- **Eliminación de Endpoints Críticos**: Removido `/api/debug-role` que exponía metadatos de usuario.
+- **Hardening de Passwords**: Eliminadas contraseñas hardcodeadas; implementado `crypto.randomBytes` para generación segura.
+- **Protección de Archivos**: Configurado bucket `signatures` como privado con Signed URLs (24h).
+- **Rate Limiting**: Implementado con Upstash (60 req/min) con fallback resiliente.
+- **Limpieza de Repo**: Eliminados 21 archivos de debug y scripts SQL de la raíz.
+- **Ofuscación**: Ruta de administración movida de `/superadmin` a `/console`.
+
+### 🏗️ Arquitectura & Backend
+- **Middleware Proxy**: Renombrado `middleware.ts` a `proxy.ts` para compatibilidad con Next.js 16.
+- **RLS Robustecido**: Agregadas políticas de seguridad faltantes en `user_locations`.
+- **Integridad de Datos**: Aplicada restricción `UNIQUE(tenant_id, email)` en clientes.
+- **SuperAdmin CLI**: Nuevo script seguro `scripts/create-superadmin.js` con validación HMAC y auditoría.
+
+### 💰 Sistema de Pricing & Módulos
+- **Pricing Vertical**: Nueva tabla `industry_pricing` con precios dinámicos por industria (Base, Premium, Luxury).
+- **Activación Automática**: Función RPC `activate_modules_for_tenant` y trigger automático en sign-up.
+- **Llamadas RPC**: Nuevo `get_tenant_price` para cálculos precisos en el servidor.
+- **Librería de Precios**: Creada `src/lib/pricing.ts` para gestión centralizada de montos y descuentos.
+
+## [4.1.0] - 2026-03-14
+### 🔐 Auth Resilience & OTP Verification (Fase 10 - Parte 1)
+Esta actualización resuelve fallos críticos en el flujo de registro y recuperación de sesión, eliminando la dependencia de "magic links" y añadiendo una capa de auto-reparación de JWTs.
+
+### ✨ Características Añadidas
+- **Verificación OTP Humana**: Implementación de códigos de 6-8 dígitos en `/auth/verify`. Esto previene la expiración prematura de enlaces (`otp_expired`) causada por escáneres de email corporativos.
+- **Auto-Recovery de Sesión**: El `AuthContext` ahora detecta automáticamente JWTs corruptos o usuarios eliminados (403 Forbidden) y limpia las cookies locales sin intervención del usuario.
+- **Onboarding Atómico (RPC)**: Migración a una sola llamada RPC `initialize_new_organization` que asegura que el tenant, el perfil y las cuotas se creen en una sola transacción SQL.
+
+### 🔨 Refactorización & Fixes
+- **Fix de Hidratación**: Corregido desajuste de SSR/CSR en el Dashboard causado por los iconos de `lucide-react` y el estado del tema.
+- **Robustez de Redirección**: Corregida la captura de errores en `AuthContext.signOut` para que los redireccionamientos nativos de Next.js (`NEXT_REDIRECT`) no se marquen como fallos.
+- **Sidebar Adaptive**: El menú lateral ahora muestra módulos de forma segura incluso si el tenant no se ha cargado completamente, evitando estados de UI vacíos.
+
+---
+
 ## [4.0.0] - 2026-03-04
 ### 🛡️ Auditoría Técnica & Hardening de Arquitectura (Fases 1 y 2)
 Esta versión marca un salto crítico en la seguridad y robustez del sistema, eliminando vulnerabilidades de aislamiento y estandarizando la comunicación con Supabase.

@@ -41,9 +41,21 @@ export function AuthProvider({
     const supabaseClient = createClient()
 
     // Sincronizar sesión inicial de forma segura con getUser()
-    supabaseClient.auth.getUser().then(({ data: { user: initialUser }, error }) => {
+    supabaseClient.auth.getUser().then(async ({ data: { user: initialUser }, error }) => {
       if (error) {
         logger.warn('[AuthContext] Error getting user:', error)
+        // AUTO-RECOVERY: Si el JWT es inválido (usuario eliminado, token corrupto),
+        // limpiar cookies locales para evitar que el error persista.
+        // Esto elimina la necesidad de que el usuario limpie caché manualmente.
+        if (error.message?.includes('does not exist') || 
+            error.message?.includes('invalid') || 
+            error.status === 403) {
+          logger.log('[AuthContext] Auto-recovery: clearing stale session')
+          await supabaseClient.auth.signOut({ scope: 'local' })
+        }
+        setUser(null)
+        setSession(null)
+        setRole(null)
         setIsLoading(false)
         return
       }
@@ -77,7 +89,16 @@ export function AuthProvider({
       const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser()
       
       if (userError || !currentUser) {
-        if (userError) logger.warn('[AuthContext] Auth Change Error:', userError)
+        if (userError) {
+          logger.warn('[AuthContext] Auth Change Error:', userError)
+          // AUTO-RECOVERY: Limpiar sesión local si el JWT es inválido
+          if (userError.message?.includes('does not exist') || 
+              userError.message?.includes('invalid') || 
+              userError.status === 403) {
+            logger.log('[AuthContext] Auto-recovery: clearing stale session on auth change')
+            await supabaseClient.auth.signOut({ scope: 'local' })
+          }
+        }
         setUser(null)
         setSession(null)
         setRole(null)
@@ -118,7 +139,11 @@ export function AuthProvider({
   const signOut = async () => {
     try {
       await logoutAction()
-    } catch (error) {
+    } catch (error: any) {
+      // NEXT_REDIRECT is the expected behavior of Server Actions calling redirect()
+      if (error?.digest?.includes('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
+        return
+      }
       logger.warn('Logout action failed, forcing client logout', error)
       await supabase.auth.signOut()
       window.location.href = '/auth/login'

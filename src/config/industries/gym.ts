@@ -6,7 +6,7 @@ export const gymConfig: IndustryConfig = {
   description: 'Membresías, clases y servicios fitness',
   icon: '💪',
   productTypes: ['membresia', 'clase', 'suplemento', 'equipamiento'],
-  defaultModules: ['Dashboard', 'Customers', 'Billing', 'Settings'],
+  defaultModules: ['dashboard', 'customers', 'billing', 'settings'],
   fields: [
     {
       key: 'tipo_servicio_gym',

@@ -6,7 +6,7 @@ export const ferreteriaConfig: IndustryConfig = {
   description: 'Herramientas, materiales de construcción y ferretería',
   icon: '🔨',
   productTypes: ['herramienta', 'material', 'electricidad', 'plomeria', 'pintura'],
-  defaultModules: ['Dashboard', 'Inventory', 'Customers', 'Billing', 'Settings'],
+  defaultModules: ['dashboard', 'inventory', 'customers', 'billing', 'settings'],
   fields: [
     {
       key: 'tipo_ferreteria',

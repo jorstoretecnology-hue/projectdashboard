@@ -1,7 +1,10 @@
+'use server'
+
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 const onboardingSchema = z.object({
   name: z.string().min(2, "El nombre de la organización es demasiado corto"),
@@ -16,17 +19,17 @@ export async function createTenantAction(rawName: string, rawPlan: string = 'fre
   const supabase = await createClient()
 
   // 1. Validar Inputs
-  const { name, plan, industry } = onboardingSchema.parse({ 
-    name: rawName, 
-    plan: rawPlan, 
-    industry: rawIndustry 
+  const { name, plan, industry } = onboardingSchema.parse({
+    name: rawName,
+    plan: rawPlan,
+    industry: rawIndustry
   })
 
   // 1. Obtener el usuario actual
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) throw new Error('No autorizado: Debes iniciar sesión primero.')
-  
-  console.log(`[Onboarding] Starting Atomic RPC initialization for: ${name} (Industry: ${industry}) User: ${user.email}`)
+
+  logger.log(`[Onboarding] Starting Atomic RPC initialization`, { name, industry, email: user.email })
 
   // 2. Obtener módulos default por industria
   const { getIndustryConfig } = await import('@/config/industries')
@@ -45,18 +48,30 @@ export async function createTenantAction(rawName: string, rawPlan: string = 'fre
   })
 
   if (rpcError) {
-    console.error("[Onboarding] RPC Initialization Failure:", rpcError)
+    logger.error("[Onboarding] RPC Initialization Failure", { error: rpcError })
     throw new Error(`Fallo técnico al inicializar organización: ${rpcError.message}.`)
   }
 
-  console.log(`[Onboarding] Success! Organization created: ${tenantId}`)
+  logger.log(`[Onboarding] Success! Organization created`, { tenantId })
 
-  // 4. Enviar correo de bienvenida (Async)
+  // 4. Activar módulos según plan e industria (usando RPC)
+  const { error: modulesError } = await supabase
+    .rpc('activate_modules_for_tenant', {
+      p_tenant_id: tenantId,
+      p_plan_slug: plan
+    })
+
+  if (modulesError) {
+    logger.error('[Onboarding] Error activando módulos', { error: modulesError })
+    // No bloquear el flujo — el trigger ya lo maneja como fallback
+  }
+
+  // 5. Enviar correo de bienvenida (Async)
   const { emailService } = await import('@/modules/notifications/email.service')
   if (user?.email) {
       // Intentamos enviar email pero no bloqueamos si falla
       emailService.sendWelcomeEmail(user.email, user.user_metadata?.full_name || name)
-        .catch(e => console.warn("[Onboarding] Welcome email failed:", e))
+        .catch(e => logger.warn("[Onboarding] Welcome email failed", { error: e }))
   }
 
   // 5. Revalidación y redirección

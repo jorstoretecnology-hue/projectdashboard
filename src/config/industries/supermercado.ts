@@ -6,7 +6,7 @@ export const supermercadoConfig: IndustryConfig = {
   description: 'Gestión de productos de consumo masivo',
   icon: '🛒',
   productTypes: ['alimento', 'bebida', 'limpieza', 'higiene', 'electronico'],
-  defaultModules: ['Dashboard', 'Inventory', 'Customers', 'Billing', 'Settings'],
+  defaultModules: ['dashboard', 'inventory', 'customers', 'billing', 'settings'],
   fields: [
     {
       key: 'categoria_supermercado',
