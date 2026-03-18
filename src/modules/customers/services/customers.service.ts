@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js"
 import { Database } from "@/lib/supabase/database.types"
-import { Customer, CustomerFormValues, toDbCustomer, fromDbCustomer } from "../types"
+import { Customer, CustomerFormValues } from "../types"
 import { quotaEngine } from "@/core/quotas/engine"
 import { auditLogService } from "@/core/security/audit.service"
 import { logger } from "@/lib/logger"
@@ -17,9 +17,10 @@ export class EnhancedCustomersService {
     const from = (page - 1) * limit
     const to = from + limit - 1
 
+    // city y metadata no existen en la tabla customers - usar solo campos existentes
     const { data, count, error } = await this.supabaseClient
       .from("customers")
-      .select("id, first_name, last_name, name, email, phone, company_name, tax_id, address, notes, status, website, metadata, city, location_id, created_at, updated_at", { count: "exact" })
+      .select("id, first_name, last_name, name, email, phone, company_name, tax_id, address, notes, status, website, location_id, created_at, updated_at", { count: "exact" })
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .range(from, to)
@@ -29,8 +30,30 @@ export class EnhancedCustomersService {
       throw new Error(`Error al listar clientes: ${error.message}`)
     }
 
+    // Convertir de snake_case (DB) a camelCase (domain) con valores default
+    const customers = (data || []).map(dbItem => ({
+      id: dbItem.id,
+      firstName: dbItem.first_name ?? '',
+      lastName: dbItem.last_name ?? '',
+      email: dbItem.email,
+      phone: dbItem.phone ?? '',
+      companyName: dbItem.company_name ?? '',
+      taxId: dbItem.tax_id ?? '',
+      identificationType: (dbItem as any).identification_type ?? 'CC',
+      identificationNumber: (dbItem as any).identification_number ?? '',
+      address: dbItem.address ?? '',
+      city: dbItem.address ?? '', // Usar address como city fallback
+      locationId: dbItem.location_id ?? undefined, // null -> undefined
+      status: (dbItem.status as 'active' | 'inactive' | 'lead') ?? 'active',
+      notes: dbItem.notes ?? '',
+      website: dbItem.website ?? '',
+      metadata: {}, // metadata no existe en DB, usar default
+      createdAt: dbItem.created_at ?? undefined,
+      updatedAt: dbItem.updated_at ?? undefined,
+    }))
+
     return {
-      data: (data || []).map(this.mapToDomain),
+      data: customers,
       total: count || 0
     }
   }
@@ -39,15 +62,27 @@ export class EnhancedCustomersService {
     await quotaEngine.assertCanConsume(tenantId, "maxCustomers")
 
     // Convertir de camelCase (frontend) a snake_case (database)
-    const dbData = toDbCustomer(data);
+    const dbData: any = {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      company_name: data.companyName,
+      tax_id: data.taxId,
+      identification_type: data.identificationType,
+      identification_number: data.identificationNumber,
+      address: data.address,
+      city: data.city,
+      location_id: data.locationId,
+      status: data.status,
+      notes: data.notes,
+      website: data.website,
+      tenant_id: tenantId,
+    };
 
     const { data: newCustomer, error } = await this.supabaseClient
       .from("customers")
-      .insert({
-        ...dbData,
-        name: `${data.firstName || ""} ${data.lastName || ""}`.trim() || null,
-        tenant_id: tenantId,
-      })
+      .insert(dbData)
       .select()
       .single()
 
@@ -66,31 +101,47 @@ export class EnhancedCustomersService {
       )
     ])
 
-    return this.mapToDomain(newCustomer)
+    // Convertir a domain con valores default
+    return {
+      ...data,
+      id: newCustomer.id,
+      identificationType: (newCustomer as any).identification_type ?? 'CC',
+      identificationNumber: (newCustomer as any).identification_number ?? '',
+      city: (newCustomer as any).city ?? newCustomer.address ?? '',
+      metadata: {}, // metadata no existe en DB
+      createdAt: newCustomer.created_at ?? undefined,
+      updatedAt: newCustomer.updated_at ?? undefined,
+    };
   }
 
   async update(id: string, data: Partial<CustomerFormValues>, tenantId: string): Promise<Customer> {
+    // Convertir de camelCase (frontend) a snake_case (database)
+    const dbData: any = {};
+    if (data.firstName !== undefined) dbData.first_name = data.firstName;
+    if (data.lastName !== undefined) dbData.last_name = data.lastName;
+    if (data.email !== undefined) dbData.email = data.email;
+    if (data.phone !== undefined) dbData.phone = data.phone;
+    if (data.companyName !== undefined) dbData.company_name = data.companyName;
+    if (data.taxId !== undefined) dbData.tax_id = data.taxId;
+    if (data.identificationType !== undefined) dbData.identification_type = data.identificationType;
+    if (data.identificationNumber !== undefined) dbData.identification_number = data.identificationNumber;
+    if (data.address !== undefined) dbData.address = data.address;
+    if (data.city !== undefined) dbData.city = data.city;
+    if (data.locationId !== undefined) dbData.location_id = data.locationId;
+    if (data.status !== undefined) dbData.status = data.status;
+    if (data.notes !== undefined) dbData.notes = data.notes;
+    if (data.website !== undefined) dbData.website = data.website;
+
     const { data: updatedCustomer, error } = await this.supabaseClient
       .from("customers")
-      .update({
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email: data.email,
-        phone: data.phone,
-        company_name: data.companyName,
-        tax_id: data.taxId,
-        address: data.address,
-        notes: data.notes,
-        status: data.status,
-        website: data.website,
-      })
+      .update(dbData)
       .eq("id", id)
       .eq("tenant_id", tenantId)
       .select()
       .single()
 
     if (error) {
-      console.error("[CustomersService] Update Error:", error)
+      logger.error("[CustomersService] Update Error", { error })
       throw new Error("No se pudo actualizar el cliente.")
     }
 
@@ -101,7 +152,28 @@ export class EnhancedCustomersService {
       data
     )
 
-    return this.mapToDomain(updatedCustomer)
+    // Convertir a domain con valores default
+    return {
+      ...data,
+      id: updatedCustomer.id,
+      firstName: updatedCustomer.first_name ?? data.firstName ?? '',
+      lastName: updatedCustomer.last_name ?? data.lastName ?? '',
+      email: updatedCustomer.email,
+      phone: updatedCustomer.phone ?? '',
+      companyName: updatedCustomer.company_name ?? '',
+      taxId: updatedCustomer.tax_id ?? '',
+      identificationType: (updatedCustomer as any).identification_type ?? 'CC',
+      identificationNumber: (updatedCustomer as any).identification_number ?? '',
+      address: updatedCustomer.address ?? '',
+      city: (updatedCustomer as any).city ?? updatedCustomer.address ?? '',
+      locationId: updatedCustomer.location_id,
+      status: updatedCustomer.status ?? 'active',
+      notes: updatedCustomer.notes ?? '',
+      website: updatedCustomer.website ?? '',
+      metadata: {}, // metadata no existe en DB
+      createdAt: updatedCustomer.created_at ?? undefined,
+      updatedAt: updatedCustomer.updated_at ?? undefined,
+    } as Customer;
   }
 
   async delete(id: string, tenantId: string): Promise<void> {
@@ -112,8 +184,8 @@ export class EnhancedCustomersService {
       .eq("tenant_id", tenantId)
 
     if (error) {
-      console.error("[CustomersService] Delete Error:", error)
-      throw new Error("No se pudo eliminar el cliente.")
+      logger.error("[CustomersService] Error", { error })
+      throw new Error("Error en operación de cliente.")
     }
 
     await Promise.all([
@@ -133,7 +205,7 @@ export class EnhancedCustomersService {
     })
 
     if (error) {
-      console.error("[CustomersService] Restore Error:", error)
+      logger.error("[CustomersService] Restore Error:", error)
       throw new Error("No se pudo restaurar el cliente.")
     }
 
@@ -147,10 +219,11 @@ export class EnhancedCustomersService {
   async getCustomerById(id: string) {
     const tenantId = this.tenantIdOverride;
     if (!tenantId) throw new Error("Tenant ID required for getCustomerById");
-    
+
+    // city y metadata no existen en la tabla customers
     const { data, error } = await this.supabaseClient
       .from("customers")
-      .select("*")
+      .select("id, first_name, last_name, name, email, phone, company_name, tax_id, address, notes, status, website, location_id, created_at")
       .eq("id", id)
       .eq("tenant_id", tenantId)
       .single();
@@ -160,16 +233,36 @@ export class EnhancedCustomersService {
       throw error;
     }
 
-    return this.mapToDomain(data);
+    // Convertir a domain con valores default
+    const dbItem = data as any;
+    return {
+      id: dbItem.id,
+      firstName: dbItem.first_name ?? '',
+      lastName: dbItem.last_name ?? '',
+      email: dbItem.email,
+      phone: dbItem.phone ?? '',
+      companyName: dbItem.company_name ?? '',
+      taxId: dbItem.tax_id ?? '',
+      identificationType: dbItem.identification_type ?? 'CC',
+      identificationNumber: dbItem.identification_number ?? '',
+      address: dbItem.address ?? '',
+      city: dbItem.address ?? '', // Usar address como city fallback
+      locationId: dbItem.location_id,
+      status: dbItem.status ?? 'active',
+      notes: dbItem.notes ?? '',
+      website: dbItem.website ?? '',
+      metadata: {}, // metadata no existe en DB
+      createdAt: dbItem.created_at ?? undefined,
+    };
   }
 
-  async createCustomer(data: any) {
+  async createCustomer(data: CustomerFormValues) {
     const tenantId = this.tenantIdOverride;
     if (!tenantId) throw new Error("Tenant ID required for createCustomer");
     return this.create(data, tenantId);
   }
 
-  async updateCustomer(id: string, data: any) {
+  async updateCustomer(id: string, data: Partial<CustomerFormValues>) {
     const tenantId = this.tenantIdOverride;
     if (!tenantId) throw new Error("Tenant ID required for updateCustomer");
     return this.update(id, data, tenantId);
@@ -180,16 +273,11 @@ export class EnhancedCustomersService {
     if (!tenantId) throw new Error("Tenant ID required for deleteCustomer");
     return this.delete(id, tenantId);
   }
-
-  private mapToDomain(dbItem: DBCustomer): Customer {
-    return fromDbCustomer(dbItem);
-  }
 }
 
 // Exportamos la clase para inyección de dependencias
 // En Server Actions se debe instanciar con el cliente de servidor.
 
 // Singleton para uso en client-side – el tenantId se pasa por método
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { createClient } = require('@/lib/supabase/client')
+import { createClient } from '@/lib/supabase/client'
 export const customersService = new EnhancedCustomersService(createClient())

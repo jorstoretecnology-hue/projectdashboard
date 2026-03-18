@@ -8,6 +8,7 @@ import { Loader2, Kanban, Utensils, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { logger } from "@/lib/logger"
 
 interface KDSBoardProps {
   tenantId: string
@@ -36,7 +37,7 @@ export function KDSBoard({ tenantId }: KDSBoardProps) {
 
     // Suscripción Realtime
     const channel = salesService.subscribeToKDS(tenantId, (payload) => {
-      console.log('Realtime change:', payload)
+      logger.log('[KDSBoard] Realtime change:', payload)
       loadOrders() // Refrescamos todo para mantener consistencia de joins
       
       if (payload.event === 'INSERT') {

@@ -46,21 +46,25 @@ export function useCustomers(tenantId: string | null, searchTerm?: string) {
       logger.error('[useCustomers] Error fetching customers', { error: fetchError.message });
       setError(fetchError.message);
     } else {
-      // Convert snake_case DB fields to camelCase Customer interface
+      // Convert snake_case DB fields to camelCase Customer interface con valores default
       const customers = (data ?? []).map(item => ({
         id: item.id,
-        firstName: item.first_name,
-        lastName: item.last_name,
+        firstName: item.first_name ?? '',
+        lastName: item.last_name ?? '',
         email: item.email,
-        phone: item.phone,
-        companyName: item.company_name,
-        taxId: item.tax_id,
-        address: item.address,
-        notes: item.notes,
-        status: item.status,
-        website: item.website,
-        metadata: item.metadata,
-        createdAt: item.created_at,
+        phone: item.phone ?? '',
+        companyName: item.company_name ?? '',
+        taxId: item.tax_id ?? '',
+        identificationType: (item as any).identification_type ?? 'CC',
+        identificationNumber: (item as any).identification_number ?? '',
+        address: item.address ?? '',
+        city: item.address ?? '', // Usar address como city fallback
+        locationId: item.location_id,
+        status: item.status ?? 'active',
+        notes: item.notes ?? '',
+        website: item.website ?? '',
+        metadata: {}, // metadata no existe en DB
+        createdAt: item.created_at ?? undefined,
       }))
       setCustomers(customers)
     }

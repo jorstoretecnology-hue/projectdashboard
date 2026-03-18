@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "sonner"
+import { logger } from "@/lib/logger"
 
 import {
   Dialog,
@@ -65,7 +66,7 @@ export function TenantCreateDialog({ open, onOpenChange }: TenantCreateDialogPro
 
   const onSubmit = async (data: TenantFormValues) => {
     setIsSubmitting(true)
-    console.log("[TenantCreateDialog] Submitting new tenant:", data)
+    logger.log("[TenantCreateDialog] Submitting new tenant:", data)
     try {
       const result = await createTenant({
         name: data.name,
@@ -76,7 +77,7 @@ export function TenantCreateDialog({ open, onOpenChange }: TenantCreateDialogPro
         maxUsers: data.plan === 'enterprise' ? 999 : (data.plan === 'professional' ? 50 : 10),
       })
 
-      console.log("[TenantCreateDialog] Success! Created:", result)
+      logger.log("[TenantCreateDialog] Success! Created:", result)
 
       toast.success("Cliente Creado", {
         description: `${data.name} ha sido registrado exitosamente en Supabase.`
@@ -85,7 +86,7 @@ export function TenantCreateDialog({ open, onOpenChange }: TenantCreateDialogPro
       onOpenChange(false)
       form.reset()
     } catch (error: any) {
-      console.error("[TenantCreateDialog] Submission failed:", error)
+      logger.error("[TenantCreateDialog] Submission failed:", error)
       toast.error("Error al crear cliente", {
         description: error.message || "Verifica los permisos de red o base de datos."
       })

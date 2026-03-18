@@ -10,6 +10,7 @@ Estás trabajando en **projectdashboard**, un SaaS multi-tenant construido con:
 El proyecto ya tiene:
 - Tablas: `tenants`, `profiles`, `customers`, `products`, `sales`, `sale_items`, `services`, `vehicles`, `inventory_items`, `purchase_orders`, `audit_logs`, `tenant_quotas`, `webhook_subscriptions`
 - RLS activo con `get_current_user_tenant_id()`
+- **Seguridad**: Cumplimiento de [**Prompt Maestro**](file:///e:/ProyectDashboard/docs/PROMPT_MAESTRO_COORDINACION.md) y [**Security Quick Reference**](file:///e:/ProyectDashboard/docs/SECURITY_QUICK_REFERENCE.md).
 - Sistema de roles: `SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER`
 - Archivos clave: `src/middleware.ts`, `src/core/modules/module-registry.ts`, `src/providers/ModuleContext.tsx`, `src/providers/TenantContext.tsx`
 

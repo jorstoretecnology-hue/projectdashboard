@@ -32,6 +32,7 @@ Este es el **único punto de verdad** que cualquier IA de Antigravity debe leer 
 | Documento | Propósito | Cuándo leer |
 |-----------|-----------|-------------|
 | `./docs/SECURITY_CHECKLIST.md` | Seguridad y RLS | Al tocar auth/permisos |
+| `./docs/SECURITY_PIPELINE_README.md` | Auditoría CI/CD con JSON | Al ejecutar validaciones |
 | `./docs/DATABASE_SCHEMA.md` | Esquema de DB | Al escribir queries |
 | `./docs/API_SPECIFICATION.md` | Endpoints API | Al crear/consumir APIs |
 | `./docs/BUSINESS_FLOWS.md` | Flujos de negocio | Al implementar lógica |
@@ -186,7 +187,7 @@ async function createCustomerAction(data: any) {
 // ✅ CORRECTO: Cliente inyectado
 class CustomerService {
   constructor(private supabase: SupabaseClient) {}
-  
+
   async list() {
     return this.supabase.from('customers').select('id, name')
   }
@@ -198,6 +199,17 @@ class CustomerService {
     const supabase = createClient() // ← No hacer en servicios
   }
 }
+```
+
+### 6. Security Pipeline con Validación JSON
+```bash
+# ✅ CORRECTO: Ejecutar auditoría antes de deploy
+npm run security:audit    # Genera reporte MD + JSON
+npm run security:validate # Valida umbrales críticos
+
+# ❌ PROHIBIDO: Deploy sin validación
+# - El pipeline falla si hay: type errors, console.log, select(*), 
+#   vulnerabilidades críticas/altas, tests fallidos, missing RLS
 ```
 
 ---

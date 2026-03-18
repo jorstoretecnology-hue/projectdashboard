@@ -1,6 +1,4 @@
-# 🤖 PROTOCOLO DE COORDINACIÓN MULTI-AGENTE (AI SYNC)
-
-Este documento define los roles y responsabilidades de los diferentes modelos de IA que colaboran en el proyecto **Antigravity SaaS**. Su objetivo es evitar redundancias, conflictos de código y asegurar que la arquitectura se mantenga coherente.
+Este documento define los roles y responsabilidades de los diferentes modelos de IA que colaboran en el proyecto **Antigravity SaaS**. Su objetivo es evitar redundancias, conflictos de código y asegurar que la arquitectura se mantenga coherente, siguiendo estrictamente el [**Prompt Maestro – Coordinación de Agentes**](file:///e:/ProyectDashboard/docs/PROMPT_MAESTRO_COORDINACION.md).
 
 ---
 
@@ -67,8 +65,20 @@ Este documento define los roles y responsabilidades de los diferentes modelos de
 - **Qwen**: ✅ Fix de redirección completado - Listo para Fase 11
 - **Claude**: Auditoría v4.6.0 completada, pendiente revisión de integración MercadoPago
 
+---
+
+## 🔒 Marcos de Seguridad y Cumplimiento (Obligatorio)
+
+Cualquier cambio en la arquitectura, base de datos o middleware **DEBE** alinearse con:
+1. [**Security Quick Reference**](file:///e:/ProyectDashboard/docs/SECURITY_QUICK_REFERENCE.md): Guía rápida para ejecución inmediata.
+2. [**Security Playbook – SaaS Multi-Tenant**](file:///e:/ProyectDashboard/docs/SECURITY_PLAYBOOK_SaaS.md): Marco integral (ISO 27001, NIST, OWASP, Xygeni).
+3. [**SECURITY_CHECKLIST.md**](file:///e:/ProyectDashboard/docs/SECURITY_CHECKLIST.md): Verificación técnica detallada.
+
+---
+
 > [!IMPORTANT]
 > Antes de que cualquier agente inicie una nueva tarea, **DEBE** leer:
-> 1. `PARA_CONTINUAR.md` (resumen rápido)
-> 2. `docs/SESSION_HANDOFF_MARZO_15.md` (detalle de lo hecho)
-> 3. `docs/CONTEXTO_DEL_PROYECTO.md` (contexto general)
+1. `PARA_CONTINUAR.md` (resumen rápido)
+2. `docs/SESSION_HANDOFF_MARZO_15.md` (detalle de lo hecho)
+3. `docs/CONTEXTO_DEL_PROYECTO.md` (contexto general)
+4. `docs/SECURITY_QUICK_REFERENCE.md` (referencia rápida de seguridad)

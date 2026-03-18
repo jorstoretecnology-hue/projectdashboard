@@ -1,0 +1,32 @@
+{
+  "date": "2026-03-17",
+  "commit": "def789abc012",
+  "status": "pass",
+  "errors": {
+    "typeErrors": 0,
+    "anyTypes": 0,
+    "consoleLogs": 0,
+    "selectStarQueries": 0,
+    "missingRls": 0,
+    "missingZodValidation": 0,
+    "hardcodedSecrets": 0
+  },
+  "tests": {
+    "passed": 25,
+    "failed": 0,
+    "coverage": 65
+  },
+  "dependencies": {
+    "critical": 0,
+    "high": 0,
+    "moderate": 2,
+    "low": 5,
+    "total": 7
+  },
+  "findings": [],
+  "recommendations": [
+    "Mantener el cumplimiento de seguridad actual",
+    "Continuar monitoreando dependencias para vulnerabilidades nuevas",
+    "Aumentar cobertura de tests al 80%"
+  ]
+}

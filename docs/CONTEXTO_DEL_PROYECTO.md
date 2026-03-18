@@ -223,6 +223,9 @@ Professional/Enterprise: todos los módulos compatibles
 | **MODULE_BLUEPRINT.md** | Al desarrollar features nuevas | `docs/` |
 | **DATABASE_SCHEMA.md** | Al escribir queries SQL | `docs/` |
 | **SECURITY_CHECKLIST.md** | Al tocar auth/permisos | `docs/` |
+| **PROMPT_MAESTRO_COORDINACION.md** | **OBLIGATORIO** - Protocolo de agentes | `docs/` |
+| **SECURITY_QUICK_REFERENCE.md** | **PRIMERO** - Referencia rápida de ejecución | `docs/` |
+| **SECURITY_PLAYBOOK_SaaS.md** | Marco integral de seguridad y cumplimiento | `docs/` |
 | **ARCHITECTURE_SUMMARY.md** | Como referencia completa | raíz |
 | **IMPLEMENTATION_STEPS.md** | Para ejecutar migraciones | raíz |
 

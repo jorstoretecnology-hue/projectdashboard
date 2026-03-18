@@ -28,7 +28,6 @@ export default async function PostAuthPage({ searchParams }: { searchParams: Pro
   }
 
   // 1. Obtener Metadatos del JWT / Perfil
-  const { createClient } = await import('@/lib/supabase/server')
   const supabase = await createClient()
 
   const { data: profile } = await supabase
@@ -70,9 +69,6 @@ export default async function PostAuthPage({ searchParams }: { searchParams: Pro
     }
 
     // Buscar invitación pendiente para este email
-    const { createClient } = await import('@/lib/supabase/server')
-    const supabase = await createClient()
-
     const { data: invitation } = await supabase
       .from('invitations')
       .select('id, tenant_id, app_role, email, status')

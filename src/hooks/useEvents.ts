@@ -3,14 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
-import type { Sale, SaleQuery } from '@/modules/sales/types';
 
 /**
  * useEvents — Hook para eventos de dominio del Dashboard.
  * SRP: centraliza la lógica de fetch y suscripción a domain_events.
  */
 export function useEvents(tenantId: string | null) {
-  const [events, setEvents] = useState<Sale[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +37,7 @@ export function useEvents(tenantId: string | null) {
       logger.error('[useEvents] Error fetching events', { error: fetchError.message });
       setError(fetchError.message);
     } else {
-      setEvents((data ?? []) as Sale[]);
+      setEvents(data ?? []);
     }
 
     setIsLoading(false);

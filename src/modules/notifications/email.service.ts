@@ -1,9 +1,10 @@
 import { resend } from '@/lib/resend';
+import { logger } from '@/lib/logger';
 
 export const emailService = {
   async sendWelcomeEmail(email: string, name: string) {
     if (!resend) {
-      console.warn("⚠️ Resend not configured. Skipping welcome email.");
+      logger.warn("[EmailService] Resend not configured. Skipping welcome email.");
       return;
     }
 
@@ -27,15 +28,15 @@ export const emailService = {
           </div>
         `
       });
-      console.log(`📧 Welcome email sent to ${email}`);
+      logger.log(`[EmailService] Welcome email sent to ${email}`);
     } catch (error) {
-      console.error("❌ Error sending welcome email:", error);
+      logger.error("[EmailService] Error sending welcome email:", error);
     }
   },
 
   async sendInvitationEmail(email: string, inviterName: string, tenantName: string, inviteLink: string) {
     if (!resend) {
-      console.warn("⚠️ Resend not configured. Skipping invitation email.");
+      logger.warn("[EmailService] Resend not configured. Skipping invitation email.");
       return;
     }
 
@@ -65,9 +66,9 @@ export const emailService = {
           </div>
         `
       });
-      console.log(`📧 Invitation email sent to ${email}`);
+      logger.log(`[EmailService] Invitation email sent to ${email}`);
     } catch (error) {
-      console.error("❌ Error sending invitation email:", error);
+      logger.error("[EmailService] Error sending invitation email:", error);
     }
   }
 };

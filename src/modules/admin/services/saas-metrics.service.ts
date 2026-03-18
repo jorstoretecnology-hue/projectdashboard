@@ -64,7 +64,7 @@ export class SaasMetricsService {
     
     // 1. Fetch de datos crudos en paralelo
     const [tenantsRes, quotasRes] = await Promise.all([
-      supabase.from("tenants").select("*"),
+      supabase.from("tenants").select("id, name, plan, industry_type, active_modules, branding, is_active, max_users, created_at, updated_at, custom_domain, feature_flags"),
       supabase.from("tenant_quotas").select("tenant_id, resource_key, current_usage, updated_at")
     ])
 
@@ -205,13 +205,13 @@ export class SaasMetricsService {
   // Deprecated support for direct DB calls if needed (not recommended)
   private async fetchRealTenants(): Promise<TenantConfig[]> {
      const supabase = await this.getSupabase()
-     const { data } = await supabase.from("tenants").select("*")
+     const { data } = await supabase.from("tenants").select("id, name, plan")
      return (data || []).map(t => ({ id: t.id, name: t.name, plan: t.plan } as any))
   }
 
   private async getQuotaData(): Promise<any[]> {
     const supabase = await this.getSupabase()
-    const { data } = await supabase.from("tenant_quotas").select("*")
+    const { data } = await supabase.from("tenant_quotas").select("id, tenant_id, resource_key, current_usage, limit_override, updated_at")
     return data || []
   }
 }

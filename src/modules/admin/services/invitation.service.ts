@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { AppRole } from '@/types';
 import { auditLogService } from '@/core/security/audit.service';
+import { logger } from '@/lib/logger';
 
 export interface Invitation {
   id: string;
@@ -43,7 +44,7 @@ class InvitationService {
       .single();
 
     if (error) {
-      console.error('[InvitationService] Error creating invitation:', error);
+      logger.error('[InvitationService] Error creating invitation:', error);
       throw new Error(`Error al crear invitación: ${error.message}`);
     }
 
@@ -65,14 +66,14 @@ class InvitationService {
   async getInvitationByToken(token: string) {
     const { data, error } = await this.supabase
       .from('invitations')
-      .select('*, tenants(name)')
+      .select('id, email, tenant_id, app_role, token, status, expires_at, created_at, tenants(name)')
       .eq('token', token)
       .eq('status', 'pending')
       .gt('expires_at', new Date().toISOString())
       .single();
 
     if (error) {
-      console.error('[InvitationService] Invalid or expired token:', error);
+      logger.error('[InvitationService] Invalid or expired token:', error);
       return null;
     }
 
@@ -97,7 +98,7 @@ class InvitationService {
   async listByTenant(tenantId: string) {
     const { data, error } = await this.supabase
       .from('invitations')
-      .select('*')
+      .select('id, email, app_role, status, expires_at, created_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
 

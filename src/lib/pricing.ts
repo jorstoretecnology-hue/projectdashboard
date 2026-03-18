@@ -41,7 +41,7 @@ export async function getIndustryPricing(industryType: string) {
   
   const { data, error } = await supabase
     .from('industry_pricing')
-    .select('*')
+    .select('industry_type, plan_slug, price_monthly, price_yearly, currency, features')
     .eq('industry_type', industryType)
     .order('plan_slug')
 

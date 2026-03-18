@@ -1,0 +1,122 @@
+{
+  "date": "2026-03-16",
+  "commit": "789xyz456",
+  "status": "fail",
+  "errors": {
+    "typeErrors": 5,
+    "anyTypes": 10,
+    "consoleLogs": 8,
+    "selectStarQueries": 2,
+    "missingRls": 3,
+    "missingZodValidation": 1,
+    "hardcodedSecrets": 0
+  },
+  "tests": {
+    "passed": 18,
+    "failed": 4,
+    "coverage": 55
+  },
+  "dependencies": {
+    "critical": 2,
+    "high": 5,
+    "moderate": 10,
+    "low": 15,
+    "total": 32
+  },
+  "findings": [
+    {
+      "type": "type",
+      "severity": "critical",
+      "file": "src/lib/api-client.ts",
+      "line": 23,
+      "description": "Error de tipo: Property 'data' does not exist on type 'Promise<any>'"
+    },
+    {
+      "type": "type",
+      "severity": "critical",
+      "file": "src/lib/api-client.ts",
+      "line": 45,
+      "description": "Error de tipo: Argument of type 'string' is not assignable to parameter of type 'number'"
+    },
+    {
+      "type": "type",
+      "severity": "critical",
+      "file": "src/app/dashboard/page.tsx",
+      "line": 67,
+      "description": "Error de tipo: Cannot find name 'useState'"
+    },
+    {
+      "type": "type",
+      "severity": "critical",
+      "file": "src/app/dashboard/page.tsx",
+      "line": 89,
+      "description": "Error de tipo: Object literal may only specify known properties"
+    },
+    {
+      "type": "type",
+      "severity": "critical",
+      "file": "src/components/Chart.tsx",
+      "line": 12,
+      "description": "Error de tipo: Module has no default export"
+    },
+    {
+      "type": "security",
+      "severity": "high",
+      "file": "src/lib/db.ts",
+      "line": 34,
+      "description": "Uso de tipo 'any' en 10 ubicaciones"
+    },
+    {
+      "type": "security",
+      "severity": "high",
+      "file": "src/app/api/",
+      "line": null,
+      "description": "console.log encontrado en 8 archivos"
+    },
+    {
+      "type": "security",
+      "severity": "critical",
+      "file": "src/lib/queries.ts",
+      "line": 56,
+      "description": "Query select(*) detectada en 2 ubicaciones"
+    },
+    {
+      "type": "security",
+      "severity": "critical",
+      "file": "src/lib/tenant-service.ts",
+      "line": 78,
+      "description": "Missing RLS en 3 queries multi-tenant"
+    },
+    {
+      "type": "dependency",
+      "severity": "critical",
+      "file": "package.json",
+      "line": null,
+      "description": "2 vulnerabilidades críticas: lodash@4.17.20, axios@0.21.0"
+    },
+    {
+      "type": "dependency",
+      "severity": "high",
+      "file": "package.json",
+      "line": null,
+      "description": "5 vulnerabilidades altas en dependencias"
+    },
+    {
+      "type": "test",
+      "severity": "critical",
+      "file": "src/tests/",
+      "line": null,
+      "description": "4 tests fallidos en suites de integración"
+    }
+  ],
+  "recommendations": [
+    "CRÍTICO: Fixear los 5 errores de tipo antes de cualquier deploy",
+    "CRÍTICO: Eliminar 2 queries select(*) y usar columnas explícitas",
+    "CRÍTICO: Agregar RLS en tenant-service.ts para aislamiento multi-tenant",
+    "CRÍTICO: Actualizar lodash y axios por vulnerabilidades críticas",
+    "ALTO: Eliminar todos los console.log (8 ocurrencias)",
+    "ALTO: Reemplazar tipos any con interfaces TypeScript (10 ocurrencias)",
+    "ALTO: Fixear 4 tests fallidos antes de deploy",
+    "MEDIO: Aumentar cobertura de tests del 55% al mínimo 70%"
+  ]
+}

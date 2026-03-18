@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { getRequiredTenantId, getUser } from '@/lib/supabase/auth'
 import { emailService } from '@/modules/notifications/email.service'
+import { logger } from '@/lib/logger'
 
 const inviteSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -51,7 +52,7 @@ export async function inviteMemberAction(rawEmail: string, rawRole: 'admin' | 's
   })
 
   if (inviteError) {
-    console.error('[InviteAction] Error:', inviteError)
+    logger.error('[InviteAction] Error:', inviteError)
     throw new Error('Error al crear la invitación en la base de datos.')
   }
 
@@ -76,7 +77,7 @@ export async function acceptInvitationAction(token: string) {
   // 2. Buscar invitación
   const { data: invitation, error: fetchError } = await supabase
     .from('invitations')
-    .select('*')
+    .select('id, email, tenant_id, app_role, status, expires_at')
     .eq('token', token)
     .eq('status', 'pending')
     .single()
@@ -123,7 +124,7 @@ export async function getTeamMembersAction() {
     
     const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, full_name, email, avatar_url, app_role, tenant_id')
         .eq('tenant_id', tenantId)
     
     if (error) throw error
@@ -136,13 +137,13 @@ export async function getTeamMembersAction() {
 export async function getPendingInvitationsAction() {
     const tenantId = await getRequiredTenantId()
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
         .from('invitations')
-        .select('*')
+        .select('id, email, app_role, status, created_at, expires_at')
         .eq('tenant_id', tenantId)
         .eq('status', 'pending')
-    
+
     if (error) throw error
     return data
 }

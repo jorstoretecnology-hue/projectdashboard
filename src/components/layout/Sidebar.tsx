@@ -64,7 +64,6 @@ export const Sidebar = () => {
         const isAllowedByRole = !requiredPermission || can(requiredPermission);
         
         // DEBUG
-        // console.log(`[Sidebar SuperAdmin] Module ${module.id}: Allowed=${isAllowedByRole}`);
         
         return isAllowedByRole;
       });

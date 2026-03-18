@@ -38,3 +38,181 @@ jobs:
 
     - name: Build
       run: npm run build
+
+    # 🚀 Auditoría de seguridad con Qwen CLI (salida dual: MD + JSON)
+    - name: Security Audit (Qwen CLI)
+      run: |
+        DATE=$(date +'%Y%m%d')
+        echo "🔐 Ejecutando auditoría de seguridad con Qwen CLI..."
+        
+        # Generar reporte markdown para humanos
+        qwen --prompt docs/SECURITY_AUDIT_PROMPT.md \
+             --output docs/SECURITY_PIPELINE_${DATE}.md
+        
+        # Qwen CLI debería generar también el JSON automáticamente
+        # Si no, usar un script post-procesamiento
+        echo "✅ Reporte generado: docs/SECURITY_PIPELINE_${DATE}.md"
+
+    # 🚨 Validación estructurada con JSON (gatekeeper de seguridad)
+    - name: Validate Security Report (JSON)
+      run: |
+        DATE=$(date +'%Y%m%d')
+        REPORT="docs/SECURITY_PIPELINE_${DATE}.json"
+        
+        # Verificar que el archivo JSON existe
+        if [ ! -f "$REPORT" ]; then
+          echo "⚠️ No se encontró el reporte JSON, intentando extraer de MD..."
+          # Fallback: intentar generar JSON desde MD (script opcional)
+          exit 1
+        fi
+        
+        echo "🔍 Validando reporte: $REPORT"
+        echo ""
+        
+        # Contadores de fallos
+        FAIL_COUNT=0
+        
+        # ===========================================
+        # ERRORES DE TIPO (CRÍTICO)
+        # ===========================================
+        TYPE_ERRORS=$(jq -r '.errors.typeErrors // 0' "$REPORT")
+        if [ "$TYPE_ERRORS" -gt 0 ]; then
+          echo "❌ Errores de tipo detectados: $TYPE_ERRORS"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
+        else
+          echo "✅ Sin errores de tipo"
+        fi
+        
+        # ===========================================
+        # ANY TYPES (prohibido por seguridad)
+        # ===========================================
+        ANY_TYPES=$(jq -r '.errors.anyTypes // 0' "$REPORT")
+        if [ "$ANY_TYPES" -gt 0 ]; then
+          echo "❌ Tipos 'any' detectados: $ANY_TYPES"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
+        else
+          echo "✅ Sin tipos 'any'"
+        fi
+        
+        # ===========================================
+        # CONSOLE.LOG (prohibido en producción)
+        # ===========================================
+        CONSOLE_LOGS=$(jq -r '.errors.consoleLogs // 0' "$REPORT")
+        if [ "$CONSOLE_LOGS" -gt 0 ]; then
+          echo "❌ console.log en producción: $CONSOLE_LOGS"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
+        else
+          echo "✅ Sin console.log"
+        fi
+        
+        # ===========================================
+        # SELECT(*) QUERIES (prohibido - usar columnas explícitas)
+        # ===========================================
+        SELECT_STAR=$(jq -r '.errors.selectStarQueries // 0' "$REPORT")
+        if [ "$SELECT_STAR" -gt 0 ]; then
+          echo "❌ Queries select(*) detectadas: $SELECT_STAR"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
+        else
+          echo "✅ Sin queries select(*)"
+        fi
+        
+        # ===========================================
+        # MISSING RLS (Row Level Security)
+        # ===========================================
+        MISSING_RLS=$(jq -r '.errors.missingRls // 0' "$REPORT")
+        if [ "$MISSING_RLS" -gt 0 ]; then
+          echo "❌ Queries sin RLS: $MISSING_RLS"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
+        else
+          echo "✅ Todas las queries tienen RLS"
+        fi
+        
+        # ===========================================
+        # VULNERABILIDADES CRÍTICAS
+        # ===========================================
+        VULN_CRITICAL=$(jq -r '.dependencies.critical // 0' "$REPORT")
+        if [ "$VULN_CRITICAL" -gt 0 ]; then
+          echo "❌ Vulnerabilidades críticas: $VULN_CRITICAL"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
+        else
+          echo "✅ Sin vulnerabilidades críticas"
+        fi
+        
+        # ===========================================
+        # VULNERABILIDADES ALTAS
+        # ===========================================
+        VULN_HIGH=$(jq -r '.dependencies.high // 0' "$REPORT")
+        if [ "$VULN_HIGH" -gt 0 ]; then
+          echo "❌ Vulnerabilidades altas: $VULN_HIGH"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
+        else
+          echo "✅ Sin vulnerabilidades altas"
+        fi
+        
+        # ===========================================
+        # TESTS FALLIDOS
+        # ===========================================
+        TESTS_FAILED=$(jq -r '.tests.failed // 0' "$REPORT")
+        if [ "$TESTS_FAILED" -gt 0 ]; then
+          echo "❌ Tests fallidos: $TESTS_FAILED"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
+        else
+          echo "✅ Todos los tests pasan"
+        fi
+        
+        # ===========================================
+        # RESUMEN FINAL
+        # ===========================================
+        echo ""
+        if [ "$FAIL_COUNT" -gt 0 ]; then
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "❌ AUDITORÍA DE SEGURIDAD RECHAZADA"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Se encontraron $FAIL_COUNT hallazgos críticos"
+          echo ""
+          echo "📊 Métricas completas:"
+          jq '.' "$REPORT"
+          echo ""
+          exit 1
+        else
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ AUDITORÍA DE SEGURIDAD APROBADA"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          # Mostrar resumen ejecutivo
+          jq '{
+            status: .status,
+            tests: .tests,
+            dependencies: {
+              total: .dependencies.total,
+              critical: .dependencies.critical,
+              high: .dependencies.high
+            }
+          }' "$REPORT"
+        fi
+
+    # 📊 Subir reportes como artefactos
+    - name: Upload Security Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          docs/SECURITY_PIPELINE_*.md
+          docs/SECURITY_PIPELINE_*.json
+        retention-days: 30
+
+    # 📈 Publicar resumen en canal de seguridad (opcional)
+    - name: Post to Security Channel
+      if: always()
+      run: |
+        DATE=$(date +'%Y%m%d')
+        REPORT="docs/SECURITY_PIPELINE_${DATE}.json"
+        
+        if [ -f "$REPORT" ]; then
+          STATUS=$(jq -r '.status' "$REPORT")
+          echo ""
+          echo "📢 Publicando resumen en #security-pipeline..."
+          echo "Estado: $STATUS"
+          echo "Fecha: $DATE"
+          # Aquí podrías integrar con Slack, Discord, Teams, etc.
+        fi

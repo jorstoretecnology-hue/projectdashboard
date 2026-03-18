@@ -2,6 +2,7 @@ import { createClient } from './server'
 import { cache } from 'react'
 import { Permission, hasPermission, FeatureFlag } from '@/config/permissions'
 import { auditLogService } from '@/core/security/audit.service'
+import { logger } from '@/lib/logger'
 import { headers } from 'next/headers'
 
 /**
@@ -27,7 +28,7 @@ export const getUser = cache(async () => {
     if (error) return null
     return user
   } catch (error) {
-    console.error('Error al obtener usuario:', error)
+    logger.error('Error al obtener usuario:', error)
     return null
   }
 })

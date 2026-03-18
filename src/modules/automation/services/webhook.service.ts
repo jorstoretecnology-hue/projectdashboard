@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js"
 import { Database } from "@/lib/supabase/database.types"
+import { logger } from "@/lib/logger"
 
 type WebhookSubscriptionRow = Database['public']['Tables']['webhook_subscriptions']['Row']
 type WebhookSubscriptionInsert = Database['public']['Tables']['webhook_subscriptions']['Insert']
@@ -25,13 +26,13 @@ export class WebhookService {
   async list(tenantId: string): Promise<WebhookSubscription[]> {
     const { data, error } = await this.supabaseClient
       .from("webhook_subscriptions" as any)
-      .select("*")
+      .select("id, tenant_id, url, event_type, secret, is_active, created_at, updated_at")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
 
     if (error) {
-      console.error("[WebhookService] List Error:", error)
-      throw new Error(`Error al listar webhooks: ${error.message}`)
+      logger.error("[WebhookService] Error:", error)
+      throw new Error(`Error en operación de webhook: ${error.message}`)
     }
 
     return ((data as unknown as WebhookSubscriptionRow[]) || []).map(this.mapToDomain)

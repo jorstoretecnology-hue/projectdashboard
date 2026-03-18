@@ -3,6 +3,7 @@ import { Database } from "@/lib/supabase/database.types"
 import { InventoryFormValues, InventoryItem } from "../types"
 import { quotaEngine } from "@/core/quotas/engine"
 import { auditLogService } from "@/core/security/audit.service"
+import { logger } from "@/lib/logger"
 
 type DBInventoryItem = Database['public']['Tables']['inventory_items']['Row']
 
@@ -36,8 +37,8 @@ export class InventoryService {
       .single()
 
     if (error) {
-      console.error("[InventoryService] Create Error:", error)
-      throw new Error(`No se pudo crear el ítem de inventario: ${error.message}`)
+      logger.error("[InventoryService] Error:", error)
+      throw new Error("Error en operación de inventario.")
     }
 
     await Promise.all([
@@ -137,7 +138,7 @@ export class InventoryService {
 
     const { data, count, error } = await this.supabase
       .from("inventory_items")
-      .select("*", { count: "exact" })
+      .select("id, name, description, type, price, stock, sku, tenant_id, metadata, created_at, updated_at, deleted_at, location_id", { count: "exact" })
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .range(from, to)

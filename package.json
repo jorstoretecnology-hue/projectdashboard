@@ -14,7 +14,9 @@
     "test:watch": "vitest",
     "prepare": "husky install",
     "check": "npm-run-all -p type-check lint test",
-    "create-superadmin": "node scripts/create-superadmin.js"
+    "create-superadmin": "node scripts/create-superadmin.js",
+    "security:audit": "qwen --prompt docs/SECURITY_AUDIT_PROMPT.md --output docs/SECURITY_PIPELINE_$(date +'%Y%m%d').md",
+    "security:validate": "node scripts/validate-security-report.js"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

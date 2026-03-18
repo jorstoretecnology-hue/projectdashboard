@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
 import type { PlanType } from '@/config/tenants';
 import { auditLogService } from '@/core/security/audit.service';
+import { logger } from '@/lib/logger';
 
 /**
  * Tenant Service
@@ -41,7 +42,7 @@ class TenantService {
       .single();
 
     if (error) {
-      console.error('[TenantService] Error creating tenant:', error);
+      logger.error('[TenantService] Error creating tenant:', error);
       throw new Error(`Failed to create tenant: ${error.message}`);
     }
 
@@ -63,7 +64,7 @@ class TenantService {
   async listAllTenants() {
     const { data, error } = await this.supabase
       .from('tenants')
-      .select('*')
+      .select('id, name, plan, industry_type, custom_domain, active_modules, branding, max_users, is_active, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -87,7 +88,7 @@ class TenantService {
       .eq('id', tenantId);
 
     if (error) {
-      console.error('[TenantService] Error updating plan:', error);
+      logger.error('[TenantService] Error updating plan:', error);
       throw new Error(`Failed to update tenant plan: ${error.message}`);
     }
 
@@ -108,7 +109,7 @@ class TenantService {
       .eq('id', tenantId);
 
     if (error) {
-       console.error('[TenantService] Error updating modules:', error);
+       logger.error('[TenantService] Error updating modules:', error);
        throw new Error(`Failed to update modules: ${error.message}`);
     }
 
@@ -129,12 +130,12 @@ class TenantService {
   async getTenantById(tenantId: string) {
     const { data, error } = await this.supabase
       .from('tenants')
-      .select('*')
+      .select('id, name, plan, industry_type, custom_domain, active_modules, branding, max_users, is_active, created_at, updated_at')
       .eq('id', tenantId)
       .single();
 
     if (error) {
-      console.error('[TenantService] Error fetching tenant:', error);
+      logger.error('[TenantService] Error fetching tenant:', error);
       throw new Error(`Failed to fetch tenant: ${error.message}`);
     }
 
