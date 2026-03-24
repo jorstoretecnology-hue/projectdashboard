@@ -139,9 +139,10 @@ export function AuthProvider({
   const signOut = async () => {
     try {
       await logoutAction()
-    } catch (error: any) {
+    } catch (error: unknown) {
       // NEXT_REDIRECT is the expected behavior of Server Actions calling redirect()
-      if (error?.digest?.includes('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
+      const err = error as { digest?: string; message?: string }
+      if (err?.digest?.includes('NEXT_REDIRECT') || err?.message?.includes('NEXT_REDIRECT')) {
         return
       }
       logger.warn('Logout action failed, forcing client logout', error)

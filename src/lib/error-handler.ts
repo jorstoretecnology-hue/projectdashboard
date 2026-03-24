@@ -113,16 +113,16 @@ export function handleError(error: unknown, options: HandleErrorOptions = {}): v
  * )
  * ```
  */
-export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
+export function withErrorHandling<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T,
   options: HandleErrorOptions = {}
-): T {
-  return (async (...args: Parameters<T>) => {
+): (...args: Parameters<T>) => Promise<ReturnType<T> | void> {
+  return async (...args: Parameters<T>) => {
     try {
-      return await fn(...args)
+      return (await fn(...args)) as ReturnType<T>
     } catch (error) {
       handleError(error, options)
-      throw error // Re-lanzar para que el caller pueda manejarlo si lo necesita
+      // No re-lanzamos por defecto para evitar romper el flujo si el caller no tiene catch
     }
-  }) as T
+  }
 }

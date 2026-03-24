@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server';
 /**
  * Estructura estándar de respuesta API (JSend-ish)
  */
-export type ApiResponse<T = any> = {
+export type ApiResponse<T = unknown> = {
   success: boolean;
   data?: T;
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
 };
 
@@ -33,7 +33,7 @@ export function apiError(
   message: string,
   code: string,
   status = 400,
-  details?: any
+  details?: unknown
 ) {
   return NextResponse.json(
     {

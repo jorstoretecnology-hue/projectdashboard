@@ -18,3 +18,8 @@ vi.mock('next/navigation', () => {
     usePathname: () => '/',
   };
 });
+
+// Stubs de variables de entorno para tests
+process.env.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-anon-key';
+process.env.MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || 'mock-mp-token';

@@ -1,56 +1,41 @@
-# 🔐 Prompt Maestro – Coordinación de Agentes
+# 🛸 Prompt Maestro – Coordinación de Agentes
 
-## 📌 Contexto
-Este proyecto SaaS multi-tenant utiliza la guía `docs/SECURITY_QUICK_REFERENCE.md` como referencia primaria de seguridad.  
-Todos los agentes (Qwen CLI y Antigravity nativos) deben seguir este protocolo para garantizar cumplimiento con **ISO/IEC 27001:2022, NIST CSF, CSA, OWASP Top 10, DevSecOps y Xygeni**.
+Este documento establece el marco de trabajo profesional para el desarrollo de **Smart Business OS**. Define cómo interactúan los agentes de IA y los humanos para entregar valor continuo al negocio.
 
----
+## 🛰️ Visión del Rol: Product Owner / Manager (Antigravity - Gemini)
 
-## 🎯 Instrucciones para los Agentes
+Como Product Owner, Antigravity representa la visión del producto y asegura que el equipo entregue valor real. Su enfoque no es solo técnico, sino orientado al negocio.
 
-### Qwen (CLI)
-- Ejecutar validaciones automáticas en cada build:
-  - `npm run check` (type-check + lint + test).
-  - Escaneo de dependencias (`npm audit`, `snyk`).
-  - Validación de IaC (Terraform/Kubernetes).
-- Generar reportes de seguridad basados en `SECURITY_QUICK_REFERENCE.md`.
-- Publicar resultados en el canal de seguridad (`#security-pipeline`).
+### Responsabilidades Clave:
+- **Gestión del Backlog**: Mantener `AI_COORDINATION.md` actualizado y priorizado (MoSCoW/RICE).
+- **Historias de Usuario**: Traducir necesidades en tareas claras con criterios de aceptación explícitos.
+- **Validación**: Asegurar que cada entrega cumple con el "Definition of Done".
+- **Alineación**: Facilitar la comunicación entre roles técnicos (Claude, Qwen) y stakeholders.
 
-### Antigravity Agents (Nativos)
-- Aplicar reglas de seguridad en tiempo real:
-  - RLS obligatorio en todas las queries.
-  - Validación Zod en inputs.
-  - Bloquear `select('*')` y `console.log` en producción.
-- Monitorear runtime:
-  - Intentos de login sospechosos.
-  - Accesos indebidos entre tenants.
-- Consultar `SECURITY_QUICK_REFERENCE.md` como checklist operativo.
+## 🤝 Mecanismo de Coordinación
 
----
+### 1. Documentación Centralizada
+- **Verdad Absoluta**: `/docs/` es el repositorio de todo el conocimiento técnico y de negocio.
+- **Actualización Continua**: Los agentes deben actualizar los docs después de decisiones críticas.
 
-## 🔄 Flujo de Trabajo Coordinado
-1. **Qwen (CLI)** → Ejecuta pruebas y genera reportes de seguridad.
-2. **Antigravity Agents** → Aplican reglas en runtime y monitoreo.
-3. **Ambos** → Consultan `SECURITY_QUICK_REFERENCE.md` como protocolo común.
-4. **Resultado** → Despliegue seguro y alineado con estándares internacionales.
+### 2. Tablero de Tareas (Kanban)
+- Ubicación: `AI_COORDINATION.md` en la raíz.
+- Flujo: `📝 TO-DO` -> `🏃 EN PROGRESO` -> `✅ LISTO PARA REVISIÓN`.
 
----
+### 3. Rituales y Sincronización
+- **Standup Diario**: Resumen breve de avances y bloqueos en el chat.
+- **Design Review**: Validación de UX/UI antes de la implementación masiva.
+- **Security Check**: Auditoría obligatoria de RLS y tipos antes de cerrar un hito.
 
-## ✅ Checklist de Ejecución
-- [ ] Qwen ejecuta validaciones en CI/CD.
-- [ ] Antigravity aplica reglas en runtime.
-- [ ] Ambos sincronizan hallazgos en `#security-pipeline`.
-- [ ] Cumplimiento verificado contra `SECURITY_QUICK_REFERENCE.md`.
+### 4. Definition of Done (DoD)
+Un ticket se considera terminado solo si:
+- [ ] Código revisado y sin tipos `any`.
+- [ ] Pruebas (unitarias/integración) aprobadas.
+- [ ] Documentación técnica actualizada.
+- [ ] Validación de seguridad (RLS/Middleware) completada.
+- [ ] Despliegue validado.
 
----
-
-## 🚀 Objetivo Final
-Garantizar que cada despliegue del SaaS cumpla con:
-- OWASP Top 10
-- DevSecOps pipeline
-- Supply chain security (Xygeni)
-- ISO/IEC 27001:2022
-- NIST CSF
-- CSA STAR
-- Zero Trust (Zscaler/Palo Alto)
-- Auditoría continua (Vanta/AppOmni)
+## 👥 Mapa de Agentes Activos
+- **Antigravity (Gemini)**: PO / IDE Agent / Senior Frontend.
+- **Qwen (CLI Agent)**: Especialista en DB y Migraciones SQL.
+- **Claude (Architect Agent)**: Auditoría y Lógica de Negocio (actualmente en espera).

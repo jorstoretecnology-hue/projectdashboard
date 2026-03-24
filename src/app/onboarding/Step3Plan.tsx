@@ -25,6 +25,7 @@ interface Plan {
 interface Step3PlanProps {
   name: string
   selectedIndustry: string
+  selectedSpecialty: string | null
   selectedPlan: string
   onPlanSelect: (plan: string) => void
   onBack: () => void
@@ -61,7 +62,7 @@ const PLANS: Plan[] = [
   },
 ]
 
-export function Step3Plan({ name, selectedIndustry, selectedPlan, onPlanSelect, onBack }: Step3PlanProps) {
+export function Step3Plan({ name, selectedIndustry, selectedSpecialty, selectedPlan, onPlanSelect, onBack }: Step3PlanProps) {
   const [loading, setLoading] = useState(false)
 
   const handleCreateTenant = async () => {
@@ -71,7 +72,7 @@ export function Step3Plan({ name, selectedIndustry, selectedPlan, onPlanSelect, 
     try {
       logger.log("[Onboarding] Creating tenant", { name, plan: selectedPlan, industry: selectedIndustry })
 
-      const tenantId = await createTenantAction(name, selectedPlan, selectedIndustry.toLowerCase())
+      const tenantId = await createTenantAction(name, selectedPlan, selectedIndustry.toLowerCase(), selectedSpecialty)
 
       logger.log("[Onboarding] Tenant created", { tenantId })
       toast.success(`Organización creada con plan ${selectedPlan.toUpperCase()}`)

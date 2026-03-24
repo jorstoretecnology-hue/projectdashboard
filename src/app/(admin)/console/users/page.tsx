@@ -12,7 +12,7 @@ export default function AdminUsersPage() {
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newName, setNewName] = useState('');
-  const [newRole, setNewRole] = useState('ADMIN'); // Por defecto Administrador de Empresa
+  const [newRole, setNewRole] = useState<string>('ADMIN'); // Por defecto Administrador de Empresa
   const [showModal, setShowModal] = useState(false);
 
   const ROLE_LABELS: Record<string, string> = {
@@ -135,7 +135,7 @@ export default function AdminUsersPage() {
                           {ROLE_OPTIONS.map(opt => (
                             <button
                               key={opt.key}
-                              onClick={() => updateUserRole(user.id, opt.key as any)}
+                              onClick={() => updateUserRole(user.id, opt.key)}
                               disabled={isLoading}
                                className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${
                                  (user.app_role === opt.key || (opt.key === 'ADMIN' && user.app_role === 'OWNER'))

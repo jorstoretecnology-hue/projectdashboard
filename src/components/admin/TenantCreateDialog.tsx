@@ -85,10 +85,11 @@ export function TenantCreateDialog({ open, onOpenChange }: TenantCreateDialogPro
       
       onOpenChange(false)
       form.reset()
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[TenantCreateDialog] Submission failed:", error)
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido"
       toast.error("Error al crear cliente", {
-        description: error.message || "Verifica los permisos de red o base de datos."
+        description: errorMessage || "Verifica los permisos de red o base de datos."
       })
     } finally {
       setIsSubmitting(false)

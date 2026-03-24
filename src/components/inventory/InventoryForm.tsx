@@ -41,6 +41,7 @@ export function InventoryForm({
       type: "product",
       stock: 0,
       price: 0,
+      cost_price: 0,
       ...defaultValues,
     },
   })
@@ -86,7 +87,7 @@ export function InventoryForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="price">Precio ($)</Label>
+          <Label htmlFor="price">Precio de Venta ($)</Label>
           <Input
             id="price"
             type="number"
@@ -96,6 +97,32 @@ export function InventoryForm({
           {errors.price && (
             <p className="text-xs text-destructive">{errors.price.message}</p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="cost_price">Costo ($)</Label>
+          <Input
+            id="cost_price"
+            type="number"
+            step="0.01"
+            {...register("cost_price", { valueAsNumber: true })}
+          />
+          {errors.cost_price && (
+            <p className="text-xs text-destructive">{errors.cost_price.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label>Utilidad / Markup</Label>
+          <div className="flex items-center h-10 px-3 rounded-md border bg-muted/50 text-sm font-medium">
+            {(() => {
+              const p = watch("price") || 0;
+              const c = watch("cost_price") || 0;
+              if (c === 0) return "N/A";
+              const margin = ((p - c) / c) * 100;
+              return `${margin.toFixed(1)}% margen`;
+            })()}
+          </div>
         </div>
 
         <div className="space-y-2">

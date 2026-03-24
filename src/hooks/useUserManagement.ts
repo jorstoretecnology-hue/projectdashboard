@@ -20,7 +20,7 @@ export type Tenant = {
 interface ApiError extends Error {
   details?: {
     message?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js"
-import { Database } from "@/lib/supabase/database.types"
+import { Database, Json } from "@/lib/supabase/database.types"
+import { logger } from "@/lib/logger"
 
 export type AuditAction = 
   | 'CREATE' 
@@ -27,8 +28,8 @@ export interface AuditLogOptions {
   action: AuditAction
   entityType: AuditEntityType
   entityId?: string
-  oldData?: any
-  newData?: any
+  oldData?: unknown
+  newData?: unknown
 }
 
 /**
@@ -50,20 +51,21 @@ export class AuditLogService {
         .from("audit_logs")
         .insert({
           tenant_id: options.tenantId,
-          user_id: options.userId || null,
+          user_id: options.userId ?? null,
           action: options.action,
           entity_type: options.entityType,
-          entity_id: options.entityId || null,
-          old_data: options.oldData,
-          new_data: options.newData,
+          entity_id: options.entityId ?? null,
+          old_data: options.oldData as Json,
+          new_data: options.newData as Json,
           user_agent: userAgent,
+          ip_address: null, // Campo requerido o opcional según tipo
         })
 
       if (error) {
-        console.warn("[AuditLogService] Error al insertar log:", error.message)
+        logger.warn("[AuditLogService] Error al insertar log:", error.message)
       }
     } catch (err) {
-      console.error("[AuditLogService] Critical Error:", err)
+      logger.error("[AuditLogService] Critical Error:", { error: err })
     }
   }
 
@@ -81,7 +83,7 @@ export class AuditLogService {
     })
   }
 
-  async logResourceCreate(tenantId: string, entityType: AuditEntityType, entityId: string, data: any, userId?: string) {
+  async logResourceCreate(tenantId: string, entityType: AuditEntityType, entityId: string, data: unknown, userId?: string) {
     return this.log({
       tenantId,
       userId,
@@ -92,7 +94,7 @@ export class AuditLogService {
     })
   }
 
-  async logResourceUpdate(tenantId: string, entityType: AuditEntityType, entityId: string, data: any, userId?: string) {
+  async logResourceUpdate(tenantId: string, entityType: AuditEntityType, entityId: string, data: unknown, userId?: string) {
     return this.log({
       tenantId,
       userId,
@@ -113,8 +115,3 @@ export class AuditLogService {
     })
   }
 }
-
-// Inyectar una instancia global por defecto para compatibilidad (usando browserClient si aplica)
-// Pero se recomienda inyectar en Server Actions
-import { createClient } from "@/lib/supabase/client"
-export const auditLogService = new AuditLogService(createClient())

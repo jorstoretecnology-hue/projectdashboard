@@ -1,7 +1,7 @@
 import { createClient } from './server'
 import { cache } from 'react'
 import { Permission, hasPermission, FeatureFlag } from '@/config/permissions'
-import { auditLogService } from '@/core/security/audit.service'
+import { AuditLogService } from '@/core/security/audit.service'
 import { logger } from '@/lib/logger'
 import { headers } from 'next/headers'
 
@@ -98,7 +98,8 @@ export async function can(permission: Permission): Promise<boolean> {
   if (!hasAccess) {
     const tenantId = user.app_metadata?.tenant_id
     if (tenantId) {
-       await auditLogService.log({
+       const audit = new AuditLogService(await createClient())
+       await audit.log({
          tenantId,
          userId: user.id,
          action: 'ACCESS_DENIED',
@@ -155,4 +156,25 @@ export async function getRequiredTenantId(): Promise<string> {
   if (!tenantId) throw new Error('SIN_ORGANIZACION: No perteneces a ninguna organización.')
   
   return tenantId
+}
+
+/**
+ * Obtiene el location_id actual de los headers (inyectado por middleware) 
+ * o lanza error si es obligatorio (Server Actions de escritura).
+ */
+export async function getRequiredLocationId(): Promise<string> {
+  const headerList = await headers()
+  const locationId = headerList.get('x-location-id')
+  
+  if (!locationId) {
+    // Si no está en header, intentamos ver si el rol permite nulo (ADMIN)
+    const role = await getUserRole()
+    if (role === 'owner' || role === 'admin' || role === 'super_admin') {
+      // Los administradores podrían no tener una sede fija
+      return '' 
+    }
+    throw new Error('SEDE_REQUERIDA: Debes seleccionar una sede para esta operación.')
+  }
+  
+  return locationId
 }

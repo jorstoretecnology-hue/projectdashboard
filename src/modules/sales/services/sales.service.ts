@@ -79,7 +79,7 @@ export class SalesService {
   /**
    * Suscribirse a cambios en tiempo real para el KDS
    */
-  subscribeToKDS(tenantId: string, callback: (payload: any) => void) {
+  subscribeToKDS(tenantId: string, callback: (payload: Record<string, unknown>) => void) {
     return this.supabase
       .channel(`kds-tenant-${tenantId}`)
       .on(

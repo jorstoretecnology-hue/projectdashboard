@@ -25,4 +25,16 @@ export class MockBillingAdapter implements BillingAdapter {
       message: 'Upgrade simulado correctamente',
     };
   }
+
+  async createPreference(params: {
+    tenantId: string;
+    targetPlan: PlanType;
+    amount: number;
+    description: string;
+  }): Promise<{ success: boolean; preferenceId?: string; error?: string }> {
+    return {
+      success: true,
+      preferenceId: `pref_mock_${Date.now()}`
+    };
+  }
 }

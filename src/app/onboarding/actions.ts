@@ -9,20 +9,22 @@ import { logger } from '@/lib/logger'
 const onboardingSchema = z.object({
   name: z.string().min(2, "El nombre de la organización es demasiado corto"),
   plan: z.string().default('free'),
-  industry: z.string().min(1, "La industria es requerida")
+  industry: z.string().min(1, "La industria es requerida"),
+  specialty: z.string().nullable().optional()
 })
 
 /**
  * ACTION: crearTenantAction
  */
-export async function createTenantAction(rawName: string, rawPlan: string = 'free', rawIndustry: string = 'taller') {
+export async function createTenantAction(rawName: string, rawPlan: string = 'free', rawIndustry: string = 'taller', rawSpecialty: string | null = null) {
   const supabase = await createClient()
 
   // 1. Validar Inputs
-  const { name, plan, industry } = onboardingSchema.parse({
+  const { name, plan, industry, specialty } = onboardingSchema.parse({
     name: rawName,
     plan: rawPlan,
-    industry: rawIndustry
+    industry: rawIndustry,
+    specialty: rawSpecialty
   })
 
   // 1. Obtener el usuario actual
@@ -44,7 +46,8 @@ export async function createTenantAction(rawName: string, rawPlan: string = 'fre
     p_plan: plan,
     p_industry: industry,
     p_user_id: user.id,
-    p_modules: defaultModules
+    p_modules: defaultModules,
+    p_specialty: specialty || null
   })
 
   if (rpcError) {

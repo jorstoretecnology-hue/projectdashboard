@@ -33,7 +33,8 @@ export function InviteMemberDialog() {
       toast.success(`Invitación enviada a ${email}`)
       setOpen(false)
       setEmail('')
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       toast.error(error.message || 'Error al enviar la invitación')
     } finally {
       setLoading(false)
@@ -71,7 +72,7 @@ export function InviteMemberDialog() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="role" className="text-slate-200">Rol</Label>
-              <Select value={role} onValueChange={(value: any) => setRole(value)}>
+              <Select value={role} onValueChange={(value: 'admin' | 'staff' | 'user') => setRole(value)}>
                 <SelectTrigger className="bg-slate-950 border-slate-700">
                   <SelectValue placeholder="Selecciona un rol" />
                 </SelectTrigger>

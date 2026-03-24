@@ -61,11 +61,12 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, user: { id: newUser?.user?.id, email: newUser?.user?.email } }, { status: 201 });
-  } catch (err: any) {
-    logger.error('[API/Admin/Users] Excepción Crítica en Servidor', { error: err });
+  } catch (err: unknown) {
+    const error = err as Error;
+    logger.error('[API/Admin/Users] Excepción Crítica en Servidor', { error });
     return NextResponse.json({
       error: 'Error interno de servidor',
-      message: err.message
+      message: error.message
     }, { status: 500 });
   }
 }
@@ -107,8 +108,9 @@ export async function PUT(request: Request) {
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json({ error: 'Error interno', details: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const error = err as Error;
+    return NextResponse.json({ error: 'Error interno', details: error.message }, { status: 500 });
   }
 }
 
@@ -127,8 +129,9 @@ export async function DELETE(request: Request) {
     if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 400 });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json({ error: 'Error interno', details: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const error = err as Error;
+    return NextResponse.json({ error: 'Error interno', details: error.message }, { status: 500 });
   }
 }
 
@@ -160,7 +163,8 @@ export async function PATCH(request: Request) {
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json({ error: 'Error al asignar empresa', details: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const error = err as Error;
+    return NextResponse.json({ error: 'Error al asignar empresa', details: error.message }, { status: 500 });
   }
 }

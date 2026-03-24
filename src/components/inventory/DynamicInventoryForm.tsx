@@ -38,6 +38,7 @@ export interface ProductFormData {
   name: string;
   description?: string;
   price: number;
+  costPrice?: number;
   stock: number | null; // null para stock ilimitado
   category: string;
   sku?: string;
@@ -80,6 +81,7 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
       name: z.string().min(1, 'Nombre requerido'),
       description: z.string().optional(),
       price: z.number().positive('Precio debe ser positivo'),
+      costPrice: z.number().nonnegative('El costo no puede ser negativo').optional(),
       stock: hasUnlimitedStock ? z.null() : z.number().int().nonnegative('Stock debe ser positivo'),
       category: z.string().min(1, 'Categoría requerida'),
       sku: z.string().optional(),
@@ -101,6 +103,7 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
       name: product.name,
       description: product.description || '',
       price: product.price,
+      costPrice: product.costPrice || 0,
       stock: product.stock,
       category: product.category,
       sku: product.sku || '',
@@ -110,6 +113,7 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
       name: '',
       description: '',
       price: 0,
+      costPrice: 0,
       stock: 0,
       category: '',
       sku: '',
@@ -315,7 +319,7 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="price">
-                Precio <span className="text-destructive">*</span>
+                Precio de Venta <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="price"
@@ -328,6 +332,25 @@ export const DynamicInventoryForm: React.FC<DynamicInventoryFormProps> = ({
               {errors.price && (
                 <p className="text-sm text-destructive">{errors.price.message}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="costPrice">Precio de Costo</Label>
+              <div className="relative">
+                <Input
+                  id="costPrice"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  {...register('costPrice', { valueAsNumber: true })}
+                  className={errors.costPrice ? 'border-destructive' : ''}
+                />
+                {(watch('price') || 0) > 0 && (watch('costPrice') || 0) > 0 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary">
+                    Margen: {Math.round(((watch('price') - (watch('costPrice') || 0)) / watch('price')) * 100)}%
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">

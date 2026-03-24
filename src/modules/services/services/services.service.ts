@@ -55,7 +55,7 @@ export class ServicesService {
     const { data: vehicle, error } = await this.supabase
       .from('vehicles')
       .insert({ ...data, tenant_id: this.tenantId })
-      .select()
+      .select('id, plate, model, brand, year, customer_id, created_at')
       .single();
 
     if (error) throw error;
@@ -115,7 +115,7 @@ export class ServicesService {
         created_by: userId,
         state: 'RECIBIDO'
       })
-      .select()
+      .select('id, customer_id, vehicle_id, state, priority, description, created_at')
       .single();
 
     if (error) throw error;
@@ -137,7 +137,7 @@ export class ServicesService {
         unit_price: data.unit_price,
         subtotal
       })
-      .select()
+      .select('id, service_id, product_id, description, quantity, unit_price, subtotal')
       .single();
 
     if (error) throw error;

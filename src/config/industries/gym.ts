@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { IndustryConfig } from './types';
 
 export const gymConfig: IndustryConfig = {
-  name: 'Gimnasio',
+  slug: 'gym',
+  name: 'Gimnasio / Centro Fitness',
   description: 'Membresías, clases y servicios fitness',
   icon: '💪',
   productTypes: ['membresia', 'clase', 'suplemento', 'equipamiento'],

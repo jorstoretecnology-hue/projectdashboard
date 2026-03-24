@@ -11,10 +11,7 @@ export async function validateBody<T>(req: NextRequest, schema: z.ZodSchema<T>):
     return schema.parse(body);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw {
-        isValidationError: true,
-        errors: error.issues || (error as any).errors, // Versiones de Zod varían, aseguramos compatiblidad
-      };
+      throw error;
     }
     throw new Error('Invalid JSON body');
   }
@@ -28,7 +25,7 @@ export function validateQuery<T>(
   schema: z.ZodSchema<T>
 ): T {
   try {
-    const params: any = {};
+    const params: Record<string, string> = {};
     searchParams.forEach((value, key) => {
       params[key] = value;
     });
@@ -36,10 +33,7 @@ export function validateQuery<T>(
     return schema.parse(params);
   } catch (error) {
      if (error instanceof z.ZodError) {
-      throw {
-        isValidationError: true,
-        errors: error.issues || (error as any).errors,
-      };
+      throw error;
     }
     throw new Error('Invalid query parameters');
   }

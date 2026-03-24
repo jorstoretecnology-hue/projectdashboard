@@ -38,14 +38,15 @@ export function DashboardStats() {
       try {
         const { data: stats, error: supabaseError } = await supabase
           .from('v_dashboard_stats')
-          .select('*')
+          .select('tenant_id, daily_sales_total, daily_sales_count, avg_lead_time_minutes, active_service_orders')
           .eq('tenant_id', currentTenant.id)
           .single();
 
         if (supabaseError) throw supabaseError;
         setData(stats);
-      } catch (err: any) {
-        console.error('Error fetching dashboard stats:', err);
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error('Error desconocido');
+        console.error('Error fetching dashboard stats:', error.message);
         setError('No se pudieron cargar las estadísticas reales');
       } finally {
         setLoading(false);

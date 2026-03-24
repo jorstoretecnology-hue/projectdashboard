@@ -64,7 +64,7 @@ export class SaasMetricsService {
     
     // 1. Fetch de datos crudos en paralelo
     const [tenantsRes, quotasRes] = await Promise.all([
-      supabase.from("tenants").select("id, name, plan, industry_type, active_modules, branding, is_active, max_users, created_at, updated_at, custom_domain, feature_flags"),
+      supabase.from("tenants").select("id, name, plan, industry_type, active_modules, branding, is_active, max_users, created_at, updated_at, custom_domain, tenant_modules(module_slug)"),
       supabase.from("tenant_quotas").select("tenant_id, resource_key, current_usage, updated_at")
     ])
 
@@ -75,19 +75,25 @@ export class SaasMetricsService {
     const quotaData = quotasRes.data || []
 
     // 2. Mapear tenants a la configuración de la app
-    const tenants: TenantConfig[] = rawTenants.map(t => ({
+    const tenants: TenantConfig[] = rawTenants.map(t => {
+      const tm = (t as any).tenant_modules as unknown as any[];
+      const activeModules = tm && tm.length > 0 
+        ? tm.map(m => m.module_slug.charAt(0).toUpperCase() + m.module_slug.slice(1)) 
+        : (t.active_modules || []);
+
+      return {
       id: t.id,
       name: t.name,
       plan: (t.plan as PlanTier) || 'free',
       industryType: t.industry_type,
-      activeModules: t.active_modules || [],
+      activeModules: activeModules,
       branding: t.branding || {},
       isActive: t.is_active ?? true,
       maxUsers: t.max_users,
       createdAt: t.created_at,
       customDomain: t.custom_domain,
-      featureFlags: t.feature_flags || [],
-    }))
+      featureFlags: [],
+    }})
 
     // 3. Calcular métricas en memoria (Zero DB calls here)
     

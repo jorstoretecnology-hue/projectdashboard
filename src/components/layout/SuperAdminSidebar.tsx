@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ShieldAlert as shieldAlertIcon, ShieldAlert, Users, LayoutDashboard, Settings, LogOut, Package, Crown, Zap } from 'lucide-react';
+import { ChevronLeft, ShieldAlert, Users, LayoutDashboard, Settings, LogOut, Package, Crown, Building2, Factory, CreditCard, ScrollText } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -9,13 +9,37 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 
-const SUPERADMIN_MENU = [
-  { name: 'Executive Dashboard', icon: Crown, path: '/console/dashboard', color: 'text-primary' },
-  { name: 'Control de Tenants', icon: LayoutDashboard, path: '/console', color: 'text-blue-500' },
-  { name: 'Inventario Global', icon: Package, path: '/console/inventory', color: 'text-emerald-500' },
-  { name: 'Cartera Clientes', icon: Users, path: '/console/customers', color: 'text-violet-500' },
-  { name: 'IAM & Usuarios', icon: shieldAlertIcon, path: '/console/users', color: 'text-amber-500' },
-  { name: 'Configuración', icon: Settings, path: '/console/config', color: 'text-slate-400' },
+import type { LucideIcon } from 'lucide-react';
+
+type MenuSection = {
+  label: string;
+  items: { name: string; icon: LucideIcon; path: string; color: string }[];
+};
+
+const SUPERADMIN_SECTIONS: MenuSection[] = [
+  {
+    label: 'Core',
+    items: [
+      { name: 'Executive Dashboard', icon: Crown, path: '/console/dashboard', color: 'text-primary' },
+      { name: 'Gestión de Tenants', icon: Building2, path: '/console/tenants', color: 'text-blue-500' },
+    ],
+  },
+  {
+    label: 'Catálogos',
+    items: [
+      { name: 'Industrias', icon: Factory, path: '/console/industries', color: 'text-emerald-500' },
+      { name: 'Módulos', icon: Package, path: '/console/modules', color: 'text-violet-500' },
+      { name: 'Planes', icon: CreditCard, path: '/console/plans', color: 'text-amber-500' },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { name: 'Usuarios IAM', icon: Users, path: '/console/users', color: 'text-orange-500' },
+      { name: 'Auditoría', icon: ScrollText, path: '/console/audit', color: 'text-rose-500' },
+      { name: 'Configuración', icon: Settings, path: '/console/config', color: 'text-slate-400' },
+    ],
+  },
 ];
 
 export const SuperAdminSidebar = () => {
@@ -75,44 +99,59 @@ export const SuperAdminSidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-8 px-4 space-y-2 custom-scrollbar">
-        {!isCollapsed && (
-          <p className="px-4 mb-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Navegación Core</p>
-        )}
-        {SUPERADMIN_MENU.map((item) => {
-          const isActive = pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={cn(
-                'flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 group relative overflow-hidden',
-                isActive
-                  ? 'bg-secondary text-white font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-secondary/50',
-              )}
-            >
-              {isActive && (
-                  <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-full shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
-              )}
-              <item.icon 
-                size={22} 
-                className={cn(
-                    "transition-all duration-300",
-                    isActive ? item.color : "text-slate-500 group-hover:text-slate-300 group-hover:scale-110",
-                    isActive && "drop-shadow-[0_0_8px_currentColor]"
-                )} 
-              />
-              {!isCollapsed && <span className="text-sm tracking-tight">{item.name}</span>}
-              
-              {!isActive && !isCollapsed && (
-                  <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronLeft size={14} className="rotate-180 text-slate-600" />
-                  </div>
-              )}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-6 custom-scrollbar">
+        {SUPERADMIN_SECTIONS.map((section, sIdx) => (
+          <div key={section.label}>
+            {!isCollapsed && (
+              <p className="px-4 mb-3 text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">{section.label}</p>
+            )}
+            {isCollapsed && sIdx > 0 && (
+              <div className="mx-4 mb-3 border-t border-white/5" />
+            )}
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const isActive = pathname === item.path || (item.path !== '/console/dashboard' && pathname.startsWith(item.path + '/'));
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    className={cn(
+                      'flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 group relative overflow-hidden',
+                      isActive
+                        ? 'bg-secondary text-white font-bold shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-secondary/50',
+                    )}
+                  >
+                    {isActive && (
+                      <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-full shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
+                    )}
+                    <item.icon
+                      size={22}
+                      className={cn(
+                        "transition-all duration-300 shrink-0",
+                        isActive ? item.color : "text-slate-500 group-hover:text-slate-300 group-hover:scale-110",
+                        isActive && "drop-shadow-[0_0_8px_currentColor]"
+                      )}
+                    />
+                    {!isCollapsed && <span className="text-sm tracking-tight truncate">{item.name}</span>}
+
+                    {isCollapsed && (
+                      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity border border-white/10">
+                        {item.name}
+                      </div>
+                    )}
+
+                    {!isActive && !isCollapsed && (
+                      <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ChevronLeft size={14} className="rotate-180 text-slate-600" />
+                      </div>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer / System Status */}

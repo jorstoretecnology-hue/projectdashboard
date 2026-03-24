@@ -34,10 +34,10 @@ export interface Sale {
   total: number;
   payment_method: PaymentMethod;
   notes: string | null;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
-  
+
   // Joins
   items?: SaleItem[];
   customer?: {
@@ -65,7 +65,7 @@ export interface CreateSaleDTO {
   discount?: number;
   tax_rate?: number;
   notes?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SaleQuery {

@@ -97,13 +97,13 @@ export const useSecureCRUD = () => {
     tenantId?: string;
     name: string;
     price: number;
-    [key: string]: any;
+    [key: string]: unknown;
   }
 
   interface ProductFilters {
     category?: string;
     status?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   }
 
   interface ValidationResult {

@@ -1,0 +1,290 @@
+# 🤖 Antigravity Configuration
+
+## Configuración Principal para Agentes de IA
+
+Este directorio contiene las reglas y configuración para los agentes de Antigravity IDE.
+
+---
+
+## 📁 Estructura
+
+```
+.antigravity/
+├── rules/
+│   ├── security-rules.md          # Reglas de seguridad (OWASP, ISO 27001)
+│   ├── architecture-rules.md      # Reglas de arquitectura (multi-tenant, módulos)
+│   ├── code-rules.md              # Reglas de código (TypeScript, React)
+│   ├── reglas-basicas.md          # Reglas básicas parametrizadas (ESPAÑOL)
+│   ├── file-creation-rules.md     # Reglas para creación de archivos nuevos
+│   ├── code-review-rules.md       # Reglas para Code Review y PRs
+│   ├── ci-cd-rules.md             # Reglas para CI/CD y Security Pipeline
+│   └── database-rules.md          # Reglas para base de datos y migraciones
+├── prompts/
+│   ├── code-review.md             # Prompt para revisión de código
+│   ├── security-audit.md          # Prompt para auditoría de seguridad
+│   └── migration-check.md         # Prompt para verificar migraciones
+└── config.json                    # Configuración global
+```
+
+---
+
+## 🎯 Agentes Disponibles
+
+### 1. Security Agent
+**Misión:** Aplicar reglas de seguridad en tiempo real
+
+**Responsable de:**
+- Verificar RLS en todas las queries
+- Bloquear `select('*')`
+- Validar uso de Zod en inputs
+- Detectar `any` en TypeScript
+- Monitorear `console.log` en producción
+
+**Reglas:** [`rules/security-rules.md`](./rules/security-rules.md)
+
+---
+
+### 2. Architecture Agent
+**Misión:** Mantener integridad arquitectónica
+
+**Responsable de:**
+- Verificar aislamiento multi-tenant
+- Validar sistema de módulos
+- Controlar permisos por rol
+- Revisar estructura de directorios
+
+**Reglas:** [`rules/architecture-rules.md`](./rules/architecture-rules.md)
+
+---
+
+### 3. Code Quality Agent
+**Misión:** Garantizar calidad de código
+
+**Responsable de:**
+- TypeScript estricto
+- Patrones React correctos
+- Hooks bien implementados
+- API routes seguras
+
+**Reglas:** [`rules/code-rules.md`](./rules/code-rules.md)
+
+---
+
+## 🔄 Flujo de Trabajo
+
+### Desarrollo Activo
+
+```
+1. Usuario escribe código
+        ↓
+2. Antigravity analiza en tiempo real
+        ↓
+3. Detecta violación de reglas
+        ↓
+4. Muestra advertencia/sugerencia
+        ↓
+5. Usuario corrige o ignora
+```
+
+### Code Review
+
+```
+1. Usuario solicita review
+        ↓
+2. Security Agent verifica:
+   - RLS
+   - Auth
+   - Tenant isolation
+        ↓
+3. Code Quality Agent verifica:
+   - TypeScript
+   - Patrones React
+   - Tests
+        ↓
+4. Architecture Agent verifica:
+   - Módulos
+   - Estructura
+   - Permisos
+        ↓
+5. Genera reporte consolidado
+```
+
+---
+
+## 📋 Configuración Global
+
+```json
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Dashboard Universal SaaS",
+    "type": "nextjs-supabase-saas",
+    "multiTenant": true,
+    "authProvider": "supabase"
+  },
+  "rules": {
+    "security": {
+      "enforceRLS": true,
+      "blockSelectStar": true,
+      "requireZodValidation": true,
+      "blockAnyType": true,
+      "blockConsoleLogInProd": true
+    },
+    "architecture": {
+      "enforceTenantIsolation": true,
+      "requireModuleActivation": true,
+      "enforceRoleBasedAccess": true
+    },
+    "code": {
+      "strictTypeScript": true,
+      "requireErrorHandling": true,
+      "requireLoadingStates": true
+    }
+  },
+  "integrations": {
+    "qwen": {
+      "enabled": true,
+      "role": "cli-validator",
+      "commands": ["npm run check", "npm run security:audit"]
+    },
+    "sentry": {
+      "enabled": true,
+      "role": "error-tracking"
+    }
+  },
+  "channels": {
+    "security": "#security-pipeline",
+    "coordination": "#ai-coordination"
+  }
+}
+```
+
+---
+
+## 🚨 Niveles de Severidad
+
+| Nivel | Color | Acción | Ejemplo |
+|-------|-------|--------|---------|
+| CRÍTICA | 🔴 | Bloquear | `select('*')`, sin RLS |
+| ALTA | 🟠 | Advertencia fuerte | `any`, sin validación Zod |
+| MEDIA | 🟡 | Sugerencia | `console.log`, orden de imports |
+| BAJA | 🟢 | Info | Naming, formato |
+
+---
+
+## 📊 Métricas de Calidad
+
+### Security Score
+
+```typescript
+interface SecurityScore {
+  rlsCoverage: number           // % tablas con RLS
+  selectStarCount: number       // Debe ser 0
+  anyTypeCount: number          // Debe ser 0
+  zodValidationCoverage: number // % inputs validados
+  tenantIsolationScore: number  // % queries con tenant_id
+}
+```
+
+### Code Quality Score
+
+```typescript
+interface CodeQualityScore {
+  typeSafety: number      // % código tipado correctamente
+  errorHandling: number   // % funciones con error handling
+  testCoverage: number    // % código cubierto por tests
+  documentation: number   // % funciones documentadas
+}
+```
+
+---
+
+## 🔗 Coordinación con Qwen CLI
+
+### Handoff Protocol
+
+```markdown
+## Sesión: [Fecha]
+## Agente: Antigravity [Security/Architecture/Code]
+
+### Cambios Realizados
+- [Lista de cambios]
+
+### Hallazgos de Seguridad
+- [Hallazgos]
+
+### Deuda Técnica
+- [Deuda identificada]
+
+### Próximos Pasos
+- [Pasos sugeridos]
+
+### Validaciones Pendientes
+- [ ] npm run check
+- [ ] npm run security:audit
+- [ ] npm test
+```
+
+### Comandos Qwen
+
+```bash
+# Ejecutar después de cada sesión de Antigravity
+npm run check                    # Type check + lint + tests
+npm run security:audit           # Auditoría de seguridad
+npm run security:validate        # Validar reporte JSON
+```
+
+---
+
+## 📚 Documentación de Referencia
+
+### Principal
+- [SECURITY_QUICK_REFERENCE.md](../../docs/security/SECURITY_QUICK_REFERENCE.md)
+- [PROMPT_MAESTRO_COORDINACION.md](../ai-coordination/PROMPT_MAESTRO_COORDINACION.md)
+- [PROMPT_ANTIGRAVITY.md](../ai-coordination/PROMPT_ANTIGRAVITY.md)
+
+### Arquitectura
+- [ARCHITECTURE_SUMMARY.md](../../ARCHITECTURE_SUMMARY.md)
+- [CONTEXTO_DEL_PROYECTO.md](../../docs/CONTEXTO_DEL_PROYECTO.md)
+
+### Seguridad
+- [docs/security/](../../docs/security/)
+- [docs/operations/](../../docs/operations/)
+
+---
+
+## 🎓 Onboarding de Nuevos Agentes
+
+Si un nuevo agente de IA se une al proyecto:
+
+1. **Leer** este archivo `config.json`
+2. **Estudiar** las reglas en `rules/`
+3. **Entender** el flujo de coordinación con Qwen
+4. **Revisar** documentación de seguridad
+5. **Practicar** con código existente
+
+---
+
+## ✅ Checklist de Configuración
+
+- [x] Reglas de seguridad definidas
+- [x] Reglas de arquitectura definidas
+- [x] Reglas de código definidas
+- [x] Integración con Qwen CLI configurada
+- [x] Canales de comunicación definidos
+- [x] Métricas de calidad establecidas
+- [x] Protocolo de handoff documentado
+
+---
+
+## 🚀 Objetivo Final
+
+Garantizar que **cada línea de código** escrita con asistencia de Antigravity cumpla con:
+
+- ✅ OWASP Top 10
+- ✅ ISO/IEC 27001:2022
+- ✅ NIST CSF
+- ✅ DevSecOps
+- ✅ Multi-tenant isolation
+- ✅ TypeScript estricto
+- ✅ Mejores prácticas de React/Next.js

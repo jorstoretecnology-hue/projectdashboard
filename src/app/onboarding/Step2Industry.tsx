@@ -9,6 +9,7 @@ import type { IndustryType } from "@/config/industries"
 import type { LucideIcon } from "lucide-react"
 
 interface Industry {
+  slug: IndustryType
   name: string
   icon: string
 }
@@ -49,7 +50,7 @@ export function Step2Industry({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {industries.map((ind) => {
           const Icon = getIndustryIcon(ind.icon)
-          const indKey = ind.name.toLowerCase() as IndustryType
+          const indKey = ind.slug
 
           return (
             <Card

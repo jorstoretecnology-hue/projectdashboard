@@ -1,41 +1,46 @@
+import { useState } from 'react';
 import { useTenant } from '@/providers/TenantContext';
-import { getBillingAdapter } from '@/core/billing/adapters';
-import { tenantService } from '@/modules/tenants/services/tenant.service';
+import { createUpgradePreferenceAction } from '@/app/(app)/billing/actions';
+import { loadMercadoPago, openCheckout } from '@/lib/mercadopago/client-side';
 import { toast } from 'sonner';
 import type { PlanType } from '@/config/tenants';
+import { logger } from '@/lib/logger';
+
+const MP_PUBLIC_KEY = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY || '';
 
 export function usePlanUpgrade() {
-  const { setSimulatedPlan, resetSimulation, effectivePlan, isSimulated, currentTenant, updateTenant } = useTenant();
+  const { resetSimulation, effectivePlan, isSimulated, currentTenant } = useTenant();
+  const [isPending, setIsPending] = useState(false);
 
   const upgradePlan = async (targetPlanId: PlanType) => {
     if (!currentTenant) return;
 
-    const billingAdapter = getBillingAdapter();
-
-    const result = await billingAdapter.upgradePlan({
-      tenantId: currentTenant.id,
-      currentPlan: currentTenant.plan,
-      targetPlan: targetPlanId,
-    });
-
-    if (!result.success) {
-      toast.error(result.message || 'No se pudo realizar el upgrade.');
-      return;
-    }
-
     try {
-      // Persistir el plan en base de datos
-      await tenantService.updatePlan(currentTenant.id, result.plan);
+      setIsPending(true);
+      const toastId = toast.loading('Preparando el pago...');
 
-      // Actualizar el tenant en el contexto (esto limpia la simulación)
-      updateTenant(currentTenant.id, { plan: result.plan });
+      // 1. Obtener preferencia desde el servidor
+      const result = await createUpgradePreferenceAction(targetPlanId as any);
 
-      toast.success(`Plan actualizado exitosamente. Has cambiado al plan ${result.plan}.`);
+      if (!result.success || !result.preferenceId) {
+        throw new Error(result.error || 'Error al generar la preferencia de pago');
+      }
+
+      // 2. Inicializar SDK en cliente
+      await loadMercadoPago(MP_PUBLIC_KEY);
+
+      // 3. Abrir Checkout
+      toast.dismiss(toastId);
+      await openCheckout(result.preferenceId);
+      
+      toast.info('Completa el pago en la ventana de MercadoPago');
     } catch (error) {
-      console.error('[usePlanUpgrade] Error persisting plan:', error);
-      toast.error('El upgrade se procesó pero no se pudo guardar. Inténtalo de nuevo.');
+      logger.error('[usePlanUpgrade] Error:', error);
+      toast.error(error instanceof Error ? error.message : 'Error al procesar el upgrade');
+    } finally {
+      setIsPending(false);
     }
   };
 
-  return { upgradePlan, resetSimulation, effectivePlan, isSimulated };
+  return { upgradePlan, resetSimulation, effectivePlan, isSimulated, isPending };
 }

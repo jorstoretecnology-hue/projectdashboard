@@ -4,7 +4,7 @@ import {
   PurchaseQueryDTO, 
   CreateSupplierDTO, 
   SupplierQueryDTO 
-} from '@/lib/api/schemas/purchases';
+} from '../../../lib/api/schemas/purchases';
 
 export class PurchasesService {
   constructor(
@@ -41,7 +41,7 @@ export class PurchasesService {
     const { data: newSupplier, error } = await this.supabase
       .from('suppliers')
       .insert({ ...data, tenant_id: this.tenantId })
-      .select()
+      .select('id, name, email, phone, contact_person, created_at')
       .single();
 
     if (error) throw error;
@@ -93,61 +93,31 @@ export class PurchasesService {
   }
 
   async createPurchase(data: CreatePurchaseDTO, userId: string) {
-    // 1. Insert Header
-    // Calcular totales simples (sin impuestos complejos por ahora)
-    const subtotal = data.items.reduce((acc, item) => acc + (item.quantity * item.unit_cost), 0);
-    const total = subtotal; // + tax
+    // Call atomic RPC
+    const { data: po, error } = await this.supabase.rpc('create_purchase_transaction', {
+      p_tenant_id: this.tenantId,
+      p_user_id: userId,
+      p_supplier_id: data.supplier_id,
+      p_delivery_date: data.expected_date || new Date().toISOString(),
+      p_notes: data.notes || '',
+      p_items: data.items.map(item => ({
+        product_id: item.product_id,
+        quantity_ordered: item.quantity,
+        unit_cost: item.unit_cost
+      }))
+    });
 
-    const { data: po, error: poError } = await this.supabase
-      .from('purchase_orders')
-      .insert({
-        tenant_id: this.tenantId,
-        supplier_id: data.supplier_id,
-        // Legacy string fields (optional fallback)
-        supplier_name: 'Link to Supplier UUID', 
-        created_by: userId,
-        state: 'PENDIENTE', // O BORRADOR
-        subtotal,
-        total,
-        notes: data.notes,
-        expected_date: data.expected_date
-      })
-      .select()
-      .single();
-
-    if (poError) throw poError;
-
-    // 2. Insert Items
-    const itemsData = data.items.map(item => ({
-      purchase_order_id: po.id,
-      product_id: item.product_id,
-      quantity_ordered: item.quantity,
-      unit_cost: item.unit_cost,
-      subtotal: item.quantity * item.unit_cost
-    }));
-
-    const { error: itemsError } = await this.supabase
-      .from('purchase_order_items')
-      .insert(itemsData);
-
-    if (itemsError) {
-      // Rollback manual (delete PO) si falla items? 
-      // Supabase-js no tiene transacción. 
-      // Idealmente, también usar RPC para crear compra atómicamente. 
-      // Pero por ahora aceptamos riesgo bajo (creación no mueve stock).
-      await this.supabase.from('purchase_orders').delete().eq('id', po.id);
-      throw itemsError;
-    }
-
+    if (error) throw error;
     return po;
   }
 
-  async receivePurchase(id: string, userId: string, notes?: string) {
-    // Call RPC
+  async receivePurchase(id: string, userId: string, items: { product_id: string, quantity_received: number }[], notes?: string) {
+    // Call RPC with new signature supporting partial items
     const { data, error } = await this.supabase.rpc('receive_purchase_transaction', {
       p_purchase_id: id,
       p_tenant_id: this.tenantId,
       p_user_id: userId,
+      p_items: items, // Passed as JSONB
       p_notes: notes || ''
     });
 

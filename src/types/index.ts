@@ -100,6 +100,7 @@ export interface Product {
   name: string;
   description?: string;
   price: number;
+  costPrice?: number;
   stock: number | null; // null for unlimited stock
   category: string;
   sku?: string;

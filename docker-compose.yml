@@ -13,7 +13,12 @@ services:
       - N8N_BASE_URL=https://cauline-lacey-tempered.ngrok-free.dev
       # Configuración local
       - GENERIC_TIMEZONE=America/Bogota
-      - N8N_EMAIL_MODE=internal
+      - N8N_EMAIL_MODE=
+      # API Configuration
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_JWT_SECRET:-change-me-in-production}
+      # Habilitar API pública
+      - N8N_ENABLED_PUBLIC_API=true
+      # API Key configuration (la key se genera en la UI o DB)
     volumes:
       - n8n_data:/home/node/.n8n
     networks:

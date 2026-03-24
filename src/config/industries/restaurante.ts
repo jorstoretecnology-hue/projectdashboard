@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { IndustryConfig } from './types';
 
 export const restauranteConfig: IndustryConfig = {
-  name: 'Restaurante',
+  slug: 'restaurante',
+  name: 'Restaurante / Gastronomía',
   description: 'Gestión de platos, menús y servicios gastronómicos',
   icon: '🍽️',
   productTypes: ['plato', 'bebida', 'menu', 'postre'],

@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { IndustryConfig } from './types';
 
 export const glampingConfig: IndustryConfig = {
-  name: 'Glamping',
+  slug: 'glamping',
+  name: 'Glamping / Hotelería',
   description: 'Alojamiento de lujo en la naturaleza',
   icon: '🏕️',
   productTypes: ['habitacion', 'paquete', 'servicio_adicional', 'experiencia'],

@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { IndustryConfig } from './types';
 
 export const supermercadoConfig: IndustryConfig = {
-  name: 'Supermercado',
+  slug: 'supermercado',
+  name: 'Supermercado / Retail',
   description: 'Gestión de productos de consumo masivo',
   icon: '🛒',
   productTypes: ['alimento', 'bebida', 'limpieza', 'higiene', 'electronico'],

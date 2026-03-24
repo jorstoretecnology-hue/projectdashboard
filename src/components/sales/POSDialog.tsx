@@ -21,10 +21,17 @@ import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 
 import { getIndustryConfig } from "@/config/industries"
-import { InspectionChecklist } from "./InspectionChecklist"
 import { InspectionCamera } from "./InspectionCamera"
 import { useDebounce } from 'use-debounce'
 import { createClient } from '@/lib/supabase/client'
+import { CustomerSelect } from "@/components/customers/CustomerSelect"
+import { 
+  Select as UISelect, 
+  SelectContent as UISelectContent, 
+  SelectItem as UISelectItem, 
+  SelectTrigger as UISelectTrigger, 
+  SelectValue as UISelectValue 
+} from "@/components/ui/select"
 
 interface POSDialogProps {
   open: boolean
@@ -41,7 +48,9 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
   
   // Estado del pedido
   const [selectedItems, setSelectedItems] = useState<(CreateSaleItemDTO & { name: string })[]>([])
-  const [metadata, setMetadata] = useState<Record<string, any>>({})
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("00000000-0000-0000-0000-000000000000")
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("CASH")
+  const [metadata, setMetadata] = useState<Record<string, unknown>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Estado de Inspección
@@ -51,7 +60,7 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
   // Esquema dinámico
   const { currentTenant } = useTenant();
   const industryConfig = currentTenant?.industryType ? getIndustryConfig(currentTenant.industryType) : null;
-  const metadataSchema = (currentTenant as any)?.settings?.metadata_schema?.sale || [];
+  const metadataSchema = (currentTenant as { settings?: { metadata_schema?: { sale?: string[] } } })?.settings?.metadata_schema?.sale || [];
 
   useEffect(() => {
     if (!open) return
@@ -70,7 +79,7 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
           .limit(20)
 
         if (error) throw error
-        setInventory((data as any) ?? [])
+        setInventory((data as InventoryItem[]) ?? [])
       } catch (err) {
         console.error("Error loading inventory:", err)
         toast.error("Error al cargar productos")
@@ -148,8 +157,8 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
       }
 
       const payload: CreateSaleDTO = {
-        customer_id: '00000000-0000-0000-0000-000000000000',
-        payment_method: 'CASH',
+        customer_id: selectedCustomerId,
+        payment_method: selectedPaymentMethod as any,
         items: selectedItems.map(({ name, ...rest }) => rest),
         metadata: finalMetadata,
         notes: `Pedido ${metadata['mesa'] ? 'Mesa ' + metadata['mesa'] : 'Venta Realizada'}`
@@ -158,7 +167,8 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
       await salesService.create(payload)
       toast.success("¡Pedido enviado correctamente!")
       onOpenChange(false)
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       toast.error(error.message)
     } finally {
       setIsSubmitting(false)
@@ -233,8 +243,19 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
 
               {/* Resumen Lateral */}
               <div className="w-80 flex flex-col p-6 bg-card">
+                <div className="space-y-4 mb-6">
+                  <h3 className="font-bold flex items-center gap-2">
+                    <User className="w-4 h-4 text-primary" /> Cliente
+                  </h3>
+                  <CustomerSelect 
+                    tenantId={tenantId}
+                    value={selectedCustomerId}
+                    onValueChange={setSelectedCustomerId}
+                  />
+                </div>
+
                 <h3 className="font-bold mb-4 flex items-center gap-2">
-                  <Utensils className="w-4 h-4" /> Resumen
+                  <ShoppingCart className="w-4 h-4" /> Mi Pedido
                 </h3>
                 <div className="flex-1 overflow-y-auto space-y-3">
                   {selectedItems.map(item => (
@@ -328,13 +349,30 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
                   <User className="w-5 h-5 text-primary" /> Información Adicional
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4" /> Método de Pago
+                    </Label>
+                    <UISelect value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                      <UISelectTrigger className="h-12 border-primary/20 bg-background/50">
+                        <UISelectValue placeholder="Efectivo, Tarjeta..." />
+                      </UISelectTrigger>
+                      <UISelectContent>
+                        <UISelectItem value="CASH">Efectivo 💵</UISelectItem>
+                        <UISelectItem value="CARD">Tarjeta Cred/Deb 💳</UISelectItem>
+                        <UISelectItem value="TRANSFER">Transferencia 🏦</UISelectItem>
+                        <UISelectItem value="MERCADOPAGO">Mercado Pago 📲</UISelectItem>
+                      </UISelectContent>
+                    </UISelect>
+                  </div>
+
                   {metadataSchema.length > 0 ? (
                     metadataSchema.map((field: string) => (
                       <div key={field} className="space-y-2">
                         <Label className="capitalize">{field.replace('_', ' ')}</Label>
                         <Input 
                           placeholder={`Ej: ${field}`}
-                          value={metadata[field] || ""} 
+                          value={(metadata[field] as string) || ""} 
                           onChange={(e) => handleMetadataChange(field, e.target.value)}
                           className="h-12 border-primary/20 bg-background/50 focus-visible:ring-primary"
                         />

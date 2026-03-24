@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { logger } from '@/lib/logger'
 import { ratelimit } from '@/lib/rate-limit'
 
 const PROTECTED_ROUTES = [
@@ -47,7 +48,7 @@ export async function middleware(request: NextRequest) {
         })
       }
     } catch (e) {
-      console.warn('[RateLimit] Error or Timeout, skipping:', e)
+      logger.warn('[RateLimit] Error or Timeout, skipping:', e)
     }
   }
 
@@ -87,8 +88,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
-    // DEBUG: Bypass de onboarding para desarrollo (bypass_onboarding=1)
-    const bypassOnboarding = request.nextUrl.searchParams.get('bypass_onboarding') === '1'
+    // DEBUG: Bypass de onboarding solo para no-producción
+    const isProd = process.env.NODE_ENV === 'production'
+    const bypassOnboarding = !isProd && request.nextUrl.searchParams.get('bypass_onboarding') === '1'
 
     // Check de Onboarding: Si no tiene tenant, mandarlo a onboarding (excepto si ya está allí o en login)
     if (!tenantId && pathname !== '/onboarding' && !isPublic && !bypassOnboarding) {
@@ -101,19 +103,25 @@ export async function middleware(request: NextRequest) {
     }
 
     // Redirigir desde raíz o login al dashboard
-    // EXCEPTO si force_login=1 (para testing de login con usuario existente)
-    const forceLogin = request.nextUrl.searchParams.get('force_login') === '1'
+    // EXCEPTO si force_login=1 (solo para testing en no-producción)
+    const forceLogin = !isProd && request.nextUrl.searchParams.get('force_login') === '1'
     if (pathname === '/' || (pathname === '/auth/login' && !forceLogin)) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
   // 5. Inyectar headers de contexto para Server Components
-  // Esto permite que los Server Components lean el usuario/tenant sin volver a consultar Supabase
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-user-id', user.id)
   if (tenantId) requestHeaders.set('x-tenant-id', (tenantId as string))
   requestHeaders.set('x-user-role', role)
+
+  // Sede actual: Intentar desde URL params o Cookie
+  const locationId = request.nextUrl.searchParams.get('location_id') || 
+                     request.cookies.get('current_location_id')?.value
+  if (locationId) {
+    requestHeaders.set('x-location-id', locationId)
+  }
 
   // Creamos una nueva respuesta con los headers del request actualizados
   const finalResponse = NextResponse.next({

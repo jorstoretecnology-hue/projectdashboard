@@ -7,29 +7,42 @@ import { getAllIndustries } from "@/config/industries"
 import type { IndustryType } from "@/config/industries"
 import { Step1Identity } from "./Step1Identity"
 import { Step2Industry } from "./Step2Industry"
+import { Step2bSpecialty } from "./Step2bSpecialty"
 import { Step3Plan } from "./Step3Plan"
+
+const TOTAL_STEPS = 4
 
 export default function OnboardingPage() {
   const params = useSearchParams()
   const [step, setStep] = useState(1)
   const [name, setName] = useState("")
   const [selectedIndustry, setSelectedIndustry] = useState<IndustryType | null>(null)
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null)
   const [selectedPlan, setSelectedPlan] = useState<string>(params.get('plan') || 'free')
 
   const industries = getAllIndustries()
 
+  const stepLabels: Record<number, string> = {
+    1: 'Identidad',
+    2: 'Industria',
+    3: 'Especialidad',
+    4: 'Selecciona tu Plan',
+  }
+
   const handleNextStep = () => {
-    if (step === 1 && !name.trim()) {
-      return
-    }
-    if (step === 2 && !selectedIndustry) {
-      return
-    }
+    if (step === 1 && !name.trim()) return
+    if (step === 2 && !selectedIndustry) return
     setStep(step + 1)
   }
 
   const handleBack = () => {
     setStep(step - 1)
+  }
+
+  const handleIndustrySelect = (industry: IndustryType) => {
+    setSelectedIndustry(industry)
+    // Reset specialty when changing industry
+    setSelectedSpecialty(null)
   }
 
   return (
@@ -42,14 +55,14 @@ export default function OnboardingPage() {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-white mb-2">Configura tu Negocio</h1>
           <p className="text-slate-400">
-            Paso {step} de 3: {step === 1 ? 'Identidad' : step === 2 ? 'Industria' : 'Selecciona tu Plan'}
+            Paso {step} de {TOTAL_STEPS}: {stepLabels[step]}
           </p>
 
           {/* Progress Bar */}
           <div className="w-full max-w-xs mx-auto h-1.5 bg-slate-800 rounded-full mt-4 overflow-hidden">
             <div
               className="h-full bg-blue-500 transition-all duration-500 ease-out"
-              style={{ width: `${(step / 3) * 100}%` }}
+              style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
             />
           </div>
         </div>
@@ -67,18 +80,30 @@ export default function OnboardingPage() {
         {step === 2 && (
           <Step2Industry
             selectedIndustry={selectedIndustry}
-            onIndustrySelect={setSelectedIndustry}
+            onIndustrySelect={handleIndustrySelect}
             onNext={handleNextStep}
             onBack={handleBack}
             industries={industries}
           />
         )}
 
-        {/* STEP 3: PLAN */}
-        {step === 3 && (
+        {/* STEP 3: ESPECIALIDAD */}
+        {step === 3 && selectedIndustry && (
+          <Step2bSpecialty
+            selectedIndustry={selectedIndustry}
+            selectedSpecialty={selectedSpecialty}
+            onSpecialtySelect={setSelectedSpecialty}
+            onNext={handleNextStep}
+            onBack={handleBack}
+          />
+        )}
+
+        {/* STEP 4: PLAN */}
+        {step === 4 && (
           <Step3Plan
             name={name}
             selectedIndustry={selectedIndustry || 'taller'}
+            selectedSpecialty={selectedSpecialty}
             selectedPlan={selectedPlan}
             onPlanSelect={setSelectedPlan}
             onBack={handleBack}

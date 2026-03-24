@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-import type { TenantConfig, PlanType } from '@/config/tenants';
+import type { TenantConfig, PlanType, TenantBranding } from '@/config/tenants';
 import { tenantService } from '@/modules/tenants/services/tenant.service';
 import { useTenantBranding } from '@/hooks/useTenantBranding';
 import { useTenantRealtime } from '@/hooks/useTenantRealtime';
@@ -30,7 +30,7 @@ interface TenantContextType {
   setIsSuperAdmin: (value: boolean) => void;
   tenants: TenantConfig[];
   updateTenant: (tenantId: string, updates: Partial<TenantConfig>) => void;
-  createTenant: (data: any) => Promise<any>;
+  createTenant: (data: CreateTenantInput) => Promise<TenantConfig>;
   refreshTenants: () => Promise<void>;
   // Simulation state
   simulatedPlan: string | null;
@@ -106,15 +106,33 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   }, [user, authLoading]);
 
   // Función auxiliar de mapeo centralizada (DRY)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapDbTenant = (t: any): TenantConfig => ({
-    ...t,
-    industryType: t.industry_type as IndustryType,
-    activeModules: (t.active_modules as string[]) || [],
-    isActive: (t.is_active as boolean) ?? true,
-    branding: t.branding || { primaryColor: '221 83% 53%' },
-    createdAt: new Date(t.created_at as string).toLocaleDateString(),
-  });
+  const mapDbTenant = (t: Record<string, unknown>): TenantConfig => {
+    const db = t as unknown as {
+      id: string;
+      name: string;
+      plan: string;
+      industry_type: string;
+      active_modules: string[];
+      is_active: boolean;
+      created_at: string;
+      branding?: Record<string, unknown>;
+      feature_flags?: string[];
+    };
+    
+    return {
+      id: db.id,
+      name: db.name,
+      plan: db.plan as PlanType,
+      industryType: db.industry_type as IndustryType,
+      activeModules: db.active_modules || [],
+      featureFlags: (db.feature_flags || []) as any[], // Temporarily as any[] until specific flags are defined
+      isActive: db.is_active ?? true,
+      branding: (db.branding && Object.keys(db.branding).length > 0 
+        ? db.branding 
+        : { primaryColor: '221 83% 53%' }) as unknown as TenantBranding,
+      createdAt: new Date(db.created_at).toLocaleDateString(),
+    };
+  };
 
   // Hook delegado: branding CSS (SRP)
   useTenantBranding(currentTenant);
@@ -159,7 +177,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   const refreshTenants = async () => {
     if (!isSuperAdmin) return;
     const all = await tenantService.listAllTenants();
-    setTenants(all.map(t => mapDbTenant(t as Record<string, unknown>)));
+    setTenants(all.map((t: unknown) => mapDbTenant(t as Record<string, unknown>)));
   };
 
   const setCurrentTenant = (tenantId: string) => {

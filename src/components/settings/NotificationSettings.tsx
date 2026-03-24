@@ -63,7 +63,7 @@ export function NotificationSettings() {
     try {
       const { data, error } = await supabase
         .from("notification_templates")
-        .select("*")
+        .select("id, tenant_id, event_type, channel, template_body, is_active, created_at, updated_at")
         .eq("tenant_id", currentTenant?.id)
 
       if (error) throw error
@@ -104,7 +104,8 @@ export function NotificationSettings() {
 
       toast.success("Plantilla guardada correctamente")
       loadTemplates()
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       toast.error(error.message)
     } finally {
       setIsSaving(false)

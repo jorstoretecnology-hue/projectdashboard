@@ -21,7 +21,20 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 
 async function resetPassword() {
   const email = 'johnjortiz018@gmail.com';
-  const newPassword = 'Password123!';
+  const newPassword = process.env.ADMIN_TEMP_PASSWORD;
+
+  if (!newPassword) {
+    console.error('❌ Falta variable de entorno ADMIN_TEMP_PASSWORD');
+    console.error('Usage: ADMIN_TEMP_PASSWORD="TuPassword123!" node scripts/reset-admin-pwd.js');
+    process.exit(1);
+  }
+
+  // Validar fortaleza de contraseña
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!passwordRegex.test(newPassword)) {
+    console.error('❌ La contraseña debe tener: 8+ caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial');
+    process.exit(1);
+  }
 
   console.log(`Buscando usuario: ${email}`);
 
@@ -51,7 +64,7 @@ async function resetPassword() {
     console.error("Error al actualizar contraseña:", error.message);
   } else {
     console.log(`✅ ¡Contraseña restablecida con éxito!`);
-    console.log(`NUEVA CONTRASEÑA: ${newPassword}`);
+    console.log(`⚠️  Contraseña temporal establecida (revisar variable de entorno)`);
   }
 }
 

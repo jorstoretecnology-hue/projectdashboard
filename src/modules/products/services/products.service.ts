@@ -101,7 +101,7 @@ export class ProductsService {
         tenant_id: this.tenantId,
         // state se calcula automáticamente por trigger o default
       })
-      .select()
+      .select('id, name, price, stock, state, created_at')
       .single();
 
     if (error) throw error;
@@ -120,7 +120,7 @@ export class ProductsService {
       .update(data)
       .eq('id', id)
       .eq('tenant_id', this.tenantId)
-      .select()
+      .select('id, name, price, stock, state, updated_at')
       .single();
 
     if (error) throw error;

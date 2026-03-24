@@ -3,12 +3,14 @@ import { createClient } from '@/lib/supabase/server';
 import { AppRole } from '@/types';
 import { apiError } from '@/lib/api/response';
 import { hasRole } from './guards';
+import { User } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export type AuthenticatedContext = {
-  user: any; // User de Supabase
+  user: User;
   tenantId: string;
   userRole: AppRole;
-  supabase: any; // SupabaseClient
+  supabase: SupabaseClient;
 };
 
 type ApiHandler = (
@@ -100,29 +102,30 @@ export function withAuth(handler: ApiHandler, options: AuthOptions = {}) {
 
       return await handler(req, ctx);
 
-    } catch (error: any) {
-      console.error('[API Error]', error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Error desconocido');
+      console.error('[API Error]', err.message);
 
       // Manejo de errores de validación (Zod)
-      if (error.isValidationError || error.name === 'ZodError') {
+      if (error instanceof Error && ((error as any).isValidationError || error.name === 'ZodError')) {
         return apiError(
           'Validation Error',
           'VALIDATION_ERROR',
           400,
-          error.errors || error.issues
+          (error as any).errors || (error as any).issues
         );
       }
 
       // Manejo de errores de negocio conscientes
-      if (error.statusCode && error.code) { // Si lanzamos errores estructurados
-          return apiError(error.message, error.code, error.statusCode);
+      if (error instanceof Error && (error as any).statusCode && (error as any).code) {
+          return apiError((error as any).message, (error as any).code, (error as any).statusCode);
       }
 
       return apiError(
-        error.message || 'Internal Server Error',
+        err.message || 'Internal Server Error',
         'INTERNAL_ERROR',
         500,
-        process.env.NODE_ENV === 'development' ? error.stack : undefined
+        process.env.NODE_ENV === 'development' ? err.stack : undefined
       );
     }
   };

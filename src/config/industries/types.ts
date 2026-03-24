@@ -30,6 +30,7 @@ export interface IndustryField {
 }
 
 export interface IndustryConfig {
+  slug: IndustryType;
   name: string;
   description: string;
   icon: string;

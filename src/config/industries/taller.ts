@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { IndustryConfig } from './types';
 
 export const tallerConfig: IndustryConfig = {
+  slug: 'taller',
   name: 'Taller Mecánico',
   description: 'Reparación y mantenimiento de motos y carros',
   icon: '🔧',

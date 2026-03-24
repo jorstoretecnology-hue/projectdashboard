@@ -16,4 +16,11 @@ export interface BillingAdapter {
     currentPlan: PlanType;
     targetPlan: PlanType;
   }): Promise<UpgradeResult>;
+
+  createPreference(params: {
+    tenantId: string;
+    targetPlan: PlanType;
+    amount: number;
+    description: string;
+  }): Promise<{ success: boolean; preferenceId?: string; error?: string }>;
 }

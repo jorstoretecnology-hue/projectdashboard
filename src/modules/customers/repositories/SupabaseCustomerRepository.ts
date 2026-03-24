@@ -2,6 +2,16 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { ICustomerRepository } from '../interfaces/ICustomerRepository';
 import { Customer } from '../types';
 import { CreateCustomerDTO, UpdateCustomerDTO, CustomerQueryDTO } from '@/lib/api/schemas/customers';
+import { Database } from '@/lib/supabase/database.types';
+
+type DBCustomer = Database['public']['Tables']['customers']['Row']
+
+// Interface para campos extendidos de customers que no están en database.types
+interface ExtendedCustomerFields {
+  identification_type?: string
+  identification_number?: string
+  city?: string
+}
 
 /**
  * Implementación concreta del Repositorio de Clientes para Supabase
@@ -50,26 +60,29 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
     if (error) throw error;
 
     // Convertir de snake_case (DB) a camelCase (domain) con valores default
-    const customers = (data || []).map(dbItem => ({
-      id: dbItem.id,
-      firstName: dbItem.first_name ?? '',
-      lastName: dbItem.last_name ?? '',
-      email: dbItem.email,
-      phone: dbItem.phone ?? '',
-      companyName: dbItem.company_name ?? '',
-      taxId: dbItem.tax_id ?? '',
-      identificationType: (dbItem as any).identification_type ?? 'CC',
-      identificationNumber: (dbItem as any).identification_number ?? '',
-      address: dbItem.address ?? '',
-      city: dbItem.address ?? '', // Usar address como city fallback
-      locationId: dbItem.location_id,
-      status: dbItem.status ?? 'active',
-      notes: dbItem.notes ?? '',
-      website: dbItem.website ?? '',
-      metadata: {}, // metadata no existe en DB
-      createdAt: dbItem.created_at ?? undefined,
-      updatedAt: dbItem.updated_at ?? undefined,
-    }));
+    const customers = (data || []).map(dbItem => {
+      const extendedFields = dbItem as unknown as ExtendedCustomerFields & DBCustomer
+      return {
+        id: dbItem.id,
+        firstName: dbItem.first_name ?? '',
+        lastName: dbItem.last_name ?? '',
+        email: dbItem.email,
+        phone: dbItem.phone ?? '',
+        companyName: dbItem.company_name ?? '',
+        taxId: dbItem.tax_id ?? '',
+        identificationType: (extendedFields.identification_type as Customer['identificationType']) ?? 'CC',
+        identificationNumber: extendedFields.identification_number ?? '',
+        address: dbItem.address ?? '',
+        city: extendedFields.city ?? dbItem.address ?? '', // Usar address como city fallback
+        locationId: dbItem.location_id ?? undefined,
+        status: (dbItem.status as Customer['status']) ?? 'active',
+        notes: dbItem.notes ?? '',
+        website: dbItem.website ?? '',
+        metadata: {}, // metadata no existe en DB
+        createdAt: dbItem.created_at ?? undefined,
+        updatedAt: dbItem.updated_at ?? undefined,
+      }
+    })
 
     return {
       data: customers,
@@ -99,25 +112,25 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
     }
 
     // Convertir de snake_case (DB) a camelCase (domain) con valores default
-    const dbItem = data as any;
+    const extendedDbItem = data as unknown as ExtendedCustomerFields & DBCustomer
     return {
-      id: dbItem.id,
-      firstName: dbItem.first_name ?? '',
-      lastName: dbItem.last_name ?? '',
-      email: dbItem.email,
-      phone: dbItem.phone ?? '',
-      companyName: dbItem.company_name ?? '',
-      taxId: dbItem.tax_id ?? '',
-      identificationType: dbItem.identification_type ?? 'CC',
-      identificationNumber: dbItem.identification_number ?? '',
-      address: dbItem.address ?? '',
-      city: dbItem.address ?? '', // Usar address como city fallback
-      locationId: dbItem.location_id,
-      status: dbItem.status ?? 'active',
-      notes: dbItem.notes ?? '',
-      website: dbItem.website ?? '',
+      id: extendedDbItem.id,
+      firstName: extendedDbItem.first_name ?? '',
+      lastName: extendedDbItem.last_name ?? '',
+      email: extendedDbItem.email,
+      phone: extendedDbItem.phone ?? '',
+      companyName: extendedDbItem.company_name ?? '',
+      taxId: extendedDbItem.tax_id ?? '',
+      identificationType: (extendedDbItem.identification_type as Customer['identificationType']) ?? 'CC',
+      identificationNumber: extendedDbItem.identification_number ?? '',
+      address: extendedDbItem.address ?? '',
+      city: extendedDbItem.city ?? extendedDbItem.address ?? '', // Usar address como city fallback
+      locationId: extendedDbItem.location_id ?? undefined,
+      status: (extendedDbItem.status as Customer['status']) ?? 'active',
+      notes: extendedDbItem.notes ?? '',
+      website: extendedDbItem.website ?? '',
       metadata: {}, // metadata no existe en DB
-      createdAt: dbItem.created_at ?? undefined,
+      createdAt: extendedDbItem.created_at ?? undefined,
     };
   }
 
@@ -137,120 +150,122 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
     if (!data) return null;
 
     // Convertir de snake_case (DB) a camelCase (domain) con valores default
-    const dbItem = data as any;
+    const extendedDbItem = data as unknown as ExtendedCustomerFields & DBCustomer
     return {
-      id: dbItem.id,
-      firstName: dbItem.first_name ?? '',
-      lastName: dbItem.last_name ?? '',
-      email: dbItem.email,
-      phone: dbItem.phone ?? '',
-      companyName: dbItem.company_name ?? '',
-      taxId: dbItem.tax_id ?? '',
-      identificationType: dbItem.identification_type ?? 'CC',
-      identificationNumber: dbItem.identification_number ?? '',
-      address: dbItem.address ?? '',
-      city: dbItem.address ?? '', // Usar address como city fallback
-      locationId: dbItem.location_id,
-      status: dbItem.status ?? 'active',
-      notes: dbItem.notes ?? '',
-      website: dbItem.website ?? '',
+      id: extendedDbItem.id,
+      firstName: extendedDbItem.first_name ?? '',
+      lastName: extendedDbItem.last_name ?? '',
+      email: extendedDbItem.email,
+      phone: extendedDbItem.phone ?? '',
+      companyName: extendedDbItem.company_name ?? '',
+      taxId: extendedDbItem.tax_id ?? '',
+      identificationType: (extendedDbItem.identification_type as Customer['identificationType']) ?? 'CC',
+      identificationNumber: extendedDbItem.identification_number ?? '',
+      address: extendedDbItem.address ?? '',
+      city: extendedDbItem.city ?? extendedDbItem.address ?? '', // Usar address como city fallback
+      locationId: extendedDbItem.location_id ?? undefined,
+      status: (extendedDbItem.status as Customer['status']) ?? 'active',
+      notes: extendedDbItem.notes ?? '',
+      website: extendedDbItem.website ?? '',
       metadata: {}, // metadata no existe en DB
-      createdAt: dbItem.created_at ?? undefined,
+      createdAt: extendedDbItem.created_at ?? undefined,
     };
   }
 
   async create(data: CreateCustomerDTO, tenantId: string): Promise<Customer> {
     // Convertir de camelCase (frontend) a snake_case (database)
-    const dbData: any = {
+    const dbData: Database['public']['Tables']['customers']['Insert'] = {
       first_name: data.firstName,
       last_name: data.lastName,
       email: data.email,
       phone: data.phone,
       company_name: data.companyName,
       tax_id: data.taxId,
-      identification_type: data.identificationType,
-      identification_number: data.identificationNumber,
-      address: data.address,
-      city: data.city,
-      location_id: data.locationId,
       status: data.status,
       notes: data.notes,
       website: data.website,
       tenant_id: tenantId,
-    };
+    }
+
+    // Campos extendidos que pueden no estar en database.types
+    ;(dbData as any).identification_type = data.identificationType
+    ;(dbData as any).identification_number = data.identificationNumber
+    ;(dbData as any).address = data.address
+    ;(dbData as any).city = data.city
+    ;(dbData as any).location_id = data.locationId
 
     const { data: newCustomer, error } = await this.supabase
       .from('customers')
       .insert(dbData)
-      .select()
+      .select("id, first_name, last_name, email, phone, company_name, tax_id, address, status, notes, website, location_id, created_at, updated_at")
       .single();
 
     if (error) throw error;
 
     // Convertir de snake_case (DB) a camelCase (domain) con valores default
-    const dbItem = newCustomer as any;
+    const extendedDbItem = newCustomer as unknown as ExtendedCustomerFields & DBCustomer
     return {
       ...data,
-      id: dbItem.id,
-      identificationType: dbItem.identification_type ?? 'CC',
-      identificationNumber: dbItem.identification_number ?? '',
-      city: dbItem.city ?? data.city ?? '',
+      id: extendedDbItem.id,
+      identificationType: (extendedDbItem.identification_type as Customer['identificationType']) ?? 'CC',
+      identificationNumber: extendedDbItem.identification_number ?? '',
+      city: extendedDbItem.city ?? data.city ?? '',
       metadata: {}, // metadata no existe en DB
-      createdAt: dbItem.created_at ?? undefined,
-      updatedAt: dbItem.updated_at ?? undefined,
+      createdAt: extendedDbItem.created_at ?? undefined,
+      updatedAt: extendedDbItem.updated_at ?? undefined,
     };
   }
 
   async update(id: string, data: UpdateCustomerDTO, tenantId: string): Promise<Customer> {
     // Convertir de camelCase (frontend) a snake_case (database)
-    const dbData: any = {};
-    if (data.firstName !== undefined) dbData.first_name = data.firstName;
-    if (data.lastName !== undefined) dbData.last_name = data.lastName;
-    if (data.email !== undefined) dbData.email = data.email;
-    if (data.phone !== undefined) dbData.phone = data.phone;
-    if (data.companyName !== undefined) dbData.company_name = data.companyName;
-    if (data.taxId !== undefined) dbData.tax_id = data.taxId;
-    if (data.identificationType !== undefined) dbData.identification_type = data.identificationType;
-    if (data.identificationNumber !== undefined) dbData.identification_number = data.identificationNumber;
-    if (data.address !== undefined) dbData.address = data.address;
-    if (data.city !== undefined) dbData.city = data.city;
-    if (data.locationId !== undefined) dbData.location_id = data.locationId;
-    if (data.status !== undefined) dbData.status = data.status;
-    if (data.notes !== undefined) dbData.notes = data.notes;
-    if (data.website !== undefined) dbData.website = data.website;
+    const dbData: Partial<Database['public']['Tables']['customers']['Update']> = {}
+    if (data.firstName !== undefined) dbData.first_name = data.firstName
+    if (data.lastName !== undefined) dbData.last_name = data.lastName
+    if (data.email !== undefined) dbData.email = data.email
+    if (data.phone !== undefined) dbData.phone = data.phone
+    if (data.companyName !== undefined) dbData.company_name = data.companyName
+    if (data.taxId !== undefined) dbData.tax_id = data.taxId
+    if (data.identificationType !== undefined) (dbData as any).identification_type = data.identificationType
+    if (data.identificationNumber !== undefined) (dbData as any).identification_number = data.identificationNumber
+    if (data.address !== undefined) (dbData as any).address = data.address
+    if (data.city !== undefined) (dbData as any).city = data.city
+    if (data.locationId !== undefined) (dbData as any).location_id = data.locationId
+    if (data.status !== undefined) dbData.status = data.status
+    if (data.notes !== undefined) dbData.notes = data.notes
+    if (data.website !== undefined) dbData.website = data.website
 
     const { data: updated, error } = await this.supabase
       .from('customers')
       .update(dbData)
       .eq('id', id)
       .eq('tenant_id', tenantId)
-      .select()
+      .select("id, first_name, last_name, email, phone, company_name, tax_id, address, status, notes, website, location_id, created_at, updated_at")
       .single();
 
     if (error) throw error;
 
     // Convertir de snake_case (DB) a camelCase (domain) con valores default
-    const dbItem = updated as any;
+    const extendedDbItem = updated as unknown as ExtendedCustomerFields & DBCustomer
     return {
       ...data,
-      id: dbItem.id,
-      firstName: dbItem.first_name ?? data.firstName ?? '',
-      lastName: dbItem.last_name ?? data.lastName ?? '',
-      email: dbItem.email,
-      phone: dbItem.phone ?? '',
-      companyName: dbItem.company_name ?? '',
-      taxId: dbItem.tax_id ?? '',
-      identificationType: dbItem.identification_type ?? 'CC',
-      identificationNumber: dbItem.identification_number ?? '',
-      address: dbItem.address ?? '',
-      city: dbItem.city ?? data.city ?? '',
-      locationId: dbItem.location_id,
-      status: dbItem.status ?? 'active',
-      notes: dbItem.notes ?? '',
-      website: dbItem.website ?? '',
+      id: extendedDbItem.id,
+      firstName: extendedDbItem.first_name ?? data.firstName ?? '',
+      lastName: extendedDbItem.last_name ?? data.lastName ?? '',
+      email: extendedDbItem.email,
+      phone: extendedDbItem.phone ?? '',
+      companyName: extendedDbItem.company_name ?? '',
+      taxId: extendedDbItem.tax_id ?? '',
+      identificationType: (extendedDbItem.identification_type as Customer['identificationType']) ?? 'CC',
+      identificationNumber: extendedDbItem.identification_number ?? '',
+      address: extendedDbItem.address ?? '',
+      city: extendedDbItem.city ?? data.city ?? '',
+      locationId: extendedDbItem.location_id ?? undefined,
+      status: (extendedDbItem.status as Customer['status']) ?? 'active',
+      notes: extendedDbItem.notes ?? '',
+      website: extendedDbItem.website ?? '',
       metadata: {}, // metadata no existe en DB
-      createdAt: dbItem.created_at ?? undefined,
-      updatedAt: dbItem.updated_at ?? undefined,
+      createdAt: extendedDbItem.created_at ?? undefined,
+      updatedAt: extendedDbItem.updated_at ?? undefined,
     } as Customer;
   }
 

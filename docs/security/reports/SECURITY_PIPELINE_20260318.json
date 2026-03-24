@@ -1,0 +1,78 @@
+{
+  "date": "2026-03-18",
+  "commit": "20c49c93ccaab07267d206362ff96e60e17aa3f4",
+  "status": "with_observations",
+  "errors": {
+    "typeErrors": 0,
+    "anyTypes": 29,
+    "consoleLogs": 67,
+    "selectStarQueries": 45,
+    "missingRls": 0,
+    "missingZodValidation": 0,
+    "hardcodedSecrets": 0
+  },
+  "tests": {
+    "passed": 10,
+    "failed": 0,
+    "coverage": 0
+  },
+  "dependencies": {
+    "critical": 0,
+    "high": 0,
+    "moderate": 0,
+    "low": 0,
+    "total": 0
+  },
+  "findings": [
+    {
+      "type": "security",
+      "severity": "high",
+      "file": "src/components/settings/NotificationSettings.tsx",
+      "line": 66,
+      "description": "FIXED: select('*') reemplazado con campos explícitos"
+    },
+    {
+      "type": "security",
+      "severity": "high",
+      "file": "src/components/dashboard/DashboardStats.tsx",
+      "line": 41,
+      "description": "FIXED: select('*') reemplazado con campos explícitos + any type eliminado"
+    },
+    {
+      "type": "security",
+      "severity": "high",
+      "file": "scripts/reset-admin-pwd.js",
+      "line": 24,
+      "description": "FIXED: Hardcoded secret movido a variable de entorno ADMIN_TEMP_PASSWORD"
+    },
+    {
+      "type": "type_error",
+      "severity": "moderate",
+      "file": "src/modules/customers/services/customers.service.ts",
+      "line": 65,
+      "description": "FIXED: any type reemplazado con Database['public']['Tables']['customers']['Insert']"
+    },
+    {
+      "type": "type_error",
+      "severity": "moderate",
+      "file": "src/lib/auth/api-wrapper.ts",
+      "line": 8,
+      "description": "FIXED: any types reemplazados con User y SupabaseClient"
+    },
+    {
+      "type": "security",
+      "severity": "moderate",
+      "file": "src/lib/logger.ts",
+      "line": 23,
+      "description": "INFO: Logger usa console.log solo en development (patrón aceptado)"
+    }
+  ],
+  "recommendations": [
+    "✅ COMPLETED: Refactorizar queries select(*) en componentes principales",
+    "✅ COMPLETED: Mover hardcoded secret a variable de entorno",
+    "✅ COMPLETED: Reemplazar tipos 'any' en services y api-wrappers principales",
+    "PENDING: Continuar eliminando tipos 'any' restantes (29 ocurrencias)",
+    "PENDING: Reemplazar console.log con logger en archivos de producción",
+    "PENDING: Ejecutar npm run check para validación completa de tipos"
+  ]
+}

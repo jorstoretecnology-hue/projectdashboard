@@ -56,8 +56,9 @@ export function KDSBoard({ tenantId }: KDSBoardProps) {
       await salesService.updateState(id, nextStatus)
       toast.success(`Pedido #${id.slice(0,5)} actualizado`)
       // El estado se actualizará automáticamente por la suscripción Realtime
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error: unknown) {
+      const err = error as Error;
+      toast.error(err.message)
     }
   }
 

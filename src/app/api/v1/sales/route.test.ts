@@ -60,9 +60,6 @@ describe('Sales API POST', () => {
     // 4. Test
     const res = await POST(req);
     const json = await res.json();
-    
-    // Debug info if fail
-    if (res.status !== 201) console.log('Test Fail Response:', json);
 
     expect(res.status).toBe(201);
     expect(json.success).toBe(true);

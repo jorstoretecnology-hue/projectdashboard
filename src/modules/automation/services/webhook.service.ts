@@ -25,7 +25,7 @@ export class WebhookService {
    */
   async list(tenantId: string): Promise<WebhookSubscription[]> {
     const { data, error } = await this.supabaseClient
-      .from("webhook_subscriptions" as any)
+      .from("webhook_subscriptions")
       .select("id, tenant_id, url, event_type, secret, is_active, created_at, updated_at")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
@@ -48,9 +48,9 @@ export class WebhookService {
     }
 
     const { data: newSub, error } = await this.supabaseClient
-      .from("webhook_subscriptions" as any)
-      .insert(insertData as any)
-      .select()
+      .from("webhook_subscriptions")
+      .insert(insertData)
+      .select('id, tenant_id, url, event_type, secret, is_active, created_at, updated_at')
       .single()
 
     if (error) {
@@ -68,11 +68,11 @@ export class WebhookService {
    */
   async update(id: string, updates: Partial<WebhookSubscriptionUpdate>, tenantId: string): Promise<WebhookSubscription> {
     const { data: updatedSub, error } = await this.supabaseClient
-      .from("webhook_subscriptions" as any)
-      .update(updates as any)
+      .from("webhook_subscriptions")
+      .update(updates)
       .eq("id", id)
       .eq("tenant_id", tenantId)
-      .select()
+      .select('id, tenant_id, url, event_type, secret, is_active, created_at, updated_at')
       .single()
 
     if (error) {
@@ -88,7 +88,7 @@ export class WebhookService {
    */
   async delete(id: string, tenantId: string): Promise<void> {
     const { error } = await this.supabaseClient
-      .from("webhook_subscriptions" as any)
+      .from("webhook_subscriptions")
       .delete()
       .eq("id", id)
       .eq("tenant_id", tenantId)

@@ -37,6 +37,7 @@ export function OrderCard({ order, onStatusChange, disabled }: OrderCardProps) {
   }
 
   const currentStatus = statusConfig[order.state] || { label: order.state, color: "bg-gray-100" }
+  const metadata = (order.metadata as Record<string, string>) || null;
 
   return (
     <Card className={cn(
@@ -47,10 +48,10 @@ export function OrderCard({ order, onStatusChange, disabled }: OrderCardProps) {
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
-              {order.metadata?.mesa ? `Mesa #${order.metadata.mesa}` : `Orden #${order.id.slice(0, 5)}`}
-              {order.metadata?.zona && (
+              {metadata?.mesa ? `Mesa #${metadata.mesa}` : `Orden #${order.id.slice(0, 5)}`}
+              {metadata?.zona && (
                 <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                  {order.metadata.zona}
+                  {metadata.zona}
                 </span>
               )}
             </CardTitle>

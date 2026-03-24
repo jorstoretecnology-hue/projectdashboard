@@ -5,17 +5,37 @@ import { useTenant } from "@/providers"
 import { PLAN_INFO, type PlanType } from "@/config/tenants"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CreditCard, RotateCcw, ShieldAlert } from "lucide-react"
+import { CreditCard, RotateCcw, ShieldAlert, CheckCircle2, XCircle, Info } from "lucide-react"
 
 import { CurrentPlanBanner } from "@/components/billing/CurrentPlanBanner"
 import { QuotaOverview } from "@/components/billing/QuotaOverview"
 import { PlanCard } from "@/components/billing/PlanCard"
 import { UpgradePlanDialog } from "@/components/billing/UpgradePlanDialog"
+import { PaymentHistory } from "@/components/billing/PaymentHistory"
 import { usePlanUpgrade } from "@/hooks/use-plan-upgrade"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useEffect } from "react"
+import { tenantDashboardService, type TenantDashboardMetrics } from "@/modules/dashboard/services/tenant-metrics.service"
+import { useRouter, useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 
 export default function BillingPage() {
   const { currentTenant } = useTenant()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const status = searchParams.get('status')
+  const [showStatusAlert, setShowStatusAlert] = useState(!!status)
+
+  useEffect(() => {
+    if (status) {
+      const timer = setTimeout(() => {
+        setShowStatusAlert(false)
+        // Limpiar URL sin recargar
+        router.replace('/billing')
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [status, router])
 
   // 1. Guard Clause: Verificación de módulo "Billing"
   // Nota: Se asume que el módulo se llama "Billing" en la configuración del tenant.
@@ -27,7 +47,7 @@ export default function BillingPage() {
   }, [currentTenant])
 
   // 2. Hook de Simulación de Upgrade (Paso 3)
-  const { upgradePlan, resetSimulation, effectivePlan, isSimulated } = usePlanUpgrade()
+  const { upgradePlan, resetSimulation, effectivePlan, isSimulated, isPending } = usePlanUpgrade()
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false)
   const [targetPlan, setTargetPlan] = useState<PlanType | null>(null)
 
@@ -46,30 +66,42 @@ export default function BillingPage() {
     if (targetPlan) await upgradePlan(targetPlan)
   }
 
-  // Datos mockeados para QuotaOverview (Paso 3)
-  const quotaMock = [
+  const [metrics, setMetrics] = useState<TenantDashboardMetrics | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Cargar métricas reales
+  useEffect(() => {
+    if (currentTenant) {
+      tenantDashboardService.getMetrics(currentTenant.id)
+        .then(setMetrics)
+        .finally(() => setLoading(false))
+    }
+  }, [currentTenant])
+
+  // Datos de cuotas dinámicos
+  const quotaData = useMemo(() => [
     {
       key: "users",
       title: "Usuarios",
       description: "Usuarios activos en la plataforma",
-      used: 4,
-      limit: currentPlanInfo?.maxUsers ?? 5,
+      used: metrics?.activeUsers || 0,
+      limit: currentPlanInfo?.maxUsers || 1,
     },
     {
       key: "inventory",
       title: "Inventario",
       description: "Productos y servicios registrados",
-      used: 124,
-      limit: 500,
+      used: metrics?.inventoryUsage || 0,
+      limit: metrics?.inventoryLimit || 0,
     },
     {
       key: "customers",
       title: "Clientes",
       description: "Cartera de clientes",
-      used: 42,
-      limit: "unlimited" as const,
+      used: metrics?.customerUsage || 0,
+      limit: metrics?.customerLimit || 0,
     },
-  ]
+  ], [metrics, currentPlanInfo])
 
   // 2. Render de Bloqueo si no activo
   if (!isModuleActive) {
@@ -102,6 +134,37 @@ export default function BillingPage() {
           </p>
         </div>
 
+        {/* Alertas de Estado de Pago */}
+        {showStatusAlert && status === 'success' && (
+          <Alert className="border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertTitle>¡Pago Exitoso!</AlertTitle>
+            <AlertDescription>
+              Tu suscripción se ha actualizado correctamente.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {showStatusAlert && status === 'failure' && (
+          <Alert variant="destructive">
+            <XCircle className="h-4 w-4" />
+            <AlertTitle>Pago Fallido</AlertTitle>
+            <AlertDescription>
+              No pudimos procesar tu pago. Por favor intenta de nuevo.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {showStatusAlert && status === 'pending' && (
+          <Alert className="border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-400">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Pago en Proceso</AlertTitle>
+            <AlertDescription>
+              Tu pago está pendiente de confirmación. Te avisaremos pronto.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Banner de Simulación */}
         {isSimulated && (
           <Alert variant="warning" className="border-amber-500/50 bg-amber-500/10">
@@ -131,8 +194,9 @@ export default function BillingPage() {
           </div>
 
           {/* Uso de Cuotas */}
-          <div className="lg:col-span-2">
-            <QuotaOverview quotas={quotaMock} />
+          <div className="lg:col-span-2 space-y-6">
+            <QuotaOverview quotas={quotaData} />
+            <PaymentHistory />
           </div>
         </div>
 
@@ -181,6 +245,7 @@ export default function BillingPage() {
           currentPlan={effectivePlan as PlanType}
           targetPlan={targetPlan}
           onConfirm={handleUpgradeConfirm}
+          isLoading={isPending}
         />
       )}
     </div>

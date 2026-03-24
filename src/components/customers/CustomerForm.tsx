@@ -1,8 +1,8 @@
 "use client"
 
-import { useForm } from "react-hook-form"
+import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { createCustomerSchema, type CustomerFormValues } from "@/modules/customers/types"
+import { createCustomerSchema, type CustomerFormValues, IdentificationTypeEnum } from "@/modules/customers/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,8 +45,8 @@ export function CustomerForm({
 
     const metadataShape: Record<string, z.ZodTypeAny> = {};
     customerFields.forEach(field => {
-      // Usar la validación definida en la config o z.any() por defecto
-      let fieldSchema = field.validation || z.any();
+      // Usar la validación definida en la config o z.string() por defecto para evitar any
+      let fieldSchema = field.validation || z.string();
 
       // Si el campo no es requerido, hacerlo opcional en el esquema
       if (!field.required) {
@@ -68,18 +68,18 @@ export function CustomerForm({
     watch,
     formState: { errors },
   } = useForm<CustomerFormValues>({
-    resolver: zodResolver(dynamicSchema) as any,
+    resolver: zodResolver(dynamicSchema) as Resolver<CustomerFormValues>,
     defaultValues: {
       status: "active",
       metadata: {},
-      ...(defaultValues as any),
-    } as any,
+      ...(defaultValues as Partial<CustomerFormValues>),
+    },
   })
 
   // Manejador para metadatos dinámicos
-  const metadata = watch("metadata" as any) || {};
-  const setMetadataValue = (key: string, value: any) => {
-    setValue("metadata" as any, { ...metadata, [key]: value });
+  const metadata = (watch("metadata") as Record<string, unknown>) || {};
+  const setMetadataValue = (key: string, value: unknown) => {
+    setValue("metadata", { ...metadata, [key]: value });
   };
 
   return (
@@ -118,7 +118,7 @@ export function CustomerForm({
             <Label htmlFor="status">Estado</Label>
             <Select
               defaultValue={defaultValues?.status || "active"}
-              onValueChange={(val) => setValue("status", val as any)}
+              onValueChange={(val) => setValue("status", val as "active" | "lead" | "inactive")}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar estado" />
@@ -141,13 +141,42 @@ export function CustomerForm({
         </h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="companyName">Nombre de la Empresa</Label>
+            <Label htmlFor="identificationType">Tipo de ID (LATAM)</Label>
+            <Select
+              defaultValue={defaultValues?.identificationType || "CC"}
+              onValueChange={(val) => setValue("identificationType", val as any)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CC">Cédula de Ciudadanía (CC)</SelectItem>
+                <SelectItem value="NIT">NIT (Empresas)</SelectItem>
+                <SelectItem value="CE">Cédula de Extranjería</SelectItem>
+                <SelectItem value="RUT">RUT (Tributario)</SelectItem>
+                <SelectItem value="PASAPORTE">Pasaporte</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="identificationNumber">Número de Identificación</Label>
+            <Input 
+              id="identificationNumber" 
+              {...register("identificationNumber")} 
+              placeholder="Sin puntos ni guiones" 
+            />
+            {errors.identificationNumber && <p className="text-xs text-destructive">{errors.identificationNumber.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="companyName">Nombre de la Empresa (Opcional)</Label>
             <Input id="companyName" {...register("companyName")} placeholder="Ej: Tech Solutions S.A." />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="taxId">Identificación Fiscal (RUC/VAT)</Label>
-            <Input id="taxId" {...register("taxId")} placeholder="Ej: 20-12345678-9" />
+            <Label htmlFor="taxId" className="text-muted-foreground">ID Fiscal Adicional (Opcional)</Label>
+            <Input id="taxId" {...register("taxId")} placeholder="RUC, VAT..." />
           </div>
 
           <div className="space-y-2 sm:col-span-2">
@@ -176,7 +205,7 @@ export function CustomerForm({
                 {field.type === 'select' ? (
                   <Select
                     onValueChange={(val) => setMetadataValue(field.key, val)}
-                    value={metadata[field.key] || ""}
+                    value={(metadata[field.key] as string) || ""}
                   >
                     <SelectTrigger className="bg-muted/30 border-primary/5">
                       <SelectValue placeholder={field.placeholder || "Seleccionar..."} />
@@ -192,7 +221,7 @@ export function CustomerForm({
                 ) : field.type === 'textarea' ? (
                   <textarea
                     placeholder={field.placeholder}
-                    value={metadata[field.key] || ""}
+                    value={(metadata[field.key] as string) || ""}
                     onChange={(e) => setMetadataValue(field.key, e.target.value)}
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-muted/30 border-primary/5 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
@@ -200,14 +229,14 @@ export function CustomerForm({
                   <Input 
                     type={field.type === 'number' ? 'number' : 'text'}
                     placeholder={field.placeholder}
-                    value={metadata[field.key] || ""}
+                    value={(metadata[field.key] as string | number | undefined) || ""}
                     onChange={(e) => setMetadataValue(field.key, field.type === 'number' ? parseFloat(e.target.value) : e.target.value)}
                     className="bg-muted/30 border-primary/5"
                   />
                 )}
-                {errors.metadata && (errors.metadata as any)[field.key] && (
+                {errors.metadata && (errors.metadata as Record<string, { message?: string }>)[field.key] && (
                   <p className="text-xs text-destructive mt-1">
-                    {(errors.metadata as any)[field.key].message}
+                    {(errors.metadata as Record<string, { message?: string }>)[field.key].message}
                   </p>
                 )}
               </div>

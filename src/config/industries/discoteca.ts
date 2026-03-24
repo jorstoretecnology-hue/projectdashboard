@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { IndustryConfig } from './types';
 
 export const discotecaConfig: IndustryConfig = {
-  name: 'Discoteca',
+  slug: 'discoteca',
+  name: 'Bar / Discoteca / Entretenimiento',
   description: 'Eventos nocturnos, bebidas y entretenimiento',
   icon: '🕺',
   productTypes: ['entrada', 'bebida', 'evento_privado', 'reservacion'],

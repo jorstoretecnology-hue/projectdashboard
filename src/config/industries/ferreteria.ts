@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { IndustryConfig } from './types';
 
 export const ferreteriaConfig: IndustryConfig = {
-  name: 'Ferretería',
+  slug: 'ferreteria',
+  name: 'Ferretería / Construcción',
   description: 'Herramientas, materiales de construcción y ferretería',
   icon: '🔨',
   productTypes: ['herramienta', 'material', 'electricidad', 'plomeria', 'pintura'],

@@ -10,6 +10,7 @@ export const inventoryItemSchema = z.object({
   description: z.string().optional(),
   type: z.enum(["product", "service", "room", "membership"] as const),
   price: z.number().min(0, "El precio no puede ser negativo"),
+  cost_price: z.number().min(0, "El costo no puede ser negativo").optional(),
   stock: z.number().int().min(0, "El stock no puede ser negativo"),
   sku: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(), // ✨ Permitir metadata dinámica por industria
@@ -31,6 +32,6 @@ export interface InventoryItem {
   stock: number
   sku?: string
   images: string[] // ✨ Cambio de image?: string a images: string[]
-  metadata?: Record<string, any> // ✨ Campos específicos de la industria
+  metadata?: Record<string, unknown> // ✨ Campos específicos de la industria
   createdAt?: string
 }

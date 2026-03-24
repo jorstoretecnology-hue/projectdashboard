@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PLAN_INFO, type PlanType } from '@/config/tenants';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, ExternalLink, Loader2 } from 'lucide-react';
 
 interface UpgradePlanDialogProps {
   open: boolean;
@@ -17,16 +17,19 @@ interface UpgradePlanDialogProps {
   currentPlan: PlanType;
   targetPlan: PlanType;
   onConfirm: () => void;
+  isLoading?: boolean;
 }
 
-export function UpgradePlanDialog({ open, onOpenChange, currentPlan, targetPlan, onConfirm }: UpgradePlanDialogProps) {
+export function UpgradePlanDialog({ 
+  open, 
+  onOpenChange, 
+  currentPlan, 
+  targetPlan, 
+  onConfirm,
+  isLoading = false
+}: UpgradePlanDialogProps) {
   const currentPlanInfo = PLAN_INFO[currentPlan];
   const targetPlanInfo = PLAN_INFO[targetPlan];
-
-  const handleUpgrade = async () => {
-    await onConfirm();
-    onOpenChange(false);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -60,10 +63,22 @@ export function UpgradePlanDialog({ open, onOpenChange, currentPlan, targetPlan,
             </ul>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleUpgrade}>
-            Confirmar Upgrade (Simulado)
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+            Cancelar
+          </Button>
+          <Button onClick={onConfirm} disabled={isLoading} className="gap-2">
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Procesando...
+              </>
+            ) : (
+              <>
+                Ir a MercadoPago
+                <ExternalLink className="h-4 w-4" />
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

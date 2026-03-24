@@ -59,10 +59,9 @@ describe('Purchases API', () => {
 
     const res = await createPost(req);
     const json = await res.json();
-    
-    if (res.status !== 201) console.log('FAIL JSON:', JSON.stringify(json, null, 2));
 
     expect(res.status).toBe(201);
+    expect(json.success).toBe(true);
     expect(mockInsert).toHaveBeenCalledTimes(2); 
   });
 });

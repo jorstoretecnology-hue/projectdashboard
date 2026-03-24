@@ -15,7 +15,7 @@ async function checkDuplicates() {
     .then(res => {
         if (res.error) throw res.error;
         const counts: Record<string, number> = {};
-        const duplicates: any[] = [];
+        const duplicates: Array<{ email: string | null; tenant_id: string | null }> = [];
         res.data?.forEach(c => {
             const key = `${c.tenant_id}:${c.email}`;
             counts[key] = (counts[key] || 0) + 1;
