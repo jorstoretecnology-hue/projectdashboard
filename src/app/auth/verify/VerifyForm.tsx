@@ -55,7 +55,7 @@ export function VerifyForm({ email, type, onVerified }: VerifyFormProps) {
 
       toast.success("¡Cuenta verificada exitosamente!")
       onVerified()
-    } catch (err: any) {
+    } catch (err) {
       logger.error("[Verify] Exception during OTP verification", { error: err })
       toast.error("Error inesperado al verificar el código.")
       setLoading(false)

@@ -72,7 +72,7 @@ export default async function PostAuthPage({ searchParams }: { searchParams: Pro
     const { data: invitation } = await supabase
       .from('invitations')
       .select('id, tenant_id, app_role, email, status')
-      .eq('email', user.email)
+      .eq('email', user.email ?? '')
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(1)

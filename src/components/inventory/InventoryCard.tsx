@@ -59,9 +59,10 @@ export function InventoryCard({ item, onEdit, onDelete }: InventoryCardProps) {
         <div className="flex items-center justify-between pt-2">
           <span className="text-sm text-muted-foreground">
             Stock:{" "}
-            <strong className={Number(item.stock) <= 5 ? "text-destructive" : "text-foreground"}>
-              {typeof item.stock === "number" ? item.stock : "∞"}
+            <strong className={(item.stock ?? 0) <= 5 ? "text-destructive" : "text-foreground"}>
+              {typeof item.stock === "number" ? item.stock : "0"}
             </strong>
+
           </span>
           <span className="text-lg font-bold">
             ${item.price.toLocaleString()}

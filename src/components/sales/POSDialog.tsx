@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Search, Plus, Trash2, Utensils, User, ShoppingCart, Loader2, Camera } from "lucide-react"
+import { Search, Plus, Trash2, Utensils, User, ShoppingCart, Loader2, Camera, CreditCard } from "lucide-react"
 import { useTenant } from "@/providers"
 import { inventoryService } from "@/modules/inventory/services/inventory.service"
 import { InventoryItem } from "@/modules/inventory/types"
@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 
 import { getIndustryConfig } from "@/config/industries"
 import { InspectionCamera } from "./InspectionCamera"
+import { InspectionChecklist } from "./InspectionChecklist"
 import { useDebounce } from 'use-debounce'
 import { createClient } from '@/lib/supabase/client'
 import { CustomerSelect } from "@/components/customers/CustomerSelect"

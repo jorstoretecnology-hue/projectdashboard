@@ -58,7 +58,7 @@ export class SuperAdminStatsService {
       }
 
       // Track most recent update
-      if (!acc[tid].lastUpdated || row.updated_at > acc[tid].lastUpdated) {
+      if (row.updated_at && (!acc[tid].lastUpdated || row.updated_at > acc[tid].lastUpdated)) {
         acc[tid].lastUpdated = row.updated_at
       }
 

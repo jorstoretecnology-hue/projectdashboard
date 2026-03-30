@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/client';
 import { AppRole } from '@/types';
 import { AuditLogService } from '@/core/security/audit.service';
 import { logger } from '@/lib/logger';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/lib/supabase/database.types';
 
 export interface Invitation {

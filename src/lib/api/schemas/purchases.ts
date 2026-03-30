@@ -48,6 +48,10 @@ export const createPurchaseOrderSchema = z.object({
 });
 
 export const receivePurchaseSchema = z.object({
+  items: z.array(z.object({
+    product_id: z.string().uuid(),
+    quantity_received: z.number().int().positive()
+  })).min(1, 'Debe incluir al menos un producto a recibir'),
   notes: z.string().optional(),
 });
 

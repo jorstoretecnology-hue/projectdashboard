@@ -10,7 +10,7 @@ interface Plan {
   id: string
   slug: string
   name: string
-  price_monthly: number
+  price_monthly: number | null
   max_locations: number | null
   max_users: number | null
 }
@@ -130,7 +130,7 @@ export default async function PlansPage() {
                 <CardTitle className="text-2xl font-black text-white capitalize">{plan.name}</CardTitle>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-4xl font-black tracking-tighter text-white">
-                    {isFree ? '$0' : `$${plan.price_monthly.toLocaleString()}`}
+                    {isFree ? '$0' : `$${(plan.price_monthly ?? 0).toLocaleString()}`}
                   </span>
                   {!isFree && <span className="text-sm font-medium text-slate-500">/mes</span>}
                 </div>

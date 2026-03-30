@@ -36,7 +36,8 @@ export function Step2bSpecialty({
     async function loadSpecialties() {
       setLoading(true)
       const supabase = createClient()
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from("industry_specialties")
         .select("slug, name, icon")
         .eq("industry_slug", selectedIndustry)
@@ -44,7 +45,7 @@ export function Step2bSpecialty({
         .order("name")
 
       if (!error && data) {
-        setSpecialties(data)
+        setSpecialties(data as Specialty[])
       }
       setLoading(false)
     }

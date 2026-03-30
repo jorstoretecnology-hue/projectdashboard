@@ -131,7 +131,7 @@ export function fromDbCustomer(dbData: {
   identification_type?: string;
   identification_number?: string;
   location_id?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }): Customer {
   const {
     first_name,

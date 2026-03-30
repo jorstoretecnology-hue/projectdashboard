@@ -49,7 +49,7 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
     try {
       const { data } = await customersService.list(tenantId)
       setItems(data)
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
       setError("Error cargando clientes. Intenta recargar.")
     } finally {
@@ -108,8 +108,9 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
       toast.success("Cliente eliminado correctamente")
       loadCustomers()
       setIsDeleteDialogOpen(false)
-    } catch (error: any) {
-      if (error.message?.includes("ACCESO_DENEGADO")) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : ''
+      if (message.includes("ACCESO_DENEGADO")) {
         toast.error("No tienes permiso para borrar clientes.")
       } else {
         console.error(error)

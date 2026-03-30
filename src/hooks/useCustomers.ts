@@ -29,7 +29,7 @@ export function useCustomers(tenantId: string | null, searchTerm?: string) {
 
     let dbQuery = supabase
       .from('customers')
-      .select('id, first_name, last_name, name, email, phone, company_name, tax_id, address, notes, status, website, metadata, city, location_id, created_at')
+      .select('id, first_name, last_name, name, email, phone, company_name, tax_id, website, metadata, city, location_id, created_at, identification_type, identification_number')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(100);
@@ -55,18 +55,18 @@ export function useCustomers(tenantId: string | null, searchTerm?: string) {
         phone: item.phone ?? '',
         companyName: item.company_name ?? '',
         taxId: item.tax_id ?? '',
-        identificationType: (item as any).identification_type ?? 'CC',
-        identificationNumber: (item as any).identification_number ?? '',
-        address: item.address ?? '',
-        city: item.address ?? '', // Usar address como city fallback
+        identificationType: (item.identification_type as any) || 'CC',
+        identificationNumber: item.identification_number ?? '',
+        address: item.city ?? '',
+        city: item.city ?? '', 
         locationId: item.location_id,
-        status: item.status ?? 'active',
-        notes: item.notes ?? '',
+        status: 'active',
+        notes: '', // No existe en DB
         website: item.website ?? '',
-        metadata: {}, // metadata no existe en DB
+        metadata: (item.metadata as Record<string, unknown>) || {},
         createdAt: item.created_at ?? undefined,
       }))
-      setCustomers(customers)
+      setCustomers(customers as any)
     }
 
     setIsLoading(false);

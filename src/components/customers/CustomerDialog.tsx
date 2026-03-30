@@ -56,13 +56,14 @@ export function CustomerDialog({
       
       onSuccess?.(result)
       onOpenChange(false)
-    } catch (error: any) {
+    } catch (error) {
       // Manejar error de permiso o quota
-      if (error.message?.includes("ACCESO_DENEGADO")) {
+      const message = error instanceof Error ? error.message : ''
+      if (message.includes("ACCESO_DENEGADO")) {
         toast.error("No tienes permisos suficientes.")
         return
       }
-      if (handleQuotaError(error)) return
+      if (error instanceof Error && handleQuotaError(error)) return
       
       console.error(error)
       toast.error(isEdit ? "Error al actualizar el cliente" : "Error al crear el cliente")

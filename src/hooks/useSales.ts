@@ -57,7 +57,12 @@ export function useSales(tenantId: string | null, query?: SaleQuery) {
       logger.error('[useSales] Error fetching sales', fetchError.message);
       setError(fetchError.message);
     } else {
-      setSales((data ?? []) as Sale[]);
+      const results = (data || []).map((item: any) => ({
+        ...item,
+        customer: item.customers, // Supabase anida por nombre de tabla
+      })) as unknown as Sale[];
+      
+      setSales(results);
       setTotal(count ?? 0);
     }
 

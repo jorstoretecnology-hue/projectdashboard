@@ -48,11 +48,9 @@ interface Tenant {
   name: string
   is_active: boolean
   industry_type: string | null
-  specialty_slug: string | null
   plan: string | null
   created_at: string
   industries?: Industry | Industry[] | null
-  industry_specialties?: Specialty | Specialty[] | null
 }
 
 interface Props {
@@ -67,9 +65,8 @@ export default async function TenantDetailPage({ params }: Props) {
   const { data: tenant, error } = await supabase
     .from('tenants')
     .select(`
-      id, name, is_active, industry_type, specialty_slug, plan, created_at,
-      industries:industry_type(slug, name, description),
-      industry_specialties:specialty_slug(slug, name, icon)
+      id, name, is_active, industry_type, plan, created_at,
+      industries:industry_type(slug, name, description)
     `)
     .eq('id', id)
     .single()
@@ -163,7 +160,6 @@ export default async function TenantDetailPage({ params }: Props) {
                 {[
                   { label: 'Nombre', value: typedTenant.name },
                   { label: 'Industria', value: (Array.isArray(typedTenant.industries) ? typedTenant.industries[0]?.name : typedTenant.industries?.name) || typedTenant.industry_type || '-' },
-                  { label: 'Especialidad', value: (Array.isArray(typedTenant.industry_specialties) ? typedTenant.industry_specialties[0]?.name : typedTenant.industry_specialties?.name) || 'General' },
                   { label: 'Plan', value: typedTenant.plan?.toUpperCase() || 'FREE' },
                   { label: 'Creado', value: typedTenant.created_at ? new Date(typedTenant.created_at).toLocaleDateString('es-CO', { dateStyle: 'long' }) : '-' },
                 ].map((item) => (

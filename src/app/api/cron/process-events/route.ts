@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     // Para simplificar, obtenemos eventos de los últimos 10 minutos que no estén en automation_logs
     const { data: events, error } = await supabase
       .from('domain_events')
-      .select('*')
+      .select('id, event_type, entity_id, entity_type, tenant_id, payload, created_at')
       .order('created_at', { ascending: true })
       .limit(20);
 
@@ -41,8 +41,9 @@ export async function GET(req: NextRequest) {
        processed: events.length 
     });
 
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error inesperado'
     logger.error('[Cron] Event Processor failed:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

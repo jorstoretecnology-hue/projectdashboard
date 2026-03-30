@@ -12,7 +12,7 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
   async findAll(tenantId: string, query: ProductQueryDTO) {
     let supabaseQuery = this.supabase
       .from('products')
-      .select('*', { count: 'exact' })
+      .select('id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at', { count: 'exact' })
       .eq('tenant_id', tenantId)
       .is('deleted_at', null);
 
@@ -53,7 +53,7 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
   async findById(id: string, tenantId: string): Promise<InventoryItem | null> {
     const { data, error } = await this.supabase
       .from('products')
-      .select('*')
+      .select('id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at')
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .is('deleted_at', null)
@@ -66,7 +66,7 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
   async findBySku(sku: string, tenantId: string): Promise<InventoryItem | null> {
     const { data, error } = await this.supabase
       .from('products')
-      .select('*')
+      .select('id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at')
       .eq('sku', sku)
       .eq('tenant_id', tenantId)
       .is('deleted_at', null)
@@ -80,9 +80,18 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
     const { data: newProduct, error } = await this.supabase
       .from('products')
       .insert({
-        ...data,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        stock: data.stock,
+        sku: data.sku,
+        industry_type: data.industry_type,
+        metadata: data.metadata as any, // Json in DB
+        threshold_low: data.threshold_low,
+        threshold_critical: data.threshold_critical,
+        category: (data as any).category || 'General', // Fallback for transition
         tenant_id: tenantId,
-      } as any) // Cast as any because of possible field mismatches during sync
+      })
       .select()
       .single();
 
@@ -106,7 +115,7 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
   async delete(id: string, tenantId: string): Promise<void> {
     const { error } = await this.supabase
       .from('products')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
       .eq('tenant_id', tenantId);
 
@@ -116,17 +125,25 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
   private mapToDomain(dbProduct: DBProduct): InventoryItem {
     return {
       id: dbProduct.id,
+      tenant_id: dbProduct.tenant_id,
       name: dbProduct.name,
-      description: dbProduct.description || '',
-      type: (dbProduct as any).type || 'product', // 'type' was added in Phase 9
-      productKind: 'simple',
-      category: (dbProduct as any).category || 'General',
+      description: dbProduct.description,
+      type: dbProduct.type,
+      industry_type: dbProduct.industry_type,
+      category: dbProduct.category,
       price: Number(dbProduct.price),
-      stock: Number(dbProduct.stock),
-      sku: dbProduct.sku || undefined,
+      stock: dbProduct.stock,
+      sku: dbProduct.sku,
+      image: dbProduct.image,
       images: dbProduct.image ? [dbProduct.image] : [],
       metadata: (dbProduct.metadata as Record<string, unknown>) || {},
-      createdAt: dbProduct.created_at || undefined,
+      state: dbProduct.state,
+      is_blocked: dbProduct.is_blocked,
+      threshold_low: dbProduct.threshold_low,
+      threshold_critical: dbProduct.threshold_critical,
+      createdAt: dbProduct.created_at,
+      updatedAt: dbProduct.updated_at,
     };
   }
 }
+

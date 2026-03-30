@@ -87,7 +87,7 @@ export async function acceptInvitationAction(token: string) {
   }
 
   // 3. Validar expiración
-  if (new Date(invitation.expires_at) < new Date()) {
+  if (invitation.expires_at && new Date(invitation.expires_at) < new Date()) {
     await supabase.from('invitations').update({ status: 'expired' }).eq('id', invitation.id)
     throw new Error('La invitación ha expirado.')
   }
@@ -97,7 +97,7 @@ export async function acceptInvitationAction(token: string) {
     .from('profiles')
     .update({ 
       tenant_id: invitation.tenant_id,
-      app_role: invitation.app_role.toUpperCase()
+      app_role: (invitation.app_role as string)?.toUpperCase() || 'VIEWER'
     })
     .eq('id', user.id)
 

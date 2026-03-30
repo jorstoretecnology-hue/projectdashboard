@@ -18,26 +18,43 @@ export async function POST(req: NextRequest) {
     // MercadoPago usa HMAC SHA256 con el webhook secret
     const webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
     
-    if (webhookSecret && signature) {
-      const parts = signature.split(',');
-      const tsPart = parts.find((p: string) => p.startsWith('ts='));
-      const v1Part = parts.find((p: string) => p.startsWith('v1='));
-      
-      if (tsPart && v1Part) {
-        const timestamp = tsPart.split('=')[1];
-        const hash = v1Part.split('=')[1];
-        const manifest = `id:${requestId};request-id:${requestId};ts:${timestamp};`;
-        const hmac = createHmac('sha256', webhookSecret);
-        hmac.update(manifest);
-        const checkHash = hmac.digest('hex');
+    if (!webhookSecret) {
+      if (process.env.NODE_ENV === 'production') {
+        logger.error('[MP Webhook] CRITICAL: MERCADOPAGO_WEBHOOK_SECRET missing in production');
+        return NextResponse.json({ error: 'Config Error' }, { status: 500 });
+      } else {
+        logger.warn('[MP Webhook] MERCADOPAGO_WEBHOOK_SECRET not defined. Skipping signature check in dev.');
+      }
+    } else {
+      if (!signature) {
+        if (process.env.NODE_ENV === 'production') {
+          logger.error('[MP Webhook] Missing signature in production');
+          return NextResponse.json({ error: 'Missing Signature' }, { status: 401 });
+        } else {
+          logger.warn('[MP Webhook] Missing signature in dev. Skipping signature check.');
+        }
+      } else {
+        const parts = signature.split(',');
+        const tsPart = parts.find((p: string) => p.startsWith('ts='));
+        const v1Part = parts.find((p: string) => p.startsWith('v1='));
         
-        if (checkHash !== hash) {
-          logger.error('[MP Webhook] Invalid Signature detected');
-          return NextResponse.json({ error: 'Invalid Signature' }, { status: 401 });
+        if (tsPart && v1Part) {
+          const timestamp = tsPart.split('=')[1];
+          const hash = v1Part.split('=')[1];
+          const manifest = `id:${requestId};request-id:${requestId};ts:${timestamp};`;
+          const hmac = createHmac('sha256', webhookSecret);
+          hmac.update(manifest);
+          const checkHash = hmac.digest('hex');
+          
+          if (checkHash !== hash) {
+            logger.error('[MP Webhook] Invalid Signature detected');
+            return NextResponse.json({ error: 'Invalid Signature' }, { status: 401 });
+          }
+        } else {
+          logger.error('[MP Webhook] Malformed Signature header');
+          return NextResponse.json({ error: 'Invalid Signature Format' }, { status: 401 });
         }
       }
-    } else if (!webhookSecret) {
-      logger.warn('[MP Webhook] MERCADOPAGO_WEBHOOK_SECRET not defined. Skipping signature check.');
     }
 
     const payload = JSON.parse(body) as MPWebhookPayload;

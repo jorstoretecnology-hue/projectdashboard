@@ -1,12 +1,13 @@
 "use client"
 
-import { Check, Clock, Wrench, Wallet, Gift, Truck } from "lucide-react"
+import { Check, Clock, Wrench, Wallet, Truck } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { SaleState } from "@/modules/sales/types"
 
 interface Step {
   id: SaleState
   label: string
-  icon: any
+  icon: LucideIcon
   description: string
 }
 

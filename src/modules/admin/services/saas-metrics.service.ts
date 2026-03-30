@@ -85,13 +85,13 @@ export class SaasMetricsService {
       id: t.id,
       name: t.name,
       plan: (t.plan as PlanTier) || 'free',
-      industryType: t.industry_type,
+      industryType: (t.industry_type as any) || 'taller',
       activeModules: activeModules,
-      branding: t.branding || {},
+      branding: (t.branding as any) || {},
       isActive: t.is_active ?? true,
-      maxUsers: t.max_users,
-      createdAt: t.created_at,
-      customDomain: t.custom_domain,
+      maxUsers: t.max_users ?? undefined,
+      createdAt: t.created_at || new Date().toISOString(),
+      customDomain: t.custom_domain ?? undefined,
       featureFlags: [],
     }})
 

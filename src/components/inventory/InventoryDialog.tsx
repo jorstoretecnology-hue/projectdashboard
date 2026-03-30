@@ -39,12 +39,18 @@ export function InventoryDialog({
   // Valores iniciales para el formulario
   const defaultValues: Partial<InventoryFormValues> = item ? {
     name: item.name,
-    description: item.description,
-    type: item.type,
+    description: item.description || "",
+    type: item.type as any,
+    industry_type: item.industry_type as any,
+    category: item.category,
     price: item.price,
-    stock: item.stock,
-    sku: item.sku,
-  } : {}
+    stock: item.stock || 0,
+    sku: item.sku || "",
+  } : {
+    industry_type: currentTenant?.industryType as any || "taller",
+
+  }
+
 
   const handleSubmit = async (data: InventoryFormValues) => {
     if (!currentTenant?.id) {

@@ -7,9 +7,18 @@
       ],
       "env": {
         "N8N_BASE_URL": "http://localhost:5678",
-        "N8N_API_KEY": "4XiAkgusZIoEM46DOosLj0H2WLQFKRgmv2QQY9p238c"
+        "N8N_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlNGI5ZTZhMC0yZWRlLTRhMWEtYTE2YS0wOTc4ODU3MDQzZDEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiOTg2OGU1NzQtNmQyOS00ZDdjLThkY2MtNWI0Zjg3Njg3MDE4IiwiaWF0IjoxNzc0NTM4ODM1fQ.QcOWpdlwcKak1mjumtWOTpMRPTJkaW2kHql_qkOoHLs"
       }
     }
   },
-  "$version": 3
+  "$version": 3,
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose *)",
+      "Bash(curl *)",
+      "Bash(select-object *)",
+      "Bash(taskkill *)",
+      "Read(C:\\Users\\Jaomart\\.qwen/**)"
+    ]
+  }
 }

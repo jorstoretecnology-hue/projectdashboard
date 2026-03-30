@@ -12,10 +12,9 @@ interface AuditLog {
   action: string
   old_data: unknown
   new_data: unknown
-  created_at: string
+  created_at: string | null
   user_id: string | null
   tenant_id: string | null
-  tenants: { name: string }[] | { name: string } | null
 }
 
 export default async function AuditPage() {
@@ -32,8 +31,7 @@ export default async function AuditPage() {
       new_data,
       created_at,
       user_id,
-      tenant_id,
-      tenants:tenant_id(name)
+      tenant_id
     `)
     .order('created_at', { ascending: false })
     .limit(100)
@@ -81,9 +79,7 @@ export default async function AuditPage() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm font-medium text-slate-300">
-                        {log.tenants 
-                          ? (Array.isArray(log.tenants) ? log.tenants[0]?.name : log.tenants.name) || 'Sistema'
-                          : 'Sistema'}
+                        {log.tenant_id || 'Sistema'}
                       </span>
                     </TableCell>
                     <TableCell>

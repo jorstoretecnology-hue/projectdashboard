@@ -130,7 +130,7 @@ export default function UsersPage() {
     toast.success(`Usuario ${newUser.name} creado correctamente`);
   };
 
-  const handleEditUser = (user: any) => {
+  const handleEditUser = (user: { id: number; name: string; email: string; role: string }) => {
     setEditingUser({
       id: user.id,
       name: user.name,

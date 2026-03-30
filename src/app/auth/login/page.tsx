@@ -72,7 +72,7 @@ export default function LoginPage() {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
       toast.error('Error al conectar con Google')
     }

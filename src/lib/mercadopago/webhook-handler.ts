@@ -22,39 +22,39 @@ const MP_STATUS_MAP: Record<string, 'approved' | 'pending' | 'rejected' | 'cance
  */
 export async function handleMPWebhook(payload: MPWebhookPayload) {
   // ⚠️ CRÍTICO: Usamos createServiceClient (bypass RLS) para que el webhook
-  // pueda escribir en webhook_events y actualizar payments/subscriptions.
+  // pueda escribir en webhook_logs y actualizar payments/subscriptions.
   const supabase = createServiceClient()
 
   // 1. Registrar el evento crudo para auditoría
   const { data: event, error: logError } = await supabase
-    .from('webhook_events')
+    .from('webhook_logs')
     .insert({
       source: 'mercadopago',
-      external_id: payload.data?.id ?? null,
-      topic: payload.type,
+      external_id: payload.data?.id ? String(payload.data.id) : null,
+      event_type: payload.type,
       payload: payload as unknown as Json,
-      processed: false,
+      status: 'PENDING',
     })
     .select('id')
     .single()
 
   if (logError || !event) {
-    logger.error('[MP Webhook] Error al registrar evento:', logError)
+    logger.error('[MP Webhook] Error al registrar evento en webhook_logs:', logError)
     return { success: false, error: 'Log failed' }
   }
 
   try {
     // 2. Procesar según el tipo de notificación
     if (payload.type === 'payment' && payload.data?.id) {
-      await processPaymentWebhook(payload.data.id, event.id)
+      await processPaymentWebhook(String(payload.data.id), event.id)
     } else {
       logger.log(`[MP Webhook] Tipo no manejado: ${payload.type}`)
     }
 
-    // 3. Marcar como procesado
+    // 3. Marcar como éxito
     await supabase
-      .from('webhook_events')
-      .update({ processed: true })
+      .from('webhook_logs')
+      .update({ status: 'SUCCESS' })
       .eq('id', event.id)
 
     return { success: true }
@@ -63,13 +63,17 @@ export async function handleMPWebhook(payload: MPWebhookPayload) {
     logger.error(`[MP Webhook] Error procesando ${payload.data?.id}:`, error)
 
     await supabase
-      .from('webhook_events')
-      .update({ error_message: errorMessage })
+      .from('webhook_logs')
+      .update({ 
+        status: 'ERROR',
+        error_message: errorMessage 
+      })
       .eq('id', event.id)
 
     return { success: false, error: errorMessage }
   }
 }
+
 
 /**
  * Procesa la actualización de un pago específico.
@@ -85,7 +89,8 @@ async function processPaymentWebhook(mpPaymentId: string, eventLogId: string) {
     throw new Error(`Pago ${mpPaymentId} no encontrado en MercadoPago`)
   }
 
-  const internalStatus = MP_STATUS_MAP[mpPayment.status ?? ''] ?? 'pending'
+  const mpStatus = mpPayment.status || ''
+  const internalStatus = MP_STATUS_MAP[mpStatus] || 'pending'
 
   // Actualizar el registro de pago usando mercadopago_payment_id (columna real de la migración)
   const { data: updatedPayment, error: updateError } = await supabase
@@ -96,7 +101,7 @@ async function processPaymentWebhook(mpPaymentId: string, eventLogId: string) {
       metadata: {
         mp_raw: mpPayment as unknown as Json,
         webhook_event_id: eventLogId,
-      } as Json,
+      } as unknown as Json,
     })
     .eq('mercadopago_payment_id', mpPaymentId)
     .select('tenant_id, subscription_id, metadata')
@@ -109,18 +114,22 @@ async function processPaymentWebhook(mpPaymentId: string, eventLogId: string) {
   // Si el pago fue aprobado, actualizar el plan del tenant
   if (internalStatus === 'approved' && updatedPayment) {
     const tenantId = updatedPayment.tenant_id
-    const meta = updatedPayment.metadata as Record<string, string> | null
-    const targetPlanId =
-      (mpPayment.additional_info?.items?.[0]?.id as string | undefined)?.replace('plan-', '') ??
-      meta?.targetPlan
+    const meta = updatedPayment.metadata as Record<string, unknown> | null
+    
+    // Obtener el plan del item o del metadata original
+    const items = (mpPayment as any).additional_info?.items
+    const targetPlanFromItems = items?.[0]?.id ? String(items[0].id).replace('plan-', '') : undefined
+    const targetPlanId = targetPlanFromItems || (meta?.targetPlan as string | undefined)
 
     if (targetPlanId) {
       logger.log(`[MP Webhook] Actualizando tenant ${tenantId} al plan ${targetPlanId}`)
 
+      const validPlan = targetPlanId as 'free' | 'starter' | 'professional' | 'enterprise'
+
       // Actualizar el plan en la tabla tenants
       await supabase
         .from('tenants')
-        .update({ plan: targetPlanId as 'free' | 'starter' | 'professional' | 'enterprise' })
+        .update({ plan: validPlan })
         .eq('id', tenantId)
 
       // Activar la suscripción del tenant
@@ -130,7 +139,7 @@ async function processPaymentWebhook(mpPaymentId: string, eventLogId: string) {
       await supabase
         .from('subscriptions')
         .update({
-          plan_slug: targetPlanId as 'free' | 'starter' | 'professional' | 'enterprise',
+          plan_slug: validPlan,
           status: 'active',
           current_period_start: now.toISOString(),
           current_period_end: periodEnd.toISOString(),
@@ -142,4 +151,5 @@ async function processPaymentWebhook(mpPaymentId: string, eventLogId: string) {
 
   logger.log(`[MP Webhook] Pago ${mpPaymentId} → estado interno: ${internalStatus}`)
 }
+
 

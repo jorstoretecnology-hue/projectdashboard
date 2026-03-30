@@ -22,7 +22,7 @@ const postHandler = async (req: NextRequest, ctx: AuthenticatedContext) => {
   const data = await validateBody(req, receivePurchaseSchema);
   const service = new PurchasesService(ctx.supabase, ctx.tenantId);
   
-  const result = await service.receivePurchase(id, ctx.user.id, data.notes);
+  const result = await service.receivePurchase(id, ctx.user.id, data.items, data.notes);
 
   return apiSuccess(result);
 };

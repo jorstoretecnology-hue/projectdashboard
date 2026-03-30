@@ -28,7 +28,7 @@ interface Template {
   event_type: string
   channel: string
   template_body: string
-  is_active: boolean
+  is_active: boolean | null
 }
 
 const AVAILABLE_VARIABLES: Record<string, string[]> = {
@@ -64,10 +64,10 @@ export function NotificationSettings() {
       const { data, error } = await supabase
         .from("notification_templates")
         .select("id, tenant_id, event_type, channel, template_body, is_active, created_at, updated_at")
-        .eq("tenant_id", currentTenant?.id)
+        .eq("tenant_id", currentTenant?.id ?? '')
 
       if (error) throw error
-      setTemplates(data || [])
+      setTemplates(data as Template[] || [])
     } catch (error) {
       toast.error("Error al cargar plantillas")
     } finally {

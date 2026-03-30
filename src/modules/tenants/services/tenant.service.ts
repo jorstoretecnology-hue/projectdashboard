@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { PlanType } from '@/config/tenants';
 import { AuditLogService } from '@/core/security/audit.service';
 import { logger } from '@/lib/logger';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/lib/supabase/database.types';
 import { Json } from '@/lib/supabase/database.types';
 
@@ -59,7 +59,7 @@ export class TenantService {
       .insert({
         name: data.name,
         plan: data.plan,
-        industry_type: data.industry_type as Database['public']['Enums']['industry_type'], 
+        industry_type: data.industry_type, 
         custom_domain: data.custom_domain,
         active_modules: selectedModules, 
         branding: data.branding || {},
@@ -67,7 +67,7 @@ export class TenantService {
         is_active: true
       })
       .select('id, name, plan, industry_type, is_active, max_users, created_at')
-      .single() as { data: { id: string, name: string, plan: PlanType, industry_type: string, is_active: boolean, max_users: number, created_at: string }, error: any };
+      .single();
 
     if (error) {
       logger.error('[TenantService] Error creating tenant:', error);

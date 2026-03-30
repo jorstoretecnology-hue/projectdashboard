@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { CreateProductDTO, UpdateProductDTO, ProductQueryDTO } from '@/lib/api/schemas/products';
 import { apiError } from '@/lib/api/response';
 

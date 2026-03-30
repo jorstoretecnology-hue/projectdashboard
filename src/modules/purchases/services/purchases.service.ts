@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { 
   CreatePurchaseDTO, 
   PurchaseQueryDTO, 
@@ -22,7 +22,7 @@ export class PurchasesService {
 
     let q = this.supabase
       .from('suppliers')
-      .select('*', { count: 'exact' })
+      .select('id, name, email, phone, created_at', { count: 'exact' })
       .eq('tenant_id', this.tenantId);
 
     if (search) {
@@ -60,7 +60,7 @@ export class PurchasesService {
       .from('purchase_orders')
       // Ajuste: si supplier_id es UUID en DB, join con suppliers. Si es string legacy, lo manejamos.
       // Migración 04 agregó supplier_id UUID.
-      .select('*, supplier:suppliers(name, email), items:purchase_order_items(count)', { count: 'exact' })
+      .select('id, tenant_id, supplier_id, state, total, created_at, deleted_at, location_id, supplier:suppliers(name, email), items:purchase_order_items(count)', { count: 'exact' })
       .eq('tenant_id', this.tenantId);
 
     if (state) q = q.eq('state', state);
@@ -80,7 +80,7 @@ export class PurchasesService {
   async getPurchaseById(id: string) {
     const { data, error } = await this.supabase
       .from('purchase_orders')
-      .select('*, items:purchase_order_items(*), supplier:suppliers(*)')
+      .select('id, tenant_id, supplier_id, state, total, created_at, deleted_at, location_id, items:purchase_order_items(*), supplier:suppliers(id, name, email, phone, created_at)')
       .eq('id', id)
       .eq('tenant_id', this.tenantId)
       .single();

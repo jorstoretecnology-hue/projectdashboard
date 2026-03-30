@@ -34,14 +34,9 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: AppRole;
   avatar?: string;
 }
-
-/**
- * Roles de usuario
- */
-export type UserRole = 'admin' | 'manager' | 'user' | 'guest';
 
 /**
  * Roles de aplicación (Database Enum)

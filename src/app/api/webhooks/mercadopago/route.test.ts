@@ -18,6 +18,54 @@ vi.mock('@/lib/logger', () => ({
 describe('MercadoPago Webhook API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  describe('Production Environment vs Dev Environment Security', () => {
+    it('should return 500 in PRODUCTION if MERCADOPAGO_WEBHOOK_SECRET is missing', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('MERCADOPAGO_WEBHOOK_SECRET', ''); // No secret
+      
+      const req = new NextRequest('http://localhost/api/webhooks/mercadopago', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'payment' }),
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(500);
+      const json = await res.json();
+      expect(json.error).toBe('Config Error');
+    });
+
+    it('should pass in DEV even if MERCADOPAGO_WEBHOOK_SECRET is missing (skips signature)', async () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('MERCADOPAGO_WEBHOOK_SECRET', '');
+      
+      const req = new NextRequest('http://localhost/api/webhooks/mercadopago', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'payment', data: { id: 'test' } }),
+      });
+      mockHandleMPWebhook.mockResolvedValue({ success: true });
+
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+    });
+
+    it('should return 401 in PRODUCTION if missing x-signature despite having secret', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('MERCADOPAGO_WEBHOOK_SECRET', 'my-secret');
+      
+      const req = new NextRequest('http://localhost/api/webhooks/mercadopago', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'payment' }),
+        // No header x-signature provided here
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(401);
+      const json = await res.json();
+      expect(json.error).toBe('Missing Signature');
+    });
   });
 
   it('should return 200 and call handler on valid payment notification', async () => {

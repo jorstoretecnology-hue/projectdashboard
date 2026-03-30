@@ -6,6 +6,36 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 
+## [5.5.0] - 2026-03-25
+### 🗄️ Database & Schema Hardening
+- **fix: 4 migraciones de corrección de schema críticos**: 
+  - `fk_tenant_specialty` duplicadas → 2 FKs independientes correctas.
+  - `products.sku` UNIQUE global → `UNIQUE(tenant_id, sku)`.
+  - `invitations.app_role` lowercase → uppercase alineado con AppRole.
+  - `industry_specialties(slug)` → UNIQUE constraint agregado.
+
+### 🔐 Multi-tenancy & Auth Unification
+- **fix: unificación completa del sistema de roles**:
+  - `auth.ts` eliminado `.toLowerCase()`, comparaciones a uppercase.
+  - `types/index.ts` eliminado `UserRole` legacy (se reemplazó exitosamente por `AppRole`).
+  - `profiles.app_role` datos migrados a uppercase con `UPDATE` directo a la base de datos.
+  - `profiles_app_role_check` constraint aplicado para asegurar estricta congruencia del sistema RBAC.
+  - `guards.test.ts` test case-sensitivity integrado.
+
+### ⚙️ Core Services & API Security
+- **fix: QuotaEngine race condition eliminada con RPCs atómicas**:
+  - Implementación en base de datos de `increment_tenant_quota()` (`INSERT ON CONFLICT DO UPDATE`) y `decrement_tenant_quota()` garantizando atomicidad transaccional.
+  - Refactorizado `engine.ts` abandonando el anti-patrón de 'read-then-write' en favor de las llamadas a `rpc()`. Sustituido `console.error` nativo por `logger.error` normalizado.
+  - **Verificado en Supabase**: ambas funciones confirmadas en `information_schema.routines`. ✅
+- **fix: webhook MercadoPago bypass de validación cerrado**:
+  - Excepciones drásticas (500) en producción cuando no existe `MERCADOPAGO_WEBHOOK_SECRET` evitando bypass ciego.
+  - Bloqueos (401) en producción en ausencia del header de firma (`x-signature`).
+  - Flexibilidad para desarrollo preservada tolerando el salto mediante `logger.warn`.
+- **fix: constraint `profiles_app_role_check` aplicado y verificado**:
+  - `CHECK (app_role = ANY (ARRAY['OWNER', 'ADMIN', 'EMPLOYEE', 'VIEWER', 'SUPER_ADMIN']))` confirmado en `pg_constraint`. ✅
+- **chore: protocolo de verificación post-migración**:
+  - Documentado en `.antigravity/rules/database-rules.md`: nunca reportar éxito solo con "Success. No rows returned"; siempre ejecutar query de verificación.
+
 ## [4.6.0] - 2026-03-15
 ### 🛡️ Seguridad & Auditoría (Hardened)
 - **Eliminación de Endpoints Críticos**: Removido `/api/debug-role` que exponía metadatos de usuario.

@@ -29,7 +29,7 @@ class TenantDashboardService {
     // En un sistema real sería: select count(*) from profiles where tenant_id = ...
     const { count: usersCount } = await this.supabase
       .from('profiles')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
 
     return {

@@ -36,15 +36,19 @@ export function InventoryForm({
     watch,
     formState: { errors },
   } = useForm<InventoryFormValues>({
-    resolver: zodResolver(inventoryItemSchema),
+    resolver: zodResolver(inventoryItemSchema) as any,
     defaultValues: {
+      name: "",
       type: "product",
+      industry_type: "taller",
+      category: "",
       stock: 0,
       price: 0,
       cost_price: 0,
       ...defaultValues,
     },
   })
+
 
   // Watch para Select controlado
   const typeValue = watch("type")
@@ -82,9 +86,42 @@ export function InventoryForm({
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="industry_type">Industria</Label>
+          <Select
+            value={watch("industry_type")}
+            onValueChange={(val) => setValue("industry_type", val as any)}
+          >
+            <SelectTrigger id="industry_type">
+              <SelectValue placeholder="Seleccionar industria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="taller">Taller</SelectItem>
+              <SelectItem value="restaurante">Restaurante</SelectItem>
+              <SelectItem value="supermercado">Supermercado</SelectItem>
+              <SelectItem value="ferreteria">Ferretería</SelectItem>
+              <SelectItem value="gym">Gimnasio</SelectItem>
+              <SelectItem value="glamping">Glamping</SelectItem>
+              <SelectItem value="discoteca">Discoteca</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.industry_type && (
+            <p className="text-xs text-destructive">{errors.industry_type.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="category">Categoría</Label>
+          <Input id="category" {...register("category")} placeholder="Ej: Electrónica" />
+          {errors.category && (
+            <p className="text-xs text-destructive">{errors.category.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="sku">SKU (Opcional)</Label>
           <Input id="sku" {...register("sku")} placeholder="PROD-001" />
         </div>
+
 
         <div className="space-y-2">
           <Label htmlFor="price">Precio de Venta ($)</Label>

@@ -8,7 +8,7 @@ import { ModuleProvider } from './ModuleContext';
 import { TenantProvider } from './TenantContext';
 import { AuthProvider } from './AuthContext';
 
-import { Session, User } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 
 interface ProvidersProps {
   children: ReactNode;

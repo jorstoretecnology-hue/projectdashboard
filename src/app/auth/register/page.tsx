@@ -56,7 +56,7 @@ export default function RegisterPage() {
         toast.success("Cuenta creada exitosamente")
         router.push(`/auth/verify?email=${encodeURIComponent(email)}&type=signup`)
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
       toast.error("Error inesperado al crear la cuenta.")
     } finally {

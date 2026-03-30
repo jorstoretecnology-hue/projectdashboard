@@ -27,7 +27,7 @@ export function getAllIndustries(): IndustryConfig[] {
   return Object.values(INDUSTRIES_CONFIG);
 }
 
-export function validateIndustryMetadata(industryType: string, metadata: any): boolean {
+export function validateIndustryMetadata(industryType: string, metadata: unknown): boolean {
   // Implementación simplificada si es necesario, o importada
   return true; 
 }

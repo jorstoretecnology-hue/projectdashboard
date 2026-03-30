@@ -11,12 +11,12 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Fecha** | 23 de marzo de 2026 |
+| **Fecha** | 25 de marzo de 2026 |
 | **Versión actual** | 5.5.0 (Estabilización & Hardening) |
 | **Fase activa del Roadmap** | **Fase 11e:** Ejecutar Pruebas E2E con Sandbox MP |
 | **Estado Global** | 🟡 82% Completado (Fases 1-14 Validadas) |
-| **Qué se hizo esta sesión** | ### ✅ Logros Recientes (Sesión 14-QA)<br>- **QA (Remediaciones Core)**: Implementación de transacciones atómicas complejas (`cancel_sale_transaction`, `receive_purchase_transaction`) para blindar el inventario.<br>- **QA (Automatización)**: Conexión de motor de eventos con API de email Resend.<br>- **Seguridad (Fase 14)**: Implementación de triggers de inmutabilidad para `tenant_id` y `created_at`.<br>- **UX/UI POS**: Selector de clientes con registro express e identificación fiscal (LATAM).<br>- **Arquitectura**: Sincronización completa de esquema `customers` y refactorización a Repositories. |
-| **Próximo paso concreto** | **FASE 11e:** Pruebas E2E finales y expansión de Dashboards Analytics (Fase 12) + Testing global de reportes de auditoría QA. |
+| **Qué se hizo esta sesión** | ### ✅ Logros Recientes (25 de marzo 2026)<br><br>**Sesión 1 - Hardening DB**:<br>- **fix**: 4 migraciones de corrección de schema críticos<br>  - `fk_tenant_specialty` duplicadas → 2 FKs independientes correctas<br>  - `products.sku` UNIQUE global → `UNIQUE(tenant_id, sku)`<br>  - `invitations.app_role` lowercase → uppercase alineado con AppRole<br>  - `industry_specialties(slug)` → UNIQUE constraint agregado<br><br>**Sesión 2 - Roles**:<br>- **fix**: unificación completa del sistema de roles<br>  - `auth.ts` eliminado `.toLowerCase()`, comparaciones uppercase<br>  - `types/index.ts` eliminado `UserRole` legacy<br>  - `profiles.app_role` datos migrados a uppercase<br>  - `profiles_app_role_check` constraint aplicado<br>  - `guards.test.ts` test case-sensitivity agregado<br><br>**Sesión 3 - Quotas & Webhooks** (migración aplicada y verificada en Supabase):<br>- **fix**: QuotaEngine race condition eliminada con RPCs atómicas<br>  - `increment_tenant_quota()` con `INSERT ON CONFLICT DO UPDATE`<br>  - `decrement_tenant_quota()` con `GREATEST(0, current - amount)`<br>  - `engine.ts` refactorizado usando `rpc()` en vez de read-then-write e integrado `logger.error`<br>- **fix**: webhook MercadoPago bypass cerrado<br>  - 500 en producción sin `MERCADOPAGO_WEBHOOK_SECRET`<br>  - 401 en producción sin `x-signature`<br>  - Dev mode preserva tolerancias con `logger.warn`<br>- **Verificación en Supabase** (queries ejecutadas post-migración):<br>  - `increment_tenant_quota` y `decrement_tenant_quota` → confirmadas en `information_schema.routines`<br>  - `profiles_app_role_check` → confirmada en `pg_constraint` con `CHECK (app_role = ANY (ARRAY['OWNER', 'ADMIN', 'EMPLOYEE', 'VIEWER', 'SUPER_ADMIN']))` ✅<br>- **nuevo**: protocolo de verificación post-migración documentado en `.antigravity/rules/database-rules.md`<br><br>**Sesión 4 - Remediación de Seguridad (Fase 15)**:<br>- **fix**: Eliminación de datos de ngrok en archivos de migración debug.<br>- **feat**: Implementación de `tracking_token` en `sales` para acceso público seguro.<br>- **security**: Endurecimiento de permisos de base de datos (mínimo privilegio).<br>- **audit**: Auditoría de esquema SQL 100% aprobada contra Roadmap (v5.5.0). 📄 `sql_audit_verdict_27mar.md`. |
+| **Próximo paso concreto** | **Próximo paso:** Limpieza de `any` + `select('*')` en módulos de Ventas/Inventario |
 
 ---
 
@@ -36,6 +36,7 @@
 | **Audit F2-10**| Auditoría UX/Tech Core | ✅ **COMPLETADO** | Auth, APIs y Flex validados. ⚠️ Gaps en stock/auto identificados. |
 | **Audit UI/UX** | Auditoría Interfaces Frontend | ✅ **COMPLETADO** | Estética premium validada. 🛑 Gaps P0 en POS/Clientes. |
 | **Hardening** | Refactor Inventario & SQL | ✅ **COMPLETADO** | Catálogo unificado y dominios estandarizados |
+| **Fase 15** | Remediación de Seguridad | ✅ **COMPLETADO** | Trazabilidad por token y endurecimiento de DB |
 
 **Backend refactorizado:** ✅ `tenant.service.ts` y métricas actualizados
 

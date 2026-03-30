@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { CreateSaleDTO, SaleQueryDTO } from '@/lib/api/schemas/sales';
 
 export class SalesService {

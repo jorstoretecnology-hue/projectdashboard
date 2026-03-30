@@ -57,10 +57,11 @@ export function InvitationDialog({ open, onOpenChange, tenantId, tenantName }: I
       toast.success("Invitación Generada", {
         description: `Se ha creado un enlace de acceso para ${email}`
       })
-    } catch (error: any) {
+    } catch (error) {
       console.error("[InvitationDialog] Error creating invitation:", error)
+      const message = error instanceof Error ? error.message : "Verifica los permisos de la tabla invitaciones."
       toast.error("Error al crear invitación", {
-        description: error.message || "Verifica los permisos de la tabla invitaciones."
+        description: message
       })
     } finally {
       setIsSubmitting(false)

@@ -4,18 +4,26 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { acceptInvitationAction } from '@/modules/team/actions'
+import type { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+
+interface InvitationData {
+  token: string
+  app_role: string
+  status: string | null
+  tenants: { name: string } | null
+}
 
 export default function InvitePage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const token = searchParams.get('token')
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-  const [invitation, setInvitation] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [invitation, setInvitation] = useState<InvitationData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isAccepting, setIsAccepting] = useState(false)
 
@@ -60,8 +68,9 @@ export default function InvitePage() {
       await acceptInvitationAction(token)
       toast.success('¡Bienvenido al equipo!')
       router.push('/dashboard')
-    } catch (err: any) {
-      toast.error(err.message || 'Error al aceptar la invitación')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al aceptar la invitación'
+      toast.error(message)
       setIsAccepting(false)
     }
   }
@@ -100,7 +109,7 @@ export default function InvitePage() {
           ) : (
             <div className="space-y-4">
               <p className="text-slate-300">
-                Has sido invitado con el rol de <strong>{invitation.app_role}</strong>. 
+                Has sido invitado con el rol de <strong>{invitation?.app_role}</strong>. 
                 {user ? (
                   `Has iniciado sesión como ${user.email}. ¿Quieres unirte ahora?`
                 ) : (

@@ -3,8 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { AppRole } from '@/types';
 import { apiError } from '@/lib/api/response';
 import { hasRole } from './guards';
-import { User } from '@supabase/supabase-js';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { User, SupabaseClient } from '@supabase/supabase-js';
 
 export type AuthenticatedContext = {
   user: User;
@@ -66,10 +65,10 @@ export function withAuth(handler: ApiHandler, options: AuthOptions = {}) {
            .eq('id', user.id)
            .single();
          
-         if (profile) {
-           tenantId = profile.tenant_id;
-           userRole = profile.app_role as AppRole;
-         }
+          if (profile) {
+            tenantId = profile.tenant_id || '';
+            userRole = (profile.app_role as AppRole) || 'VIEWER';
+          }
       }
 
       if (!tenantId) {

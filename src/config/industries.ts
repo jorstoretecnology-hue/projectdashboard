@@ -20,7 +20,7 @@ export const getIndustryConfig = getModularConfig;
 import { z } from 'zod';
 import { IndustryType } from './industries/types';
 
-export function validateIndustryMetadata(industryType: IndustryType, metadata: any): boolean {
+export function validateIndustryMetadata(industryType: IndustryType, metadata: unknown): boolean {
   try {
     const config = getModularConfig(industryType);
     if (!config) return false;

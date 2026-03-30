@@ -70,8 +70,8 @@ export const getUserRole = cache(async () => {
   }
 
   // 2. Fallback: JWT (Metadata sincronizada)
-  const role = user.app_metadata?.app_role || user.app_metadata?.role || 'user'
-  return role.toLowerCase()
+  const role = user.app_metadata?.app_role || user.app_metadata?.role || 'VIEWER'
+  return role.toUpperCase()
 })
 
 /**
@@ -83,7 +83,7 @@ export async function can(permission: Permission): Promise<boolean> {
   if (!user) return false
 
   const permissions = (user.app_metadata?.permissions as string[]) || []
-  const role = user.app_metadata?.app_role || 'user'
+  const role = (user.app_metadata?.app_role || 'VIEWER').toUpperCase()
   
   // 1. Validar contra el JWT (Ultra rápido)
   let hasAccess = permissions.includes(permission)
@@ -139,7 +139,7 @@ export async function canAccessFeature(feature: FeatureFlag): Promise<boolean> {
     .eq('id', tenantId)
     .single()
 
-  const flags = (tenant?.feature_flags as string[]) || []
+  const flags = (tenant?.feature_flags as string[] | null) || []
   return flags.includes(feature)
 }
 
@@ -168,8 +168,8 @@ export async function getRequiredLocationId(): Promise<string> {
   
   if (!locationId) {
     // Si no está en header, intentamos ver si el rol permite nulo (ADMIN)
-    const role = await getUserRole()
-    if (role === 'owner' || role === 'admin' || role === 'super_admin') {
+    const role = (await getUserRole())?.toUpperCase()
+    if (role === 'OWNER' || role === 'ADMIN' || role === 'SUPER_ADMIN') {
       // Los administradores podrían no tener una sede fija
       return '' 
     }

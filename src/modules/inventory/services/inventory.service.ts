@@ -32,17 +32,19 @@ export class InventoryService {
 
     try {
       // Mapeo de InventoryFormValues a CreateProductDTO
-      const productData: CreateProductDTO = {
+      const productData: CreateProductDTO & { category: string } = {
         name: data.name,
         description: data.description,
         price: data.price,
         stock: data.stock,
         sku: data.sku,
-        industry_type: (data.metadata?.industry_type as any) || 'taller', // Fallback seguro
+        industry_type: data.industry_type,
+        category: data.category,
         metadata: data.metadata || {},
         threshold_low: 10,
         threshold_critical: 3
       };
+
 
       const newItem = await this.repository.create(productData, tenantId);
 

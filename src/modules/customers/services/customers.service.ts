@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import { SupabaseClient } from "@supabase/supabase-js"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { Database } from "@/lib/supabase/database.types"
 import { ICustomerRepository } from "../interfaces/ICustomerRepository"
 import { SupabaseCustomerRepository } from "../repositories/SupabaseCustomerRepository"

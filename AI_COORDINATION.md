@@ -74,6 +74,7 @@ Este documento define los roles y responsabilidades de los diferentes modelos de
 - *(Vacío — tickets pasaron a TO-DO o LISTO)*
 
 ### ✅ LISTO PARA REVISIÓN (Esperando al PO)
+- **Fase 15 - Remediación de Seguridad Post-Auditoría (P0)** [Antigravity] - ✅ Hallazgos remotos de ngrok eliminados, permisos de DB endurecidos y sistema de tracking por token implementado. Reporte: `sql_audit_verdict_27mar.md`.
 - **Seguridad: Auditoría Integral Fases 1-10 (P0)** [Antigravity] - ✅ Reportes: `audit_report_phase1.md` y `audit_report_core_phases.md` generados.
 - **Fase 11 - MercadoPago Integration & UI (P0)** [Antigravity] - ✅ Adapter, Webhook, RLS, `PaymentHistory`, `use-payments` y refactor de `BillingPage` completados.
 - **Fase 13 - RLS Refinement & Granular Permissions (P0)** [Antigravity] - ✅ Auditoría + Validación completadas.
@@ -144,3 +145,20 @@ Cualquier cambio en la arquitectura, base de datos o middleware **DEBE** alinear
 2. `docs/SESSION_HANDOFF_MARZO_15.md` (detalle de lo hecho)
 3. `docs/CONTEXTO_DEL_PROYECTO.md` (contexto general)
 4. `docs/SECURITY_QUICK_REFERENCE.md` (referencia rápida de seguridad)
+---
+
+## 📅 Estado de la Sesión Actual (Marzo 27, 2026)
+
+### Sesión 15 (Especialista en Seguridad - Antigravity) ✅ COMPLETADA
+- **Tarea**: Auditoría de Esquema SQL y Remediación Post-Auditoría.
+- **Logros**:
+  - ✅ **Seguridad**: Eliminación de fugas de `ngrok` en migraciones de depuración.
+  - ✅ **Seguridad**: Implementación de `tracking_token` (UUID) en `sales` para evitar IDOR público.
+  - ✅ **Base de Datos**: Endurecimiento de permisos (mínimo privilegio) y consolidación de `SUPER_ADMIN`.
+  - ✅ **Auditoría**: Verificación del esquema SQL de producción (100% alineado con el Roadmap).
+  - ✅ **Documentación**: Reporte de veredicto generado en `docs/security/reports/sql_audit_verdict_27mar.md`.
+
+### Próximos Pasos (Siguiente Sesión)
+1. **Cleanup** — Ejecutar el DROP de `inventory_items` tras validación de datos.
+2. **Hardening UI** — Reemplazar `any` y `select('*')` en los módulos de Inventario y Ventas.
+3. **QA** — Verificación manual del flujo de seguimiento por token en producción.

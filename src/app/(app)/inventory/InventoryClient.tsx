@@ -49,7 +49,7 @@ export function InventoryClient({ initialItems, tenantId }: InventoryClientProps
     try {
       const { data } = await inventoryService.list(tenantId)
       setItems(data)
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
       setError("No se pudo cargar el inventario. Intenta refrescar.")
     } finally {
@@ -70,9 +70,9 @@ export function InventoryClient({ initialItems, tenantId }: InventoryClientProps
   // Métricas para KPIs
   const metrics = useMemo(() => {
     const totalItems = items.length
-    const lowStock = items.filter(i => i.stock <= 5 && i.stock > 0).length
-    const outOfStock = items.filter(i => i.stock <= 0).length
-    const totalValue = items.reduce((acc, i) => acc + (i.price * i.stock), 0)
+    const lowStock = items.filter(i => (i.stock ?? 0) <= 5 && (i.stock ?? 0) > 0).length
+    const outOfStock = items.filter(i => (i.stock ?? 0) <= 0).length
+    const totalValue = items.reduce((acc, i) => acc + (i.price * (i.stock ?? 0)), 0)
     
     return { totalItems, lowStock, outOfStock, totalValue }
   }, [items])
@@ -102,8 +102,9 @@ export function InventoryClient({ initialItems, tenantId }: InventoryClientProps
       toast.success("Producto eliminado correctamente")
       loadInventory()
       setIsDeleteDialogOpen(false)
-    } catch (error: any) {
-      if (error.message?.includes("ACCESO_DENEGADO")) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : ''
+      if (message.includes("ACCESO_DENEGADO")) {
         toast.error("No tienes permiso para eliminar items.")
       } else {
         console.error(error)

@@ -11,6 +11,12 @@ describe('RBAC Guards', () => {
       expect(hasRole('VIEWER', ['ADMIN', 'OWNER'])).toBe(false);
     });
 
+    it('should confirm that UPPERCASE passes and lowercase fails', () => {
+      expect(hasRole('ADMIN', ['ADMIN', 'OWNER'])).toBe(true);
+      // @ts-expect-error Comportamiento esperado en case-sensitivity
+      expect(hasRole('admin', ['ADMIN', 'OWNER'])).toBe(false);
+    });
+
     it('should return true if userRole is SUPER_ADMIN regardless of allowedRoles', () => {
       expect(hasRole('SUPER_ADMIN', ['EMPLOYEE'])).toBe(true);
       expect(hasRole('SUPER_ADMIN', [])).toBe(true);

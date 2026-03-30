@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client"
 import { PLANS, PlanTier } from "@/core/billing/plans"
 import { tenantService } from "@/modules/tenants/services/tenant.service"
+import { logger } from "@/lib/logger"
 
 export type QuotaResource = "maxUsers" | "maxInventoryItems" | "maxCustomers"
 
@@ -38,59 +39,31 @@ export class QuotaEngine {
    * Incrementa el uso de un recurso de manera atómica
    */
   async incrementUsage(tenantId: string, resource: QuotaResource, amount = 1): Promise<void> {
-    // Upsert para incrementar o inicializar
-    // Nota: Esto es una simplificación. En prod ideal usar RPC 'increment_quota'
-    
-    // Primero intentamos leer para ver si existe
-    const { data: existing } = await this.supabase
-      .from("tenant_quotas")
-      .select("current_usage")
-      .eq("tenant_id", tenantId)
-      .eq("resource_key", resource)
-      .single()
-
-    const newUsage = (existing?.current_usage || 0) + amount
-
-    const { error } = await this.supabase
-      .from("tenant_quotas")
-      .upsert({
-        tenant_id: tenantId,
-        resource_key: resource,
-        current_usage: newUsage,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'tenant_id, resource_key' })
+    const { error } = await this.supabase.rpc('increment_tenant_quota', {
+      p_tenant_id: tenantId,
+      p_resource_key: resource as string,
+      p_increment_by: amount
+    })
 
     if (error) {
-      console.error("[QuotaEngine] Increment Error:", error)
+      logger.error("[QuotaEngine] Increment Error:", error)
       // No lanzamos error para no romper el flujo principal si el tracking falla,
       // pero logueamos crítico.
     }
   }
 
   /**
-   * Decrementa el uso de un recurso
+   * Decrementa el uso de un recurso de forma atómica (nunca menor a 0)
    */
   async decrementUsage(tenantId: string, resource: QuotaResource, amount = 1): Promise<void> {
-    const { data: existing } = await this.supabase
-      .from("tenant_quotas")
-      .select("current_usage")
-      .eq("tenant_id", tenantId)
-      .eq("resource_key", resource)
-      .single()
-
-    const newUsage = Math.max(0, (existing?.current_usage || 0) - amount)
-
-    const { error } = await this.supabase
-      .from("tenant_quotas")
-      .upsert({
-        tenant_id: tenantId,
-        resource_key: resource,
-        current_usage: newUsage,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'tenant_id, resource_key' })
+    const { error } = await this.supabase.rpc('decrement_tenant_quota', {
+      p_tenant_id: tenantId,
+      p_resource_key: resource as string,
+      p_decrement_by: amount
+    })
 
     if (error) {
-       console.error("[QuotaEngine] Decrement Error:", error)
+       logger.error("[QuotaEngine] Decrement Error:", error)
     }
   }
 
@@ -122,7 +95,7 @@ export class QuotaEngine {
       .single()
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = Not found
-       console.error("[QuotaEngine] Read Usage Error", error)
+       logger.error("[QuotaEngine] Read Usage Error", error)
     }
 
     return data?.current_usage || 0

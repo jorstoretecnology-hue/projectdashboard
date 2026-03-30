@@ -43,7 +43,7 @@ export default async function TeamSettingsPage() {
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={member.avatar_url || ''} />
                       <AvatarFallback className="bg-blue-600 text-white">
-                        {member.full_name?.substring(0, 2).toUpperCase() || member.email.substring(0, 2).toUpperCase()}
+                        {member.full_name?.substring(0, 2).toUpperCase() || (member.email ?? '').substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
@@ -90,7 +90,7 @@ export default async function TeamSettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-slate-200">{invite.email}</p>
-                        <p className="text-xs text-slate-500">Expira el {new Date(invite.expires_at).toLocaleDateString()}</p>
+                        <p className="text-xs text-slate-500">Expira el {invite.expires_at ? new Date(invite.expires_at).toLocaleDateString() : 'N/A'}</p>
                       </div>
                     </div>
                     <Badge variant="outline" className="border-slate-700 text-slate-400 capitalize">

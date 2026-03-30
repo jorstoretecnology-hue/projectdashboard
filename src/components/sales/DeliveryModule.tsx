@@ -11,11 +11,12 @@ import { CheckCircle2, UserCheck, ShieldCheck, Loader2 } from "lucide-react"
 
 interface DeliveryModuleProps {
   saleId: string
+  token: string
   customerDocument?: string
   onDeliveryComplete: () => void
 }
 
-export function DeliveryModule({ saleId, customerDocument, onDeliveryComplete }: DeliveryModuleProps) {
+export function DeliveryModule({ saleId, token, customerDocument, onDeliveryComplete }: DeliveryModuleProps) {
   const [step, setStep] = useState<1 | 2>(1) // 1: Validacion Id, 2: Firma
   const [document, setDocument] = useState("")
   const [signature, setSignature] = useState<string | null>(null)
@@ -41,7 +42,7 @@ export function DeliveryModule({ saleId, customerDocument, onDeliveryComplete }:
 
     setIsSubmitting(true)
     try {
-      const resp = await fetch(`/api/v1/public/tracking/${saleId}/deliver`, {
+      const resp = await fetch(`/api/v1/public/tracking/${token}/deliver`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

@@ -1,49 +1,21 @@
-version: '3.8'
+# Docker Compose para n8n local
+# Guarda este archivo como docker-compose.yml en una carpeta vacía.
 
 services:
   n8n:
     image: n8nio/n8n:latest
-    container_name: n8n_main
-    restart: unless-stopped
+    restart: always
     ports:
       - "5678:5678"
     environment:
-      # URL pública (Ngrok) para que los webhooks externos funcionen
-      - WEBHOOK_URL=https://cauline-lacey-tempered.ngrok-free.dev/
-      - N8N_BASE_URL=https://cauline-lacey-tempered.ngrok-free.dev
-      # Configuración local
-      - GENERIC_TIMEZONE=America/Bogota
-      - N8N_EMAIL_MODE=
-      # API Configuration
-      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_JWT_SECRET:-change-me-in-production}
-      # Habilitar API pública
-      - N8N_ENABLED_PUBLIC_API=true
-      # API Key configuration (la key se genera en la UI o DB)
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=America/Bogota # Ajusta a tu zona horaria
     volumes:
       - n8n_data:/home/node/.n8n
-    networks:
-      - backend-network
-
-  # 2. Ngrok (Túnel hacia N8N)
-  ngrok:
-    image: ngrok/ngrok:latest
-    container_name: ngrok_tunnel
-    restart: unless-stopped
-    command:
-      - http
-      - n8n:5678
-      - --domain=cauline-lacey-tempered.ngrok-free.dev
-    environment:
-      # Debe leerse desde tu .env local
-      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    networks:
-      - backend-network
-    depends_on:
-      - n8n
-
-networks:
-  backend-network:
-    driver: bridge
 
 volumes:
   n8n_data:
+    external: false

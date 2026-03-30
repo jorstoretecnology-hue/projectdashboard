@@ -13,10 +13,10 @@ import { createClient } from '@/lib/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardStatsData {
-  daily_sales_total: number;
-  daily_sales_count: number;
-  avg_lead_time_minutes: number;
-  active_service_orders: number;
+  daily_sales_total: number | null;
+  daily_sales_count: number | null;
+  avg_lead_time_minutes: number | null;
+  active_service_orders: number | null;
 }
 
 export function DashboardStats() {

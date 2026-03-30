@@ -10,11 +10,11 @@ interface ModuleCatalogItem {
   name: string
   slug: string
   description: string | null
-  is_active: boolean
+  is_available: boolean | null
 }
 
 interface ModuleUsage {
-  module_id: string
+  module_slug: string
 }
 
 export default async function ModulesPage() {
@@ -22,18 +22,18 @@ export default async function ModulesPage() {
 
   const { data: catalog } = await supabase
     .from('modules_catalog')
-    .select('id, name, slug, description, is_active')
+    .select('id, name, slug, description, is_available')
     .order('name')
 
   // Count active module usage across tenants
   const { data: usage } = await supabase
     .from('tenant_modules')
-    .select('module_id')
+    .select('module_slug')
     .eq('is_active', true)
 
   const usageMap: Record<string, number> = {}
   usage?.forEach((u: ModuleUsage) => {
-    usageMap[u.module_id] = (usageMap[u.module_id] || 0) + 1
+    usageMap[u.module_slug] = (usageMap[u.module_slug] || 0) + 1
   })
 
   return (
@@ -91,8 +91,8 @@ export default async function ModulesPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant={mod.is_active ? "default" : "destructive"} className="text-[10px] font-bold">
-                          {mod.is_active ? 'ACTIVO' : 'INACTIVO'}
+                        <Badge variant={mod.is_available ? "default" : "destructive"} className="text-[10px] font-bold">
+                          {mod.is_available ? 'ACTIVO' : 'INACTIVO'}
                         </Badge>
                       </TableCell>
                     </TableRow>

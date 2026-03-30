@@ -1,14 +1,15 @@
-// v3 - Uses Service Role for public access (Server Component only - key never exposed)
+import { headers } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import { notFound } from "next/navigation"
 import { Timeline } from "@/components/sales/Timeline"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Camera, ClipboardCheck, Package, Clock, User, Hash, Calendar } from "lucide-react"
+import { Camera, ClipboardCheck, Clock, User, Hash, Calendar, CheckCircle2 } from "lucide-react"
+import { DeliveryModule } from "@/components/sales/DeliveryModule"
 
 interface TrackingPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ token: string }>
 }
 
 // Service Role client for public read-only access (Server Component - never exposed to browser)
@@ -20,25 +21,41 @@ function getServiceClient() {
   )
 }
 
+interface TrackingSale {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  state: string;
+  metadata: Record<string, any> | null;
+  total: number;
+  subtotal: number;
+  customer_display: string;
+  items: { id: string; product_name: string; quantity: number; subtotal: number }[];
+}
+
 export default async function TrackingPage({ params }: TrackingPageProps) {
-  const { id } = await params
+  const { token } = await params
   const supabase = getServiceClient()
   
-  // Obtener la venta con service role (bypass RLS para lectura pública)
-  const { data: sale, error } = await supabase
-    .from('sales')
-    .select(`
-      *,
-      customer:customers(*),
-      items:sale_items(*)
-    `)
-    .eq('id', id)
-    .single()
+  // Obtener IP para el rate limiting y auditoría
+  const headerList = await headers()
+  const ip = headerList.get("x-forwarded-for")?.split(',')[0] || "127.0.0.1"
 
-  if (error || !sale) {
-    console.error("Error fetching sale:", error)
+  // Usar el RPC seguro para obtener datos (valida HMAC + Rate Limit + IP)
+  const { data: rpcResponse, error } = await supabase.rpc('get_safe_tracking_data', {
+    p_token: token,
+    p_ip: ip
+  })
+
+  // get_safe_tracking_data retorna { success: boolean, data?: sale, error?: string }
+  const result = rpcResponse as { success: boolean; data?: TrackingSale; error?: string }
+
+  if (error || !result?.success) {
+    console.error("Error fetching safe tracking data:", error || result?.error)
     return notFound()
   }
+
+  const sale = result.data!
 
   // Formatear fecha
   const date = new Date(sale.created_at).toLocaleDateString('es-ES', {
@@ -47,10 +64,10 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
     year: 'numeric'
   })
 
-  // Extraer metadata del taller
-  const workshopData = sale.metadata || {}
-  const inspectionPhotos = workshopData.inspection_photos || []
-  const checklist = workshopData.checklist || {}
+  // Extraer metadata del taller (seguro con unknown/cast controlado)
+  const workshopData = (sale.metadata as Record<string, any>) || {}
+  const inspectionPhotos = (workshopData.inspection_photos as string[]) || []
+  const checklist = (workshopData.checklist as Record<string, string>) || {}
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
@@ -61,7 +78,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
             <div>
               <div className="flex items-center gap-2 mb-2 text-slate-400">
                 <Hash size={16} />
-                <span className="text-sm font-mono">{id}</span>
+                <span className="text-sm font-mono">{sale.id}</span>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">Seguimiento de Orden</h1>
               <p className="text-slate-400">Consulta el estado real de tu servicio en nuestro taller</p>
@@ -73,7 +90,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Cliente</p>
-                  <p className="font-medium">{sale.customer?.first_name} {sale.customer?.last_name}</p>
+                  <p className="font-medium">{sale.customer_display}</p>
                 </div>
               </div>
             </div>
@@ -93,10 +110,10 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
                     Progreso del Servicio
                   </h2>
                   <Badge variant="outline" className="px-4 py-1 text-sm font-semibold border-blue-200 bg-blue-50 text-blue-700">
-                    {sale.state}
+                    {sale.state as any}
                   </Badge>
                 </div>
-                <Timeline currentState={sale.state} updatedAt={sale.updated_at} />
+                <Timeline currentState={sale.state as any} updatedAt={sale.updated_at} />
               </div>
             </Card>
 
@@ -160,7 +177,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
                </div>
                <CardContent className="p-6">
                   <div className="space-y-4">
-                    {sale.items?.map((item: any) => (
+                    {sale.items?.map((item: { id: string; product_name: string; quantity: number; subtotal: number; }) => (
                       <div key={item.id} className="flex justify-between items-start">
                         <div>
                           <p className="text-sm font-semibold">{item.product_name || 'Servicio'}</p>
@@ -188,6 +205,28 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
                   </div>
                </CardContent>
             </Card>
+
+            {/* Módulo de Entrega (Solo si está listo y no entregado aún) */}
+            {['REPARADO', 'PAGADO'].includes(sale.state) && (
+              <DeliveryModule 
+                saleId={sale.id} 
+                token={token} 
+                onDeliveryComplete={() => {
+                  // Opcional: Recargar página o cambiar estado local
+                  typeof window !== 'undefined' && window.location.reload()
+                }} 
+              />
+            )}
+            
+            {sale.state === 'ENTREGADO' && (
+              <Card className="border-none shadow-sm bg-green-50 border border-green-100">
+                <CardContent className="p-6 text-center space-y-2">
+                  <CheckCircle2 className="w-10 h-10 text-green-500 mx-auto" />
+                  <h3 className="font-bold text-green-900">Orden Entregada</h3>
+                  <p className="text-sm text-green-700">Esta orden ya ha sido entregada y finalizada.</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

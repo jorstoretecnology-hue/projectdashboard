@@ -17,7 +17,7 @@ export class AutomationExecutorService {
     // 1. Buscar reglas activas para este tipo de evento
     const { data: rules, error } = await this.supabase
       .from('automation_rules')
-      .select('*')
+      .select('id, name, tenant_id, event_type, action_type, action_config, condition_json, is_active, created_at, description, updated_at')
       .eq('event_type', event.event_type)
       .eq('tenant_id', event.tenant_id)
       .eq('is_active', true);
@@ -51,8 +51,8 @@ export class AutomationExecutorService {
     if (!condition || typeof condition !== 'object' || Array.isArray(condition)) return true;
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
 
-    const payloadObj = payload as Record<string, any>;
-    const conditionObj = condition as Record<string, any>;
+    const payloadObj = payload as Record<string, unknown>;
+    const conditionObj = condition as Record<string, unknown>;
 
     for (const key in conditionObj) {
       if (payloadObj[key] !== conditionObj[key]) return false;
@@ -98,9 +98,9 @@ export class AutomationExecutorService {
         default:
           throw new Error(`Action type ${rule.action_type} not supported`);
       }
-    } catch (err: any) {
+    } catch (err) {
       status = 'FAILED';
-      errorMessage = err.message;
+      errorMessage = err instanceof Error ? err.message : 'Error inesperado en la ejecución';
     }
 
     // Actualizar log final
@@ -120,9 +120,9 @@ export class AutomationExecutorService {
       throw new Error("Invalid webhook configuration");
     }
 
-    const configObj = config as Record<string, any>;
+    const configObj = config as Record<string, unknown>;
     const url = configObj.url;
-    if (!url) throw new Error("Webhook URL missing in config");
+    if (typeof url !== 'string' || !url) throw new Error("Webhook URL missing in config");
 
     const response = await fetch(url, {
       method: 'POST',
@@ -142,13 +142,12 @@ export class AutomationExecutorService {
       throw new Error("Invalid email configuration");
     }
 
-    const configObj = config as Record<string, any>;
+    const configObj = config as Record<string, unknown>;
     const to = configObj.to;
     const subject = configObj.subject;
     
-    // Aquí se podría usar un sistema de plantillas para inyectar variables del payload
-    // Por simplicidad, inyectamos un log crudo si no hay body definido.
-    const body = configObj.body || `<p>Se ha disparado un evento de automatización.</p><pre>${JSON.stringify(payload, null, 2)}</pre>`;
+    // Aqui se podria usar un sistema de plantillas para inyectar variables del payload
+    const body = (configObj.body as string | undefined) || `<p>Se ha disparado un evento de automatización.</p><pre>${JSON.stringify(payload, null, 2)}</pre>`;
 
     if (!to || !subject) {
       throw new Error("Email 'to' or 'subject' missing in config");

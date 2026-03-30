@@ -37,7 +37,17 @@ export function usePayments() {
 
         if (pgError) throw pgError
 
-        setPayments(data || [])
+        const mappedPayments: Payment[] = (data || []).map((p: any) => ({
+          id: p.id,
+          amount: p.amount,
+          currency: p.currency || 'USD',
+          status: (p.status as Payment['status']) || 'pending',
+          description: p.description || '',
+          paid_at: p.paid_at,
+          created_at: p.created_at || new Date().toISOString()
+        }))
+
+        setPayments(mappedPayments)
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Error al cargar pagos'
         setError(msg)

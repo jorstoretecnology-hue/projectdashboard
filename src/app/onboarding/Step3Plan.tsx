@@ -81,12 +81,17 @@ export function Step3Plan({ name, selectedIndustry, selectedSpecialty, selectedP
       await supabase.auth.refreshSession().catch(e => logger.warn("[Onboarding] Error refrescando sesión", { error: e }))
 
       window.location.href = "/dashboard"
-    } catch (err: any) {
-      if (err?.digest?.includes('NEXT_REDIRECT') || err?.message?.includes('NEXT_REDIRECT')) {
-        return
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message?.includes('NEXT_REDIRECT') || (err as unknown as { digest?: string }).digest?.includes('NEXT_REDIRECT')) {
+          return
+        }
+        logger.error("[Onboarding] Error creating tenant", { error: err })
+        toast.error(err.message || "Error al crear la organización")
+      } else {
+        logger.error("[Onboarding] Unknown error creating tenant", { error: err })
+        toast.error("Error al crear la organización")
       }
-      logger.error("[Onboarding] Error creating tenant", { error: err })
-      toast.error(err.message || "Error al crear la organización")
       setLoading(false)
     }
   }

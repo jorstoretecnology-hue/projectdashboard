@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_logs: {
+        Row: {
+          automation_rule_id: string
+          domain_event_id: string | null
+          executed_at: string
+          error_message: string | null
+          id: string
+          provider_response: Json | null
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          automation_rule_id: string
+          domain_event_id?: string | null
+          executed_at?: string
+          error_message?: string | null
+          id?: string
+          provider_response?: Json | null
+          status: string
+          tenant_id: string
+        }
+        Update: {
+          automation_rule_id?: string
+          domain_event_id?: string | null
+          executed_at?: string
+          error_message?: string | null
+          id?: string
+          provider_response?: Json | null
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_logs_automation_rule_id_fkey"
+            columns: ["automation_rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_dashboard_stats"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      automation_rules: {
+        Row: {
+          action_config: Json
+          action_type: string
+          condition_json: Json
+          created_at: string
+          description: string | null
+          event_type: string
+          id: string
+          is_active: boolean
+          name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          action_config: Json
+          action_type: string
+          condition_json?: Json
+          created_at?: string
+          description?: string | null
+          event_type: string
+          id?: string
+          is_active?: boolean
+          name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          condition_json?: Json
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_dashboard_stats"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -56,127 +168,9 @@ export type Database = {
         }
         Relationships: []
       }
-      automation_logs: {
-        Row: {
-          automation_rule_id: string
-          domain_event_id: string
-          error_message: string | null
-          executed_at: string | null
-          id: string
-          provider_response: Json | null
-          status: string
-          tenant_id: string
-        }
-        Insert: {
-          automation_rule_id: string
-          domain_event_id: string
-          error_message?: string | null
-          executed_at?: string | null
-          id?: string
-          provider_response?: Json | null
-          status: string
-          tenant_id: string
-        }
-        Update: {
-          automation_rule_id?: string
-          domain_event_id?: string
-          error_message?: string | null
-          executed_at?: string | null
-          id?: string
-          provider_response?: Json | null
-          status?: string
-          tenant_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "automation_logs_automation_rule_id_fkey"
-            columns: ["automation_rule_id"]
-            isOneToOne: false
-            referencedRelation: "automation_rules"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "automation_logs_domain_event_id_fkey"
-            columns: ["domain_event_id"]
-            isOneToOne: false
-            referencedRelation: "domain_events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "automation_logs_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "automation_logs_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "v_dashboard_stats"
-            referencedColumns: ["tenant_id"]
-          },
-        ]
-      }
-      automation_rules: {
-        Row: {
-          action_config: Json
-          action_type: string
-          condition_json: Json | null
-          created_at: string | null
-          description: string | null
-          event_type: string
-          id: string
-          is_active: boolean | null
-          name: string
-          tenant_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          action_config: Json
-          action_type: string
-          condition_json?: Json | null
-          created_at?: string | null
-          description?: string | null
-          event_type: string
-          id?: string
-          is_active?: boolean | null
-          name: string
-          tenant_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          action_config?: Json
-          action_type?: string
-          condition_json?: Json | null
-          created_at?: string | null
-          description?: string | null
-          event_type?: string
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          tenant_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "automation_rules_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "automation_rules_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "v_dashboard_stats"
-            referencedColumns: ["tenant_id"]
-          },
-        ]
-      }
       customers: {
         Row: {
+          address: string | null
           city: string | null
           company_name: string | null
           created_at: string | null
@@ -190,13 +184,16 @@ export type Database = {
           location_id: string | null
           metadata: Json | null
           name: string | null
+          notes: string | null
           phone: string | null
+          status: string | null
           tax_id: string | null
           tenant_id: string
           updated_at: string | null
           website: string | null
         }
         Insert: {
+          address?: string | null
           city?: string | null
           company_name?: string | null
           created_at?: string | null
@@ -210,13 +207,16 @@ export type Database = {
           location_id?: string | null
           metadata?: Json | null
           name?: string | null
+          notes?: string | null
           phone?: string | null
+          status?: string | null
           tax_id?: string | null
           tenant_id: string
           updated_at?: string | null
           website?: string | null
         }
         Update: {
+          address?: string | null
           city?: string | null
           company_name?: string | null
           created_at?: string | null
@@ -230,7 +230,9 @@ export type Database = {
           location_id?: string | null
           metadata?: Json | null
           name?: string | null
+          notes?: string | null
           phone?: string | null
+          status?: string | null
           tax_id?: string | null
           tenant_id?: string
           updated_at?: string | null
@@ -370,53 +372,69 @@ export type Database = {
           },
         ]
       }
-      industry_specialties: {
+      invitations: {
         Row: {
+          app_role: string
           created_at: string | null
-          description: string | null
-          extra_fields: Json | null
-          icon: string | null
+          email: string
+          expires_at: string | null
           id: string
-          industry_slug: string
-          is_active: boolean | null
-          name: string
-          slug: string
+          invited_by: string | null
+          status: string | null
+          token: string
+          tenant_id: string | null
+          updated_at: string | null
         }
         Insert: {
+          app_role: string
           created_at?: string | null
-          description?: string | null
-          extra_fields?: Json | null
-          icon?: string | null
+          email: string
+          expires_at?: string | null
           id?: string
-          industry_slug: string
-          is_active?: boolean | null
-          name: string
-          slug: string
+          invited_by?: string | null
+          status?: string | null
+          token: string
+          tenant_id?: string | null
+          updated_at?: string | null
         }
         Update: {
+          app_role?: string
           created_at?: string | null
-          description?: string | null
-          extra_fields?: Json | null
-          icon?: string | null
+          email?: string
+          expires_at?: string | null
           id?: string
-          industry_slug?: string
-          is_active?: boolean | null
-          name?: string
-          slug?: string
+          invited_by?: string | null
+          status?: string | null
+          token?: string
+          tenant_id?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "industry_specialties_industry_slug_fkey"
-            columns: ["industry_slug"]
+            foreignKeyName: "invitations_invited_by_fkey"
+            columns: ["invited_by"]
             isOneToOne: false
-            referencedRelation: "industries"
-            referencedColumns: ["slug"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_dashboard_stats"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
       inventory_items: {
         Row: {
-          cost_price: number | null
           created_at: string | null
           deleted_at: string | null
           description: string | null
@@ -432,7 +450,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          cost_price?: number | null
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
@@ -448,7 +465,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          cost_price?: number | null
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
@@ -517,75 +533,21 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_inv_movements_product"
+            foreignKeyName: "inventory_movements_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_inv_movements_tenant"
+            foreignKeyName: "inventory_movements_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_inv_movements_tenant"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "v_dashboard_stats"
-            referencedColumns: ["tenant_id"]
-          },
-        ]
-      }
-      invitations: {
-        Row: {
-          app_role: string
-          created_at: string | null
-          email: string
-          expires_at: string | null
-          id: string
-          invited_by: string | null
-          status: string | null
-          tenant_id: string | null
-          token: string
-          updated_at: string | null
-        }
-        Insert: {
-          app_role: string
-          created_at?: string | null
-          email: string
-          expires_at?: string | null
-          id?: string
-          invited_by?: string | null
-          status?: string | null
-          tenant_id?: string | null
-          token?: string
-          updated_at?: string | null
-        }
-        Update: {
-          app_role?: string
-          created_at?: string | null
-          email?: string
-          expires_at?: string | null
-          id?: string
-          invited_by?: string | null
-          status?: string | null
-          tenant_id?: string | null
-          token?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invitations_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invitations_tenant_id_fkey"
+            foreignKeyName: "inventory_movements_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "v_dashboard_stats"
@@ -751,6 +713,7 @@ export type Database = {
           description: string | null
           failure_reason: string | null
           id: string
+          mercadopago_payment_id: string | null
           metadata: Json | null
           paid_at: string | null
           provider: string | null
@@ -767,6 +730,7 @@ export type Database = {
           description?: string | null
           failure_reason?: string | null
           id?: string
+          mercadopago_payment_id?: string | null
           metadata?: Json | null
           paid_at?: string | null
           provider?: string | null
@@ -783,6 +747,7 @@ export type Database = {
           description?: string | null
           failure_reason?: string | null
           id?: string
+          mercadopago_payment_id?: string | null
           metadata?: Json | null
           paid_at?: string | null
           provider?: string | null
@@ -1226,25 +1191,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_sales_customer"
+            foreignKeyName: "sales_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_sales_tenant"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_sales_tenant"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "v_dashboard_stats"
-            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "sales_location_id_fkey"
@@ -1252,6 +1203,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_dashboard_stats"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1594,45 +1559,10 @@ export type Database = {
           },
         ]
       }
-      tenant_tags: {
-        Row: {
-          created_at: string | null
-          id: string
-          tag: string
-          tenant_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          tag: string
-          tenant_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          tag?: string
-          tenant_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tenant_tags_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tenant_tags_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "v_dashboard_stats"
-            referencedColumns: ["tenant_id"]
-          },
-        ]
-      }
       tenants: {
         Row: {
           active_modules: string[] | null
+          feature_flags: string[] | null
           branding: Json | null
           created_at: string | null
           custom_domain: string | null
@@ -1644,11 +1574,11 @@ export type Database = {
           name: string
           plan: string
           settings: Json | null
-          specialty_slug: string | null
           updated_at: string | null
         }
         Insert: {
           active_modules?: string[] | null
+          feature_flags?: string[] | null
           branding?: Json | null
           created_at?: string | null
           custom_domain?: string | null
@@ -1660,11 +1590,11 @@ export type Database = {
           name: string
           plan?: string
           settings?: Json | null
-          specialty_slug?: string | null
           updated_at?: string | null
         }
         Update: {
           active_modules?: string[] | null
+          feature_flags?: string[] | null
           branding?: Json | null
           created_at?: string | null
           custom_domain?: string | null
@@ -1676,17 +1606,9 @@ export type Database = {
           name?: string
           plan?: string
           settings?: Json | null
-          specialty_slug?: string | null
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_tenant_specialty"
-            columns: ["industry_type", "specialty_slug"]
-            isOneToOne: false
-            referencedRelation: "industry_specialties"
-            referencedColumns: ["industry_slug", "slug"]
-          },
           {
             foreignKeyName: "tenants_industry_type_fkey"
             columns: ["industry_type"]
@@ -1871,39 +1793,48 @@ export type Database = {
       webhook_logs: {
         Row: {
           created_at: string | null
+          error_message: string | null
           event_type: string
+          external_id: string | null
           id: string
           payload: Json
           request_id: number | null
           response_body: string | null
           response_status_code: number | null
+          source: string | null
           status: string | null
           subscription_id: string | null
-          tenant_id: string
+          tenant_id: string | null
         }
         Insert: {
           created_at?: string | null
+          error_message?: string | null
           event_type: string
+          external_id?: string | null
           id?: string
           payload: Json
           request_id?: number | null
           response_body?: string | null
           response_status_code?: number | null
+          source?: string | null
           status?: string | null
           subscription_id?: string | null
-          tenant_id: string
+          tenant_id?: string | null
         }
         Update: {
           created_at?: string | null
+          error_message?: string | null
           event_type?: string
+          external_id?: string | null
           id?: string
           payload?: Json
           request_id?: number | null
           response_body?: string | null
           response_status_code?: number | null
+          source?: string | null
           status?: string | null
           subscription_id?: string | null
-          tenant_id?: string
+          tenant_id?: string | null
         }
         Relationships: [
           {
@@ -1929,6 +1860,7 @@ export type Database = {
           },
         ]
       }
+
       webhook_subscriptions: {
         Row: {
           created_at: string | null
@@ -2038,10 +1970,6 @@ export type Database = {
         }
         Returns: Json
       }
-      cancel_sale_transaction: {
-        Args: { p_sale_id: string; p_user_id: string }
-        Returns: Json
-      }
       complete_service_transaction: {
         Args: {
           p_new_state: string
@@ -2059,17 +1987,6 @@ export type Database = {
           p_phone?: string
         }
         Returns: string
-      }
-      create_purchase_transaction: {
-        Args: {
-          p_delivery_date: string
-          p_items: Json
-          p_notes: string
-          p_supplier_id: string
-          p_tenant_id: string
-          p_user_id: string
-        }
-        Returns: Json
       }
       create_sale_transaction:
         | {
@@ -2095,7 +2012,6 @@ export type Database = {
             }
             Returns: Json
           }
-      get_current_user_app_role: { Args: never; Returns: string }
       get_current_user_tenant_id: { Args: never; Returns: string }
       get_sibling_location_ids: {
         Args: { p_location_id: string }
@@ -2109,53 +2025,22 @@ export type Database = {
         }
         Returns: number
       }
-      get_user_authorized_locations: {
-        Args: never
-        Returns: {
-          loc_id: string
-        }[]
-      }
       get_user_location_ids: { Args: never; Returns: string[] }
-      initialize_new_organization:
-        | {
-            Args: {
-              p_industry?: string
-              p_modules?: string[]
-              p_name: string
-              p_plan?: string
-              p_specialty?: string
-              p_user_id?: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_industry: string
-              p_modules?: string[]
-              p_name: string
-              p_plan: string
-              p_user_id: string
-            }
-            Returns: string
-          }
-      is_super_admin: { Args: { user_id?: string }; Returns: boolean }
-      is_superadmin: { Args: never; Returns: boolean }
-      is_tenant_manager: { Args: never; Returns: boolean }
-      purge_old_logs: { Args: never; Returns: undefined }
-      receive_purchase_transaction: {
+      initialize_new_organization: {
         Args: {
-          p_items: Json
-          p_notes?: string
-          p_purchase_id: string
-          p_tenant_id: string
+          p_industry: string
+          p_modules?: string[]
+          p_name: string
+          p_plan: string
           p_user_id: string
         }
-        Returns: Json
+        Returns: string
       }
-      rename_constraint_if_exists: {
-        Args: { new_name: string; old_name: string; t_name: string }
-        Returns: undefined
-      }
+      is_super_admin:
+        | { Args: never; Returns: boolean }
+        | { Args: { user_id?: string }; Returns: boolean }
+      is_superadmin: { Args: never; Returns: boolean }
+      purge_old_logs: { Args: never; Returns: undefined }
       restore_record: {
         Args: {
           record_id: string
@@ -2163,6 +2048,22 @@ export type Database = {
           target_tenant_id: string
         }
         Returns: undefined
+      }
+      increment_tenant_quota: {
+        Args: {
+          p_tenant_id: string
+          p_resource_key: string
+          p_increment_by: number
+        }
+        Returns: Json
+      }
+      decrement_tenant_quota: {
+        Args: {
+          p_tenant_id: string
+          p_resource_key: string
+          p_decrement_by: number
+        }
+        Returns: Json
       }
     }
     Enums: {
