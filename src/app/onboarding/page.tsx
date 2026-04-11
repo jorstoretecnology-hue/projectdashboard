@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { logger } from "@/lib/logger"
 import { getAllIndustries } from "@/config/industries"
@@ -12,7 +12,7 @@ import { Step3Plan } from "./Step3Plan"
 
 const TOTAL_STEPS = 4
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const params = useSearchParams()
   const [step, setStep] = useState(1)
   const [name, setName] = useState("")
@@ -111,5 +111,17 @@ export default function OnboardingPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-950 text-white">
+        Cargando configuración...
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   )
 }

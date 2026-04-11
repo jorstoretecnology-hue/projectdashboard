@@ -82,53 +82,63 @@ export function AuthProvider({
     })
 
     // Escuchar cambios en la autenticación - FIRMA ESTRICTA SUGERIDA (_unused_session)
-    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (event, _unused_session) => {
-      logger.log(`[AuthContext] Auth Event: ${event}`)
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event, currentSession) => {
+      // Log sanitizado para desarrollo
+      if (process.env.NODE_ENV !== 'production') {
+        logger.log(`[AuthContext] Auth Event: ${event}`)
+      }
       
-      // VALIDACIÓN REAL: Ignoramos el objeto session del callback y consultamos al servidor
-      const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser()
-      
-      if (userError || !currentUser) {
-        if (userError) {
-          logger.warn('[AuthContext] Auth Change Error:', userError)
-          // AUTO-RECOVERY: Limpiar sesión local si el JWT es inválido
-          if (userError.message?.includes('does not exist') || 
-              userError.message?.includes('invalid') || 
-              userError.status === 403) {
-            logger.log('[AuthContext] Auto-recovery: clearing stale session on auth change')
-            await supabaseClient.auth.signOut({ scope: 'local' })
+      // FIX DEADLOCK: El callback onAuthStateChange no debe ser asíncrono.
+      // Delegamos la lógica pesada a una función separada en el ciclo de eventos (event loop).
+      const processAuthChange = async () => {
+        // VALIDACIÓN REAL: Ignoramos el objeto session del callback y consultamos al servidor
+        const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser()
+        
+        if (userError || !currentUser) {
+          if (userError) {
+            logger.warn('[AuthContext] Auth Change Error:', userError)
+            // AUTO-RECOVERY: Limpiar sesión local si el JWT es inválido
+            if (userError.message?.includes('does not exist') || 
+                userError.message?.includes('invalid') || 
+                userError.status === 403) {
+              logger.log('[AuthContext] Auto-recovery: clearing stale session on auth change')
+              await supabaseClient.auth.signOut({ scope: 'local' })
+            }
           }
+          setUser(null)
+          setSession(null)
+          setRole(null)
+        } else {
+          setUser(currentUser)
+          
+          // Obtenemos la sesión de forma segura solo para tokens si es necesario
+          const { data: { session: newSession } } = await supabaseClient.auth.getSession()
+          setSession(newSession)
+          
+          // Sincronizar ROL desde base de datos
+          const { data } = await supabaseClient.from('profiles')
+            .select('app_role')
+            .eq('id', currentUser.id)
+            .single()
+          
+          const finalRole = data?.app_role || currentUser.app_metadata?.app_role || 'VIEWER'
+          setRole(finalRole)
         }
-        setUser(null)
-        setSession(null)
-        setRole(null)
-      } else {
-        setUser(currentUser)
-        
-        // Obtenemos la sesión de forma segura solo para tokens si es necesario
-        const { data: { session: currentSession } } = await supabaseClient.auth.getSession()
-        setSession(currentSession)
-        
-        // Sincronizar ROL desde base de datos
-        const { data } = await supabaseClient.from('profiles')
-          .select('app_role')
-          .eq('id', currentUser.id)
-          .single()
-        
-        const finalRole = data?.app_role || currentUser.app_metadata?.app_role || 'VIEWER'
-        setRole(finalRole)
-      }
 
-      setIsLoading(false)
+        setIsLoading(false)
 
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        router.refresh()
-      }
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          router.refresh()
+        }
 
-      if (event === 'SIGNED_OUT') {
-        router.push('/auth/login')
-        router.refresh()
-      }
+        if (event === 'SIGNED_OUT') {
+          router.push('/auth/login')
+          router.refresh()
+        }
+      };
+
+      // Soltamos la microtarea para romper el deadlock del SDK
+      Promise.resolve().then(processAuthChange);
     })
 
     return () => {

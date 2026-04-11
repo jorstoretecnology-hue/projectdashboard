@@ -36,7 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MODULES_CONFIG } from '@/config/modules';
+import { MODULE_DEFINITIONS } from '@/core/modules/module-registry';
 import { PLAN_INFO, type PlanType } from '@/config/tenants';
 import { cn } from '@/lib/utils';
 import { useTenant } from '@/providers';
@@ -331,7 +331,7 @@ export default function SuperAdminPage() {
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="rounded-full">
+                        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Abrir menú de administración">
                           <MoreVertical size={20} />
                         </Button>
                       </DropdownMenuTrigger>
@@ -381,15 +381,15 @@ export default function SuperAdminPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Control de Módulos</span>
                         <Badge variant="outline" className="text-[10px] font-bold">
-                          {tenant.activeModules.length} de {MODULES_CONFIG.length} Activos
+                          {tenant.activeModules.length} de {Object.keys(MODULE_DEFINITIONS).length} Activos
                         </Badge>
                       </div>
                       <div className="space-y-2">
-                        {MODULES_CONFIG.map((mod) => {
-                          const isActive = tenant.activeModules.includes(mod.id);
+                        {Object.values(MODULE_DEFINITIONS).map((mod) => {
+                          const isActive = tenant.activeModules.includes(mod.key);
                           return (
                             <div 
-                              key={mod.id} 
+                              key={mod.key} 
                               className={cn(
                                 "flex items-center justify-between px-4 py-3 rounded-xl border transition-all",
                                 isActive 
@@ -402,13 +402,20 @@ export default function SuperAdminPage() {
                                   "flex items-center justify-center w-8 h-8 rounded-lg shrink-0",
                                   isActive ? "bg-primary/10" : "bg-muted/20"
                                 )}>
-                                  <mod.icon size={16} className={isActive ? "text-primary" : "text-muted-foreground"} />
+                                  <span className={cn(
+                                    "text-xs font-mono",
+                                    isActive ? "text-primary" : "text-muted-foreground"
+                                  )}>
+                                    {mod.navigation[0]?.icon?.slice(0, 2) ?? '??'}
+                                  </span>
                                 </div>
-                                <Label className="text-xs font-bold cursor-pointer truncate">{mod.name}</Label>
+                                <Label className="text-xs font-bold cursor-pointer truncate">
+                                  {mod.navigation[0]?.label ?? mod.key}
+                                </Label>
                               </div>
                               <Switch 
                                 checked={isActive} 
-                                onCheckedChange={() => handleToggleModule(tenant.id, mod.id)}
+                                onCheckedChange={() => handleToggleModule(tenant.id, mod.key)}
                                 className="shrink-0 ml-3"
                               />
                             </div>

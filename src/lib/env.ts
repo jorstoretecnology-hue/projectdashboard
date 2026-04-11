@@ -15,6 +15,11 @@ const envSchema = z.object({
   // App Config (opcional)
   NEXT_PUBLIC_APP_NAME: z.string().optional().default('Dashboard Universal'),
   NEXT_PUBLIC_DEFAULT_THEME: z.enum(['light', 'dark', 'system']).optional().default('system'),
+
+  // Mercado Pago
+  NEXT_PUBLIC_MP_PUBLIC_KEY: z.string().min(1, 'NEXT_PUBLIC_MP_PUBLIC_KEY es requerida'),
+  MERCADOPAGO_ACCESS_TOKEN: z.string().min(1, 'MERCADOPAGO_ACCESS_TOKEN es requerida'),
+  MERCADOPAGO_WEBHOOK_SECRET: z.string().min(1, 'MERCADOPAGO_WEBHOOK_SECRET es requerida'),
 })
 
 /**
@@ -34,6 +39,9 @@ function validateEnv(): Env {
       NODE_ENV: process.env.NODE_ENV,
       NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
       NEXT_PUBLIC_DEFAULT_THEME: process.env.NEXT_PUBLIC_DEFAULT_THEME,
+      NEXT_PUBLIC_MP_PUBLIC_KEY: process.env.NEXT_PUBLIC_MP_PUBLIC_KEY,
+      MERCADOPAGO_ACCESS_TOKEN: process.env.MERCADOPAGO_ACCESS_TOKEN,
+      MERCADOPAGO_WEBHOOK_SECRET: process.env.MERCADOPAGO_WEBHOOK_SECRET,
     })
   } catch (err) {
     if (err instanceof z.ZodError) {

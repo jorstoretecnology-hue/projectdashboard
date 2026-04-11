@@ -17,7 +17,7 @@ interface TenantUser {
 }
 
 interface TenantModule {
-  module_id: string
+  module_slug: string
   is_active: boolean
 }
 
@@ -85,7 +85,7 @@ export default async function TenantDetailPage({ params }: Props) {
   // Fetch active modules
   const { data: modules } = await supabase
     .from('tenant_modules')
-    .select('module_id, is_active')
+    .select('module_slug, is_active')
     .eq('tenant_id', id)
 
   // Fetch audit logs (last 20)
@@ -104,7 +104,7 @@ export default async function TenantDetailPage({ params }: Props) {
       {/* Back + Header */}
       <div className="flex items-center gap-4">
         <Link href="/console/tenants">
-          <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
+          <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10" aria-label="Volver a tenants">
             <ArrowLeft size={20} />
           </Button>
         </Link>
@@ -255,7 +255,7 @@ export default async function TenantDetailPage({ params }: Props) {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {(modules as unknown as TenantModule[])?.map((mod) => (
                   <div
-                    key={mod.module_id}
+                    key={mod.module_slug}
                     className={cn(
                       "flex items-center justify-between px-4 py-3 rounded-xl border transition-all",
                       mod.is_active
@@ -265,7 +265,7 @@ export default async function TenantDetailPage({ params }: Props) {
                   >
                     <div className="flex items-center gap-3">
                       <Package size={16} className={mod.is_active ? "text-primary" : "text-muted-foreground"} />
-                      <span className="text-sm font-bold">{mod.module_id}</span>
+                      <span className="text-sm font-bold uppercase">{mod.module_slug}</span>
                     </div>
                     <Badge variant={mod.is_active ? "default" : "outline"} className="text-[10px]">
                       {mod.is_active ? 'ACTIVO' : 'INACTIVO'}

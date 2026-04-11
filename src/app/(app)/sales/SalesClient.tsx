@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ShoppingBag, TrendingUp, Calendar, Loader2 } from "lucide-react"
+import { ShoppingBag, TrendingUp, Calendar, Loader2, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { salesService } from "@/modules/sales/services/sales.service"
 import { Sale } from "@/modules/sales/types"
 import { Badge } from "@/components/ui/badge"
+import { POSDialog } from "@/components/sales/POSDialog"
+import { Button } from "@/components/ui/button"
 
 interface SalesClientProps {
   initialSales: Sale[]
@@ -16,6 +18,7 @@ interface SalesClientProps {
 export function SalesClient({ initialSales, tenantId }: SalesClientProps) {
   const [sales, setSales] = useState<Sale[]>(initialSales)
   const [isLoading, setIsLoading] = useState(false)
+  const [isPOSOpen, setIsPOSOpen] = useState(false)
 
   const loadSales = async () => {
     setIsLoading(true)
@@ -37,6 +40,19 @@ export function SalesClient({ initialSales, tenantId }: SalesClientProps) {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Ventas</h1>
+          <p className="text-muted-foreground">Gestiona tus transacciones y movimientos de caja.</p>
+        </div>
+        <Button 
+          onClick={() => setIsPOSOpen(true)}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 py-6 rounded-2xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+        >
+          <Plus className="w-5 h-5 mr-2" /> Nueva Venta
+        </Button>
+      </div>
+
       {/* KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-primary">
@@ -118,6 +134,15 @@ export function SalesClient({ initialSales, tenantId }: SalesClientProps) {
           </div>
         </CardContent>
       </Card>
+
+      <POSDialog 
+        open={isPOSOpen} 
+        onOpenChange={(open) => {
+          setIsPOSOpen(open)
+          if (!open) loadSales() // Recargar al cerrar
+        }} 
+        tenantId={tenantId} 
+      />
     </div>
   )
 }

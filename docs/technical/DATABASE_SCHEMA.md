@@ -28,8 +28,8 @@
 
 -- Módulos de negocio
 ✅ customers
-✅ products (Catálogo Unificado: Productos y Servicios)
-✅ inventory_items (Consolidado en products)
+✅ products (Catálogo Unificado: Productos y Servicios - **Mantenimiento Maestro**)
+✅ inventory_items (LEGACY - Consolidado en `products`, usar solo para refactorización gradual)
 ```
 
 ### ⚠️ Tablas que Necesitan Actualización
@@ -84,7 +84,7 @@ CREATE TABLE sales (
   created_by UUID NOT NULL REFERENCES auth.users(id),
   
   -- Estado del flujo (según BUSINESS_FLOWS.md)
-  state VARCHAR(50) NOT NULL DEFAULT 'COTIZACIÓN' 
+  state VARCHAR(50) NOT NULL DEFAULT 'PAGADO' 
     CHECK (state IN ('COTIZACIÓN', 'PENDIENTE', 'PAGADO', 'ENTREGADO', 'RECHAZADO', 'CANCELADA')),
   
   -- Información financiera
@@ -368,9 +368,12 @@ CREATE TABLE inventory_movements (
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES products(id),
   
-  -- Tipo de movimiento
+  -- Tipo de movimiento (Flujo físico)
   type VARCHAR(50) NOT NULL 
-    CHECK (type IN ('VENTA', 'COMPRA', 'AJUSTE_MANUAL', 'REVERSA_VENTA', 'INICIAL')),
+    CHECK (type IN ('IN', 'OUT', 'ADJUSTMENT')),
+  
+  -- Evento de negocio (Referencia)
+  reference_type VARCHAR(50) NOT NULL, -- 'VENTA', 'COMPRA', 'AJUSTE', etc.
   
   -- Cantidad (positivo = entrada, negativo = salida)
   quantity INTEGER NOT NULL,

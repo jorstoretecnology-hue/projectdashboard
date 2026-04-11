@@ -3,7 +3,7 @@
 import { Search, Command, X } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 
-import { MODULES_CONFIG } from '@/config/modules';
+import { useModuleContext } from '@/providers/ModuleContext';
 import { useTenant } from '@/providers';
 
 interface CommandSearchProps {
@@ -42,23 +42,21 @@ export const CommandSearch = ({ isOpen, onClose }: CommandSearchProps) => {
     }
   }, [isOpen]);
 
-  // Filtrar módulos por tenant y query
+  // ModuleContext ya filtra por tenant — solo filtramos por query
+  const { modules } = useModuleContext();
+
   const filteredModules = useMemo(() => {
-    // Primero filtrar por módulos del tenant
-    const tenantModules = MODULES_CONFIG.filter((module) =>
-      currentTenant?.activeModules.includes(module.id),
-    );
-
-    // Luego filtrar por query
     const normalizedQuery = query.toLowerCase().trim();
-    if (!normalizedQuery) return tenantModules;
+    if (!normalizedQuery) return modules;
 
-    return tenantModules.filter(
-      (m) =>
-        m.name.toLowerCase().includes(normalizedQuery) ||
-        m.description?.toLowerCase().includes(normalizedQuery),
+    return modules.filter((m) =>
+      m.navigation.some(
+        (nav) =>
+          nav.label.toLowerCase().includes(normalizedQuery) ||
+          nav.path.toLowerCase().includes(normalizedQuery),
+      ),
     );
-  }, [query, currentTenant]);
+  }, [query, modules]);
 
   if (!isOpen) return null;
 
@@ -111,24 +109,24 @@ export const CommandSearch = ({ isOpen, onClose }: CommandSearchProps) => {
           </p>
 
           {filteredModules.length > 0 ? (
-            filteredModules.map((module) => (
-              <a
-                key={module.id}
-                href={module.path}
-                onClick={onClose}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors group"
-              >
-                <div className="p-2 bg-muted rounded-md group-hover:bg-primary/20 transition-colors">
-                  <module.icon size={18} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-medium">{module.name}</span>
-                  {module.description && (
-                    <span className="text-xs text-muted-foreground">{module.description}</span>
-                  )}
-                </div>
-              </a>
-            ))
+            filteredModules.flatMap((module) =>
+              module.navigation.map((nav) => (
+                <a
+                  key={`${module.key}-${nav.path}`}
+                  href={nav.path}
+                  onClick={onClose}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors group"
+                >
+                  <div className="p-2 bg-muted rounded-md group-hover:bg-primary/20 transition-colors">
+                    <span className="text-sm font-mono text-muted-foreground">{nav.icon}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{nav.label}</span>
+                    <span className="text-xs text-muted-foreground">{nav.path}</span>
+                  </div>
+                </a>
+              ))
+            )
           ) : (
             <div className="p-8 text-center text-muted-foreground">
               {query

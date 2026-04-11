@@ -123,7 +123,7 @@ export default async function PlansPage() {
                   ) : (
                     <Badge variant="default" className={cn("bg-gradient-to-r border-0 text-white shadow-sm", gradient)}>Premium</Badge>
                   )}
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white -mr-2 -mt-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white -mr-2 -mt-1" aria-label="Abrir opciones del plan">
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </div>

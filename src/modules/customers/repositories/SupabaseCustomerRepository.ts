@@ -1,14 +1,25 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ICustomerRepository } from '../interfaces/ICustomerRepository';
 import { Customer } from '../types';
-import { CreateCustomerDTO, UpdateCustomerDTO, CustomerQueryDTO, fromDbCustomer, toDbCustomer } from '@/lib/api/schemas/customers';
-import { Database } from '@/lib/supabase/database.types';
+import {
+  CreateCustomerDTO,
+  UpdateCustomerDTO,
+  CustomerQueryDTO,
+  fromDbCustomer,
+  toDbCustomer,
+} from '@/lib/api/schemas/customers';
+import { Database, Json } from '@/lib/supabase/database.types';
 
-type DBCustomer = Database['public']['Tables']['customers']['Row']
+type DBCustomer = Database['public']['Tables']['customers']['Row'];
+type DBCustomerInsert = Database['public']['Tables']['customers']['Insert'];
+type DBCustomerUpdate = Database['public']['Tables']['customers']['Update'];
+
+const CUSTOMER_FIELDS =
+  'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website' as const;
 
 /**
  * Implementación concreta del Repositorio de Clientes para Supabase
- * 
+ *
  * Esta clase encapsula toda la lógica específica de Supabase (RLS, filtros, queries).
  * Si en el futuro se cambia de base de datos, solo se necesita crear una nueva
  * implementación de ICustomerRepository sin tocar el servicio.
@@ -16,14 +27,14 @@ type DBCustomer = Database['public']['Tables']['customers']['Row']
 export class SupabaseCustomerRepository implements ICustomerRepository {
   constructor(private supabase: SupabaseClient<Database>) {}
 
-
   async findAll(tenantId: string, query: CustomerQueryDTO) {
     const { page, limit, search, status, city, sortBy, sortOrder } = query;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
     // Campos exactos de la tabla customers
-    const CUSTOMER_FIELDS = 'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website';
+    const CUSTOMER_FIELDS =
+      'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website';
 
     let q = this.supabase
       .from('customers')
@@ -33,7 +44,7 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
     // Búsqueda "Fuzzy" en múltiples campos
     if (search) {
       q = q.or(
-        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,company_name.ilike.%${search}%,tax_id.ilike.%${search}%`
+        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,company_name.ilike.%${search}%,tax_id.ilike.%${search}%`,
       );
     }
 
@@ -67,7 +78,8 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
   }
 
   async findById(id: string, tenantId: string): Promise<Customer | null> {
-    const CUSTOMER_FIELDS = 'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website';
+    const CUSTOMER_FIELDS =
+      'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website';
 
     const { data, error } = await this.supabase
       .from('customers')
@@ -85,7 +97,8 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
   }
 
   async findByEmail(email: string, tenantId: string): Promise<Customer | null> {
-    const CUSTOMER_FIELDS = 'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website';
+    const CUSTOMER_FIELDS =
+      'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website';
 
     const { data, error } = await this.supabase
       .from('customers')
@@ -105,12 +118,14 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
     const dbData = {
       ...toDbCustomer(data),
       tenant_id: tenantId,
-    }
+    };
 
     const { data: newCustomer, error } = await this.supabase
       .from('customers')
       .insert(dbData as any)
-      .select('id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website')
+      .select(
+        'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website',
+      )
       .single();
 
     if (error) throw error;
@@ -120,14 +135,16 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
 
   async update(id: string, data: UpdateCustomerDTO, tenantId: string): Promise<Customer> {
     // Convertir de camelCase (frontend) a snake_case (database)
-    const dbData = toDbCustomer(data as any)
+    const dbData = toDbCustomer(data as any);
 
     const { data: updated, error } = await this.supabase
       .from('customers')
       .update(dbData as any)
       .eq('id', id)
       .eq('tenant_id', tenantId)
-      .select('id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website')
+      .select(
+        'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website',
+      )
       .single();
 
     if (error) throw error;

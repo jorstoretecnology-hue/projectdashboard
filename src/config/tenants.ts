@@ -19,7 +19,7 @@ export interface TenantConfig {
   id: string;
   name: string;
   plan: PlanType;
-  activeModules: string[]; // IDs de módulos del MODULES_CONFIG
+  activeModules: string[]; // slugs de módulos — deben existir en MODULE_DEFINITIONS (@/core/modules/module-registry)
   active_modules?: string[]; // Alias para compatibilidad con DB
   featureFlags: FeatureFlag[]; // Nuevas features granulares
   feature_flags?: FeatureFlag[]; // Alias para compatibilidad con DB

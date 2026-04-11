@@ -17,8 +17,8 @@
 ### Minuto 1-5: Contexto General
 1. **[CONTEXTO_DEL_PROYECTO.md](./CONTEXTO_DEL_PROYECTO.md)** ← **EMPIEZA AQUÍ**
    - Qué es este proyecto (elevator pitch)
-   - Arquitectura en 30 segundos
-   - Stack tecnológico
+   - [ARCHITECTURE_SUMMARY.md](./technical/ARCHITECTURE_SUMMARY.md) (Arquitectura)
+   - [README.md](./README.md) (Stack técnico)
    - Conceptos fundamentales
 
 ### Minuto 5-10: Estado Actual

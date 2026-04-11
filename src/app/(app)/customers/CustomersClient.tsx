@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useDeferredValue, useCallback } from "react"
 import { Users, Loader2, UserCheck, UserPlus, Users2, UserX } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
@@ -35,6 +35,7 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
   const [error, setError] = useState<string | null>(null)
   
   const [search, setSearch] = useState("")
+  const deferredSearch = useDeferredValue(search)
   const [view, setView] = useState<"grid" | "list">("list")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -43,30 +44,29 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
   const [isDeleting, setIsDeleting] = useState(false)
 
   // 2. Carga de Datos (para Refetch)
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
       const { data } = await customersService.list(tenantId)
       setItems(data)
-    } catch (err) {
-      console.error(err)
+    } catch {
       setError("Error cargando clientes. Intenta recargar.")
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [tenantId])
 
-  // 3. Filtrado Local
+  // 3. Filtrado Local con deferred value
   const filteredItems = useMemo(() => {
-    const q = search.toLowerCase()
+    const q = deferredSearch.toLowerCase()
     return items.filter(
       (c) =>
         c.firstName.toLowerCase().includes(q) ||
         c.lastName.toLowerCase().includes(q) ||
         c.email.toLowerCase().includes(q)
     )
-  }, [items, search])
+  }, [items, deferredSearch])
 
 
   // Métricas para KPIs
@@ -79,27 +79,27 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
     return { total, active, leads, inactive }
   }, [items])
 
-  // 4. Handlers CRUD
-  const handleOpenCreate = () => {
+  // 4. Handlers CRUD memoizados
+  const handleOpenCreate = useCallback(() => {
     setSelectedCustomer(null)
     setIsDialogOpen(true)
-  }
+  }, [])
 
-  const handleOpenEdit = (customer: Customer) => {
+  const handleOpenEdit = useCallback((customer: Customer) => {
     setSelectedCustomer(customer)
     setIsDialogOpen(true)
-  }
+  }, [])
 
-  const handleOpenDelete = (customer: Customer) => {
+  const handleOpenDelete = useCallback((customer: Customer) => {
     setSelectedCustomer(customer)
     setIsDeleteDialogOpen(true)
-  }
+  }, [])
 
-  const handleDialogSuccess = () => {
+  const handleDialogSuccess = useCallback(() => {
     loadCustomers()
-  }
+  }, [loadCustomers])
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!selectedCustomer) return
 
     setIsDeleting(true)
@@ -113,14 +113,13 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
       if (message.includes("ACCESO_DENEGADO")) {
         toast.error("No tienes permiso para borrar clientes.")
       } else {
-        console.error(error)
         toast.error("Error al eliminar el cliente")
       }
     } finally {
       setIsDeleting(false)
       setSelectedCustomer(null)
     }
-  }
+  }, [selectedCustomer, loadCustomers])
 
   return (
     <div className="space-y-6">

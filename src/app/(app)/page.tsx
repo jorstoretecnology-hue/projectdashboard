@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTenant } from '@/providers';
 import { useModuleContext } from '@/providers';
-import { MODULES_CONFIG } from '@/config/modules';
+import { MODULE_DEFINITIONS } from '@/core/modules/module-registry';
 import { Switch } from '@/components/ui/switch';
 import { DashboardStats } from '@/components/dashboard/DashboardStats'; // Import new component
 
@@ -191,26 +191,27 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                {MODULES_CONFIG.map((module) => {
-                  // Módulos Core no se pueden desactivar desde aquí (Dashboard, Settings)
-                  const isCore = ['Dashboard', 'Settings'].includes(module.id);
-                  const isActive = activeModules.includes(module.id) || isCore;
-                  
-                  // TODO: Validar si el PLAN permite este módulo antes de mostrar el switch habilitado
-                  const canToggle = !isCore; 
+                {Object.values(MODULE_DEFINITIONS).map((module) => {
+                  const nav = module.navigation[0]
+                  if (!nav) return null
+                  const isCore = ['dashboard', 'settings'].includes(module.key);
+                  const isActive = activeModules.includes(module.key) || isCore;
+                  const canToggle = !isCore;
 
                   return (
                     <div
-                      key={module.id}
+                      key={module.key}
                       className="flex items-center justify-between min-h-[40px]"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className={`p-2 rounded-md ${isActive ? 'bg-primary/10' : 'bg-muted/50'}`}>
-                          <module.icon size={16} className={isActive ? 'text-primary' : 'text-muted-foreground'} />
+                          <span className={`text-xs font-mono ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                            {nav.icon?.slice(0, 2) ?? '??'}
+                          </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm font-medium truncate ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
-                            {module.name}
+                            {nav.label}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
                             {isActive ? 'Activo' : 'Inactivo'}
@@ -219,7 +220,7 @@ export default function DashboardPage() {
                       </div>
                       <Switch
                         checked={isActive}
-                        onCheckedChange={() => handleToggleModule(module.id)}
+                        onCheckedChange={() => handleToggleModule(module.key)}
                         disabled={!canToggle}
                         className="ml-2"
                       />

@@ -46,17 +46,19 @@ Entendemos la necesidad fiscal, pero la manejamos mediante una **Capa de Integra
 
 ## 💰 6. Modelo de Precios
 
-| Característica | **Starter** (Base) | **Growth** ($29/mes) | **Pro** ($79/mes) |
-|----------------|---------------------------|----------------------|-------------------|
-| **Usuarios**   | 2                         | 5                    | Ilimitados        |
-| **Productos**  | Hasta 50                  | Hasta 500            | Ilimitados        |
-| **Industria**  | 1                         | 1                    | Multi-industria   |
-| **WhatsApp**   | Notificaciones básicas    | Integración estándar | Integración Total |
-| **Soporte**    | Comunitario               | Email                | Prioritario/Chat  |
+| Característica | **Free** ($0) | **Starter** ($49k - $89k) | **Professional** ($99k - $179k) |
+|----------------|----------------|---------------------------|----------------------------------|
+| **Usuarios**   | 2              | 5                         | Ilimitados                       |
+| **Productos**  | Hasta 50       | Hasta 500                 | Ilimitados                       |
+| **Industria**  | 1              | 1                         | Multi-industria                  |
+| **WhatsApp**   | Notificaciones | Integración estándar      | Integración Total                |
+| **Soporte**    | Comunitario    | Email (<24h)              | Prioritario / WhatsApp           |
+
+*Nota: Los precios varían según la industria (Taller, Gym, Glamping, etc.) tal como se define en `business-strategy/SKILL.md`.*
 
 ### Add-ons de IA (Fase 4)
-- **AI Automation Pack** ($15/mes): Predictor de stock y catálogos inteligentes.
-- **AI WhatsApp Agent** ($0.05 / conv): Agente autónomo de atención.
+- **AI Automation Pack** ($45.000 / mes): Predictor de stock y catálogos inteligentes.
+- **AI WhatsApp Agent** ($150 por conversación): Agente autónomo de atención.
 
 ### Gestión de Quotas
 El `QuotaEngine` controla límites de usuarios, items de inventario y consumo de servicios inteligentes, disparando el `QuotaExceededDialog` cuando es necesario.

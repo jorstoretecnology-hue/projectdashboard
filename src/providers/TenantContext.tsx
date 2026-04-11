@@ -74,8 +74,6 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       const role = rawRole.toUpperCase();
       const tenantId = profile?.tenant_id || user.app_metadata?.tenant_id;
       const superAdmin = role === 'SUPER_ADMIN';
-
-      logger.log('[TenantContext] Initializing', { email: user.email, role, tenantId, superAdmin });
       setIsSuperAdmin(superAdmin);
 
       try {
@@ -90,7 +88,9 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
             setCurrentTenantId(dbTenant.id);
             setTenants([mapDbTenant(dbTenant)]);
           } else {
-            logger.error('[TenantContext] Tenant not found', tenantId);
+            if (process.env.NODE_ENV !== 'production') {
+              logger.log('[TenantContext] Tenant not found', { tenantId });
+            }
           }
         } else {
           logger.warn('[TenantContext] No tenant_id for user');

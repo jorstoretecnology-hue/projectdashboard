@@ -5,8 +5,7 @@ import { loadMercadoPago, openCheckout } from '@/lib/mercadopago/client-side';
 import { toast } from 'sonner';
 import type { PlanType } from '@/config/tenants';
 import { logger } from '@/lib/logger';
-
-const MP_PUBLIC_KEY = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY || '';
+import { env } from '@/lib/env';
 
 export function usePlanUpgrade() {
   const { resetSimulation, effectivePlan, isSimulated, currentTenant } = useTenant();
@@ -27,7 +26,7 @@ export function usePlanUpgrade() {
       }
 
       // 2. Inicializar SDK en cliente
-      await loadMercadoPago(MP_PUBLIC_KEY);
+      await loadMercadoPago(env.NEXT_PUBLIC_MP_PUBLIC_KEY);
 
       // 3. Abrir Checkout
       toast.dismiss(toastId);

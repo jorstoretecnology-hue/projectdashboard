@@ -359,7 +359,7 @@ export default function UsersPage() {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" aria-label="Abrir menú de usuario">
                             <MoreHorizontal size={16} />
                           </Button>
                         </DropdownMenuTrigger>

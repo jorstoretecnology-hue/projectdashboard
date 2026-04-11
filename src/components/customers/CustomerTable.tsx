@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import {
   Table,
@@ -7,7 +7,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,36 +15,52 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Pencil, Trash2, Mail, Phone, Calendar } from "lucide-react"
-import { Customer } from "@/modules/customers/types"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import { useUser } from "@/providers"
-import { PERMISSIONS } from "@/config/permissions"
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal, Pencil, Trash2, Mail, Phone, Calendar } from 'lucide-react';
+import { Customer } from '@/modules/customers/types';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { useUser } from '@/providers';
+import { PERMISSIONS } from '@/config/permissions';
 
 interface CustomerTableProps {
-  customers: Customer[]
-  onEdit: (customer: Customer) => void
-  onDelete: (customer: Customer) => void
+  customers: Customer[];
+  onEdit: (customer: Customer) => void;
+  onDelete: (customer: Customer) => void;
 }
 
 export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProps) {
-  const { can } = useUser()
-  
-  const canEdit = can(PERMISSIONS.CUSTOMERS_EDIT)
-  const canDelete = can(PERMISSIONS.CUSTOMERS_DELETE)
-  const hasActions = canEdit || canDelete
+  const { can } = useUser();
+
+  const canEdit = can(PERMISSIONS.CUSTOMERS_EDIT);
+  const canDelete = can(PERMISSIONS.CUSTOMERS_DELETE);
+  const hasActions = canEdit || canDelete;
 
   const getStatusBadge = (status: string = 'active') => {
     switch (status) {
-      case 'active': return <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-green-200">Activo</span>
-      case 'lead': return <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-blue-200">Lead</span>
-      case 'inactive': return <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-gray-200">Inactivo</span>
-      default: return null
+      case 'active':
+        return (
+          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-green-200">
+            Activo
+          </span>
+        );
+      case 'lead':
+        return (
+          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-blue-200">
+            Lead
+          </span>
+        );
+      case 'inactive':
+        return (
+          <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-gray-200">
+            Inactivo
+          </span>
+        );
+      default:
+        return null;
     }
-  }
+  };
 
   return (
     <div className="rounded-md border bg-card shadow-sm overflow-hidden">
@@ -55,7 +71,9 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
             <TableHead className="font-bold">Estado</TableHead>
             <TableHead className="font-bold">Contacto</TableHead>
             <TableHead className="font-bold">Registro</TableHead>
-            {hasActions && <TableHead className="text-right font-bold w-[100px]">Acciones</TableHead>}
+            {hasActions && (
+              <TableHead className="text-right font-bold w-[100px]">Acciones</TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -73,9 +91,7 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
                   )}
                 </div>
               </TableCell>
-              <TableCell>
-                {getStatusBadge(customer.status)}
-              </TableCell>
+              <TableCell>{getStatusBadge(customer.status)}</TableCell>
               <TableCell>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 text-xs">
@@ -92,9 +108,9 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
               </TableCell>
               <TableCell>
                 <div className="text-xs text-muted-foreground">
-                  {customer.createdAt 
-                    ? format(new Date(customer.createdAt), "d 'de' MMMM", { locale: es }) 
-                    : "-"}
+                  {customer.createdAt
+                    ? format(new Date(customer.createdAt), "d 'de' MMMM", { locale: es })
+                    : '-'}
                 </div>
               </TableCell>
               {hasActions && (
@@ -102,26 +118,31 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
                   <div className="flex justify-end items-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-background shadow-sm border">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-full hover:bg-background shadow-sm border"
+                          aria-label="Abrir menú de acciones"
+                        >
                           <MoreHorizontal size={14} />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40 rounded-xl elevation-3">
                         <DropdownMenuLabel className="text-xs">Gestionar Cliente</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        
+
                         {canEdit && (
-                          <DropdownMenuItem 
-                            className="gap-2 cursor-pointer" 
+                          <DropdownMenuItem
+                            className="gap-2 cursor-pointer"
                             onClick={() => onEdit(customer)}
                           >
                             <Pencil size={14} /> Editar Perfil
                           </DropdownMenuItem>
                         )}
-                        
+
                         {canDelete && (
-                          <DropdownMenuItem 
-                            className="gap-2 text-destructive focus:text-destructive cursor-pointer" 
+                          <DropdownMenuItem
+                            className="gap-2 text-destructive focus:text-destructive cursor-pointer"
                             onClick={() => onDelete(customer)}
                           >
                             <Trash2 size={14} /> Eliminar
@@ -137,5 +158,5 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

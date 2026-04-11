@@ -35,9 +35,11 @@ export function UpgradePlanDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Actualizar Plan</DialogTitle>
+          <DialogTitle>{currentPlan === targetPlan ? 'Detalles de tu Plan Actual' : 'Actualizar Plan'}</DialogTitle>
           <DialogDescription>
-            Revisa los detalles de tu nuevo plan.
+            {currentPlan === targetPlan 
+              ? 'Estás revisando los beneficios incluidos en tu suscripción activa.' 
+              : 'Revisa los detalles de tu nuevo plan.'}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -46,13 +48,17 @@ export function UpgradePlanDialog({
               <h3 className="font-semibold text-lg">{currentPlanInfo.name}</h3>
               <p className="text-sm text-muted-foreground">Plan Actual</p>
             </div>
-            <div>
-              <h3 className="font-semibold text-lg text-primary">{targetPlanInfo.name}</h3>
-              <p className="text-sm text-muted-foreground">Nuevo Plan</p>
-            </div>
+            {currentPlan !== targetPlan && (
+              <div>
+                <h3 className="font-semibold text-lg text-primary">{targetPlanInfo.name}</h3>
+                <p className="text-sm text-muted-foreground">Nuevo Plan</p>
+              </div>
+            )}
           </div>
           <div className="space-y-2">
-            <h4 className="font-medium">Características destacadas del plan {targetPlanInfo.name}:</h4>
+            <h4 className="font-medium">
+              {currentPlan === targetPlan ? 'Lo que incluye tu plan:' : `Características destacadas del plan ${targetPlanInfo.name}:`}
+            </h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               {targetPlanInfo.features.map((feature, index) => (
                 <li key={index} className="flex items-start">
@@ -65,21 +71,23 @@ export function UpgradePlanDialog({
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-            Cancelar
+            {currentPlan === targetPlan ? 'Cerrar' : 'Cancelar'}
           </Button>
-          <Button onClick={onConfirm} disabled={isLoading} className="gap-2">
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Procesando...
-              </>
-            ) : (
-              <>
-                Ir a MercadoPago
-                <ExternalLink className="h-4 w-4" />
-              </>
-            )}
-          </Button>
+          {currentPlan !== targetPlan && (
+            <Button onClick={onConfirm} disabled={isLoading} className="gap-2">
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Procesando...
+                </>
+              ) : (
+                <>
+                  Ir a MercadoPago
+                  <ExternalLink className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

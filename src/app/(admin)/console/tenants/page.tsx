@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { Building2, Search, Filter, Users, CheckCircle2, XCircle, ArrowUpRight } from 'lucide-react'
+import { Building2, Search, Filter, Users, CheckCircle2, XCircle, ArrowUpRight, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -60,6 +60,14 @@ export default async function TenantsPage() {
             {tenants?.length || 0} organizaciones registradas • {activeTenants.length} activas • {totalUsers} usuarios totales
           </p>
         </div>
+        
+        <Link 
+          href="/onboarding" 
+          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5"
+        >
+          <Plus size={18} strokeWidth={3} />
+          Nuevo Tenant
+        </Link>
       </div>
 
       {/* Stats Row */}

@@ -2,7 +2,8 @@
 
 import { useMemo } from "react"
 import { useTenant } from "@/providers"
-import { useModules } from "@/core/modules/module-registry"
+import { useModuleContext } from "@/providers/ModuleContext"
+import type { ActiveModule } from "@/core/modules/module-registry"
 import { resolveModuleStatus, isActionAllowedByPlan } from "@/core/billing/engine"
 import { PlanTier } from "@/core/billing/plans"
 import { useUser } from "@/providers"
@@ -17,7 +18,7 @@ import { Permission } from "@/config/permissions"
 export function usePermission(permission: string): boolean {
   const { currentTenant, effectivePlan } = useTenant()
   const { can } = useUser()
-  const modules = useModules()
+  const { modules } = useModuleContext()
 
   const hasAccess = useMemo(() => {
     // 1. RBAC: ¿Tiene el rol del usuario este permiso?
@@ -30,7 +31,7 @@ export function usePermission(permission: string): boolean {
     if (!currentTenant) return false
 
     // 3. Billing Engine: ¿El plan del tenant permite este módulo/acción?
-    const module = modules.find(m => m.permissions.includes(permission))
+    const module = modules.find((m: ActiveModule) => m.permissions.includes(permission))
     if (!module) {
       console.warn(`[Security] Permission '${permission}' not found in registry.`)
       return false

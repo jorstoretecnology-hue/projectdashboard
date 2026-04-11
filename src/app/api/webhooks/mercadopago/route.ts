@@ -3,6 +3,7 @@ import { handleMPWebhook } from '@/lib/mercadopago/webhook-handler';
 import { logger } from '@/lib/logger';
 import { MPWebhookPayload } from '@/lib/mercadopago/types';
 import { createHmac } from 'crypto';
+import { env } from '@/lib/env';
 
 /**
  * POST /api/webhooks/mercadopago
@@ -16,16 +17,9 @@ export async function POST(req: NextRequest) {
     
     // Verificación de firma (Security Hardening)
     // MercadoPago usa HMAC SHA256 con el webhook secret
-    const webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+    const webhookSecret = env.MERCADOPAGO_WEBHOOK_SECRET;
     
-    if (!webhookSecret) {
-      if (process.env.NODE_ENV === 'production') {
-        logger.error('[MP Webhook] CRITICAL: MERCADOPAGO_WEBHOOK_SECRET missing in production');
-        return NextResponse.json({ error: 'Config Error' }, { status: 500 });
-      } else {
-        logger.warn('[MP Webhook] MERCADOPAGO_WEBHOOK_SECRET not defined. Skipping signature check in dev.');
-      }
-    } else {
+    if (webhookSecret) {
       if (!signature) {
         if (process.env.NODE_ENV === 'production') {
           logger.error('[MP Webhook] Missing signature in production');

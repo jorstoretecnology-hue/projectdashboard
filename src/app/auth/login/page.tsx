@@ -1,82 +1,81 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Loader2, Eye, EyeOff, LayoutDashboard, ShieldCheck } from 'lucide-react'
-import { toast } from 'sonner'
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Loader2, Eye, EyeOff, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [cooldown, setCooldown] = useState(false)
-  const router = useRouter()
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-  const token = searchParams?.get('token')
-  const supabase = createClient()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
+  const router = useRouter();
+  const searchParams =
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const token = searchParams?.get('token');
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (cooldown) {
-      toast.error('Espera unos segundos antes de reintentar.')
-      return
+      toast.error('Espera unos segundos antes de reintentar.');
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
       if (error) {
-        toast.error(error.message)
-        setCooldown(true)
-        setTimeout(() => setCooldown(false), 2000)
-        return
+        toast.error(error.message);
+        setCooldown(true);
+        setTimeout(() => setCooldown(false), 2000);
+        return;
       }
 
       if (data.user) {
-        toast.success('Sesión iniciada correctamente')
-        
+        toast.success('Sesión iniciada correctamente');
+
         if (token) {
-          router.push(`/auth/invite?token=${token}`)
+          router.push(`/auth/invite?token=${token}`);
         } else {
-          router.push('/post-auth')
+          router.push('/post-auth');
         }
-        router.refresh()
+        router.refresh();
       }
-    } catch (err) {
-      console.error(err)
-      toast.error('Error inesperado al iniciar sesión.')
+    } catch {
+      toast.error('Error inesperado al iniciar sesión.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleGoogleLogin = async () => {
     try {
-      await supabase.auth.signOut()
+      await supabase.auth.signOut();
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
-    } catch (err) {
-      console.error(err)
-      toast.error('Error al conectar con Google')
+      });
+    } catch {
+      toast.error('Error al conectar con Google');
     }
-  }
+  };
 
   return (
     <div className="relative min-h-screen w-full flex overflow-hidden bg-slate-950">
@@ -189,14 +188,17 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               className="w-full h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 rounded-xl transition-all"
               onClick={handleGoogleLogin}
             >
               <svg className="mr-3 h-5 w-5" viewBox="0 0 488 512">
-                <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+                <path
+                  fill="currentColor"
+                  d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+                ></path>
               </svg>
               Continuar con Google
             </Button>
@@ -205,15 +207,15 @@ export default function LoginPage() {
           {/* Footer Info */}
           <div className="flex flex-col items-center space-y-6">
             <p className="text-slate-400 text-sm">
-              ¿No tienes una cuenta?{" "}
-              <Link 
-                href={`/auth/register${token ? `?token=${token}` : ''}`} 
+              ¿No tienes una cuenta?{' '}
+              <Link
+                href={`/auth/register${token ? `?token=${token}` : ''}`}
                 className="text-white font-bold hover:text-primary transition-colors underline decoration-primary/50 underline-offset-4"
               >
                 Crea una ahora
               </Link>
             </p>
-            
+
             <div className="flex items-center gap-2 text-slate-500 text-xs font-medium bg-white/5 px-4 py-2 rounded-full border border-white/5">
               <ShieldCheck size={14} className="text-emerald-500" />
               <span>Conexión segura SSL (AES-256)</span>
@@ -222,5 +224,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

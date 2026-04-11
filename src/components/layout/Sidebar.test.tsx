@@ -1,62 +1,38 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Sidebar } from './Sidebar';
+import type { ActiveModule } from '@/core/modules/module-registry';
 
-// 1. Mock de dependencias externas (Next.js y Supabase)
+// 1. Mock de dependencias externas (Next.js)
 vi.mock('next/navigation', () => ({
   usePathname: () => '/dashboard',
-  useRouter: () => ({
-    refresh: vi.fn(),
-    push: vi.fn(),
-  }),
 }));
 
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({
-    auth: {
-      signOut: vi.fn(),
-    },
-  }),
-}));
-
-// 2. Mock de la configuración de módulos
-// Definimos 3 módulos para probar el filtrado
-vi.mock('@/config/modules', () => ({
-  MODULES_CONFIG: [
-    { id: 'Dashboard', name: 'Dashboard', path: '/dashboard', icon: () => <div /> },
-    { id: 'Users', name: 'Usuarios', path: '/users', icon: () => <div /> },
-    { id: 'Inventory', name: 'Inventario Avanzado', path: '/inventory', icon: () => <div /> },
-  ],
-}));
-
-// 3. Mock de los Providers (Contexto del Tenant)
-const mockCurrentTenant = {
-  id: '550e8400-e29b-41d4-a716-446655440000', // UUID válido
-  name: 'Empresa Demo S.A.',
-  plan: 'starter',
-  // Simulamos que este tenant SOLO tiene acceso a Dashboard y Usuarios
-  activeModules: ['Dashboard', 'Users'], 
-  branding: {
-    primaryColor: '220 100% 50%',
+// 2. Mock de ModuleContext — usamos la nueva interfaz ActiveModule
+const mockModules: ActiveModule[] = [
+  {
+    key: 'dashboard',
+    status: 'ACTIVE',
+    permissions: ['dashboard.view'],
+    navigation: [{ label: 'Dashboard', path: '/dashboard', icon: 'LayoutDashboard' }],
   },
-};
+  {
+    key: 'customers',
+    status: 'ACTIVE',
+    permissions: ['customers.view'],
+    navigation: [{ label: 'Clientes', path: '/customers', icon: 'Users' }],
+  },
+  // 'inventory' NO incluido — simulamos que este tenant no lo tiene contratado
+];
 
-vi.mock('@/providers', () => ({
+vi.mock('@/providers/ModuleContext', () => ({
   useModuleContext: () => ({
-    // Simulamos la función isModuleActive
-    isModuleActive: (id: string) => mockCurrentTenant.activeModules.includes(id),
-  }),
-  useTenant: () => ({
-    currentTenant: mockCurrentTenant,
+    modules: mockModules,
+    activeModuleSlugs: mockModules.map((m) => m.key),
+    isModuleActive: (slug: string) => mockModules.some((m) => m.key === slug),
     isLoading: false,
-    isSuperAdmin: false,
-  }),
-  useUser: () => ({
-    user: { id: 'test-user', email: 'test@example.com' },
-    role: 'OWNER',
-    signOut: vi.fn(),
-    can: () => true,
-    canAccessFeature: () => true,
+    mounted: true,
+    toggleModule: vi.fn(),
   }),
 }));
 
@@ -70,16 +46,14 @@ describe('Sidebar Component (SaaS Logic)', () => {
 
     // ✅ Deben aparecer
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Usuarios')).toBeInTheDocument();
+    expect(screen.getByText('Clientes')).toBeInTheDocument();
 
-    // ❌ NO debe aparecer (Módulo restringido para este tenant)
-    expect(screen.queryByText('Inventario Avanzado')).not.toBeInTheDocument();
+    // ❌ NO debe aparecer (Módulo no contratado por este tenant)
+    expect(screen.queryByText('Inventario')).not.toBeInTheDocument();
   });
 
-  it('muestra la información del tenant y su plan', () => {
+  it('no muestra el mensaje de error cuando hay módulos activos', () => {
     render(<Sidebar />);
-    
-    expect(screen.getByText('Empresa Demo S.A.')).toBeInTheDocument();
-    expect(screen.getByText('STARTER')).toBeInTheDocument(); // El componente aplica .toUpperCase()
+    expect(screen.queryByText(/Sin módulos activos/i)).not.toBeInTheDocument();
   });
 });

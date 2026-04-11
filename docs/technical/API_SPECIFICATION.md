@@ -190,7 +190,8 @@ Response: 200 OK
     "movements": [ // Últimos 10 movimientos
       {
         "id": "uuid",
-        "type": "VENTA",
+        "type": "OUT",
+        "reference_type": "VENTA",
         "quantity": -2,
         "previous_stock": 17,
         "new_stock": 15,
@@ -700,7 +701,7 @@ Response: 200 OK
 }
 
 Side Effect:
-- Crea inventory_movements de tipo COMPRA
+- Crea inventory_movements con type='IN', reference_type='COMPRA'
 - Recalcula estado de productos (puede pasar de AGOTADO → DISPONIBLE)
 - Dispara eventos product.state_changed si cambia
 ```
@@ -1011,6 +1012,31 @@ Response: 200 OK
 ---
 
 ## 🔢 11. Rate Limiting
+
+#### POS / Creación de Venta Atómica (RPC)
+
+El sistema utiliza una función de base de datos (`create_sale_transaction`) para garantizar que la venta, el descuento de inventario y el registro de movimientos ocurran como una única unidad atómica.
+
+- **RPC Name**: `create_sale_transaction`
+- **Frontend Component**: `POSDialog.tsx`
+- **Payload**:
+  ```json
+  {
+    "p_tenant_id": "uuid",
+    "p_customer_id": "uuid",
+    "p_payment_method": "CASH | CARD | TRANSFER",
+    "p_items": [
+      { "product_id": "uuid", "quantity": 1, "unit_price": 100 }
+    ]
+  }
+  ```
+
+##### Errores Comunes de Negocio:
+| Código de Error | Causa | Acción Recomendada |
+|-----------------|-------|-------------------|
+| `INSUFFICIENT_STOCK` | El producto no tiene stock suficiente para la cantidad solicitada. | Notificar al usuario mediante `toast` e impedir el envío. |
+| `PRODUCT_NOT_FOUND` | El ID del producto no existe en el catálogo unificado (`products`). | Sincronizar el catálogo local. |
+| `QUOTA_EXCEEDED` | El tenant ha alcanzado su límite de ventas mensuales según su plan. | Bloquear la operación y sugerir upgrade de plan. |
 
 ### Límites Globales
 - **Por Usuario:** 100 requests/minuto

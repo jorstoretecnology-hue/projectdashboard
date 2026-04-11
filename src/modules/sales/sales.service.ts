@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { CreateSaleDTO, SaleQueryDTO } from '@/lib/api/schemas/sales';
+import { logger } from '@/lib/logger';
 
 export class SalesService {
   constructor(
@@ -27,7 +28,7 @@ export class SalesService {
     });
 
     if (error) {
-      console.error('[SalesService] RPC Error:', error);
+      logger.error('RPC create_sale_transaction failed', { error, tenantId: this.tenantId, userId });
       // Intentar extraer mensaje de error de Postgres (P0001 Raise Exception)
       if (error.code === 'P0001' || error.message.includes('Stock insuficiente')) {
         throw new Error(error.message); // Propagar como error de negocio (409/400 manejado por wrapper)
@@ -48,7 +49,19 @@ export class SalesService {
 
     let q = this.supabase
       .from('sales')
-      .select('*, customer:customers(first_name, last_name, company_name), creator:created_by(email)', { count: 'exact' })
+      .select(`
+        id, 
+        customer_id, 
+        state, 
+        subtotal, 
+        discount, 
+        tax, 
+        total, 
+        payment_method, 
+        created_at,
+        customer:customers(first_name, last_name, company_name),
+        creator:profiles!created_by(email)
+      `, { count: 'exact' })
       .eq('tenant_id', this.tenantId);
 
     if (state) q = q.eq('state', state);
@@ -83,7 +96,38 @@ export class SalesService {
   async getSaleById(id: string) {
     const { data, error } = await this.supabase
       .from('sales')
-      .select('*, items:sale_items(*), customer:customers(*)')
+      .select(`
+        id,
+        tenant_id,
+        customer_id,
+        state,
+        subtotal,
+        discount,
+        tax,
+        total,
+        payment_method,
+        notes,
+        metadata,
+        created_at,
+        updated_at,
+        items:sale_items(
+          id,
+          product_id,
+          product_name,
+          product_sku,
+          unit_price,
+          quantity,
+          subtotal
+        ),
+        customer:customers(
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          company_name
+        )
+      `)
       .eq('id', id)
       .eq('tenant_id', this.tenantId)
       .single();

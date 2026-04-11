@@ -14,16 +14,6 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts"
 import { cn } from "@/lib/utils"
 import type {
   GlobalMetrics,
@@ -34,6 +24,12 @@ import type {
 import { MetricCard } from "./MetricCard"
 import { TopListCard } from "./TopListCard"
 import { CriticalQuotaTable } from "./CriticalQuotaTable"
+import dynamic from "next/dynamic"
+
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), {
+  ssr: false,
+  loading: () => <div className="h-[300px] animate-pulse bg-muted rounded-lg" />
+})
 
 interface DashboardClientProps {
   data: {
@@ -134,37 +130,7 @@ export default function DashboardClient({ data }: DashboardClientProps) {
               <CardContent className="p-8 pt-0">
                 <div className="h-[300px] w-full mt-6">
                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={plans}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
-                          <XAxis 
-                              dataKey="planName" 
-                              stroke="#64748b" 
-                              fontSize={12} 
-                              tickLine={false} 
-                              axisLine={false}
-                              tick={{ fill: '#94a3b8' }}
-                          />
-                          <YAxis 
-                              stroke="#64748b" 
-                              fontSize={12} 
-                              tickLine={false} 
-                              axisLine={false}
-                              tick={{ fill: '#94a3b8' }}
-                          />
-                          <Tooltip 
-                              contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-                              cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                          />
-                          <Bar 
-                              dataKey="count" 
-                              radius={[6, 6, 0, 0]} 
-                              barSize={45}
-                          >
-                              {plans.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} fillOpacity={0.8} />
-                              ))}
-                          </Bar>
-                      </BarChart>
+                      <BarChartComponent data={plans} colors={CHART_COLORS} />
                   </ResponsiveContainer>
                 </div>
               </CardContent>
@@ -209,5 +175,49 @@ export default function DashboardClient({ data }: DashboardClientProps) {
 
       </div>
     </div>
+  )
+}
+
+function BarChartComponent({ data, colors }: { data: PlanDistribution[]; colors: string[] }) {
+  const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false })
+  const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false })
+  const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
+  const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false })
+  const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false })
+  const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
+  const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false })
+
+  return (
+    <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+        <XAxis 
+            dataKey="planName" 
+            stroke="#64748b" 
+            fontSize={12} 
+            tickLine={false} 
+            axisLine={false}
+            tick={{ fill: '#94a3b8' }}
+        />
+        <YAxis 
+            stroke="#64748b" 
+            fontSize={12} 
+            tickLine={false} 
+            axisLine={false}
+            tick={{ fill: '#94a3b8' }}
+        />
+        <Tooltip 
+            contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+        />
+        <Bar 
+            dataKey="count" 
+            radius={[6, 6, 0, 0]} 
+            barSize={45}
+        >
+            {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} fillOpacity={0.8} />
+            ))}
+        </Bar>
+    </BarChart>
   )
 }

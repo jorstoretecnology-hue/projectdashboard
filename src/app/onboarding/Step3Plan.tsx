@@ -1,34 +1,41 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Loader2, Check, Star, Building2, Zap, Shield } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { logger } from "@/lib/logger"
-import { createClient } from "@/lib/supabase/client"
-import { createTenantAction } from "./actions"
-import { toast } from "sonner"
-import type { LucideIcon } from "lucide-react"
+import { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Loader2, Check, Star, Building2, Zap, Shield } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
+import { createClient } from '@/lib/supabase/client';
+import { createTenantAction } from './actions';
+import { toast } from 'sonner';
+import type { LucideIcon } from 'lucide-react';
 
 interface Plan {
-  id: string
-  name: string
-  price: string
-  description: string
-  features: string[]
-  icon: LucideIcon
-  color: string
-  popular?: boolean
+  id: string;
+  name: string;
+  price: string;
+  description: string;
+  features: string[];
+  icon: LucideIcon;
+  color: string;
+  popular?: boolean;
 }
 
 interface Step3PlanProps {
-  name: string
-  selectedIndustry: string
-  selectedSpecialty: string | null
-  selectedPlan: string
-  onPlanSelect: (plan: string) => void
-  onBack: () => void
+  name: string;
+  selectedIndustry: string;
+  selectedSpecialty: string | null;
+  selectedPlan: string;
+  onPlanSelect: (plan: string) => void;
+  onBack: () => void;
 }
 
 const PLANS: Plan[] = [
@@ -60,41 +67,79 @@ const PLANS: Plan[] = [
     icon: Shield,
     color: 'bg-indigo-600',
   },
-]
+];
 
-export function Step3Plan({ name, selectedIndustry, selectedSpecialty, selectedPlan, onPlanSelect, onBack }: Step3PlanProps) {
-  const [loading, setLoading] = useState(false)
+export function Step3Plan({
+  name,
+  selectedIndustry,
+  selectedSpecialty,
+  selectedPlan,
+  onPlanSelect,
+  onBack,
+}: Step3PlanProps) {
+  const [loading, setLoading] = useState(false);
+  const [showTimeout, setShowTimeout] = useState(false);
 
   const handleCreateTenant = async () => {
-    if (!name.trim() || !selectedIndustry) return
-
-    setLoading(true)
-    try {
-      logger.log("[Onboarding] Creating tenant", { name, plan: selectedPlan, industry: selectedIndustry })
-
-      const tenantId = await createTenantAction(name, selectedPlan, selectedIndustry.toLowerCase(), selectedSpecialty)
-
-      logger.log("[Onboarding] Tenant created", { tenantId })
-      toast.success(`Organización creada con plan ${selectedPlan.toUpperCase()}`)
-
-      const supabase = createClient()
-      await supabase.auth.refreshSession().catch(e => logger.warn("[Onboarding] Error refrescando sesión", { error: e }))
-
-      window.location.href = "/dashboard"
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err.message?.includes('NEXT_REDIRECT') || (err as unknown as { digest?: string }).digest?.includes('NEXT_REDIRECT')) {
-          return
-        }
-        logger.error("[Onboarding] Error creating tenant", { error: err })
-        toast.error(err.message || "Error al crear la organización")
-      } else {
-        logger.error("[Onboarding] Unknown error creating tenant", { error: err })
-        toast.error("Error al crear la organización")
-      }
-      setLoading(false)
+    if (!name.trim() || !selectedIndustry) {
+      toast.error('Por favor completa todos los campos');
+      return;
     }
-  }
+
+    setLoading(true);
+    setShowTimeout(false);
+
+    // Timeout de 20 segundos para detectar lentitud
+    const timeoutId = setTimeout(() => {
+      setShowTimeout(true);
+    }, 20000);
+
+    try {
+      console.log('[Onboarding] Starting tenant creation...', {
+        name,
+        selectedPlan,
+        selectedIndustry,
+        selectedSpecialty,
+      });
+
+      const startTime = Date.now();
+      const tenantId = await createTenantAction(
+        name,
+        selectedPlan,
+        selectedIndustry.toLowerCase(),
+        selectedSpecialty,
+      );
+      const duration = Date.now() - startTime;
+
+      clearTimeout(timeoutId);
+      console.log('[Onboarding] Tenant created in', duration, 'ms:', tenantId);
+      toast.success(`Organización creada con plan ${selectedPlan.toUpperCase()}`);
+
+      const supabase = createClient();
+      await supabase.auth
+        .refreshSession()
+        .catch((e) => logger.warn('[Onboarding] Error refrescando sesión', { error: e }));
+
+      window.location.href = '/dashboard';
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.error('[Onboarding] Error:', err);
+      if (err instanceof Error) {
+        if (
+          err.message?.includes('NEXT_REDIRECT') ||
+          (err as unknown as { digest?: string }).digest?.includes('NEXT_REDIRECT')
+        ) {
+          return;
+        }
+        logger.error('[Onboarding] Error creating tenant', { error: err });
+        toast.error(err.message || 'Error al crear la organización');
+      } else {
+        logger.error('[Onboarding] Unknown error creating tenant', { error: err });
+        toast.error('Error al crear la organización');
+      }
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-8">
@@ -103,10 +148,10 @@ export function Step3Plan({ name, selectedIndustry, selectedSpecialty, selectedP
           key={plan.id}
           onClick={() => onPlanSelect(plan.id)}
           className={cn(
-            "relative cursor-pointer transition-all hover:scale-105 border-slate-800 bg-slate-900/50 backdrop-blur-xl",
+            'relative cursor-pointer transition-all hover:scale-105 border-slate-800 bg-slate-900/50 backdrop-blur-xl',
             selectedPlan === plan.id
-              ? "ring-2 ring-blue-500 border-transparent bg-slate-800/80"
-              : "opacity-70 hover:opacity-100"
+              ? 'ring-2 ring-blue-500 border-transparent bg-slate-800/80'
+              : 'opacity-70 hover:opacity-100',
           )}
         >
           {plan.popular && (
@@ -117,8 +162,8 @@ export function Step3Plan({ name, selectedIndustry, selectedSpecialty, selectedP
           <CardHeader>
             <div
               className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center mb-2 text-white",
-                plan.color
+                'w-10 h-10 rounded-lg flex items-center justify-center mb-2 text-white',
+                plan.color,
               )}
             >
               <plan.icon size={20} />
@@ -140,8 +185,8 @@ export function Step3Plan({ name, selectedIndustry, selectedSpecialty, selectedP
           <CardFooter>
             <div
               className={cn(
-                "w-full h-4 rounded-full flex items-center justify-center",
-                selectedPlan === plan.id ? "text-blue-400" : "text-transparent"
+                'w-full h-4 rounded-full flex items-center justify-center',
+                selectedPlan === plan.id ? 'text-blue-400' : 'text-transparent',
               )}
             >
               {selectedPlan === plan.id && <div className="w-2 h-2 bg-blue-500 rounded-full" />}
@@ -164,10 +209,10 @@ export function Step3Plan({ name, selectedIndustry, selectedSpecialty, selectedP
               <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Creando...
             </>
           ) : (
-            `Comenzar con ${PLANS.find(p => p.id === selectedPlan)?.name}`
+            `Comenzar con ${PLANS.find((p) => p.id === selectedPlan)?.name}`
           )}
         </Button>
       </div>
     </div>
-  )
+  );
 }

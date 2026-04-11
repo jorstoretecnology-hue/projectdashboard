@@ -1,13 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Package, Loader2, DollarSign, AlertCircle, PackageCheck } from "lucide-react"
+import { useMemo, useState, useDeferredValue, useCallback } from "react"
+import { Package, Loader2, DollarSign, AlertCircle, PackageCheck, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { InventoryHeader } from "@/components/inventory/InventoryHeader"
 import { InventoryToolbar } from "@/components/inventory/InventoryToolbar"
 import { InventoryCard } from "@/components/inventory/InventoryCard"
 import { InventoryDialog } from "@/components/inventory/InventoryDialog"
+import { EmptyState } from "@/components/ui/empty-state"
 import { inventoryService } from "@/modules/inventory/services/inventory.service"
 import { deleteInventoryItemAction } from "@/modules/inventory/actions"
 import type { InventoryItem } from "@/modules/inventory/types"
@@ -35,6 +36,7 @@ export function InventoryClient({ initialItems, tenantId }: InventoryClientProps
   const [error, setError] = useState<string | null>(null)
   
   const [search, setSearch] = useState("")
+  const deferredSearch = useDeferredValue(search)
   const [view, setView] = useState<"grid" | "list">("grid")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -43,57 +45,64 @@ export function InventoryClient({ initialItems, tenantId }: InventoryClientProps
   const [isDeleting, setIsDeleting] = useState(false)
 
   // 2. Carga de Datos (Refetch)
-  const loadInventory = async () => {
+  const loadInventory = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
       const { data } = await inventoryService.list(tenantId)
       setItems(data)
-    } catch (err) {
-      console.error(err)
+    } catch {
       setError("No se pudo cargar el inventario. Intenta refrescar.")
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [tenantId])
 
-  // 3. Filtrado Local
+  // 3. Filtrado Local con deferred value
   const filteredItems = useMemo(() => {
-    const q = search.toLowerCase()
+    const q = deferredSearch.toLowerCase()
     return items.filter(
       (item) =>
         item.name.toLowerCase().includes(q) ||
         item.sku?.toLowerCase().includes(q)
     )
-  }, [items, search])
+  }, [items, deferredSearch])
 
-  // Métricas para KPIs
+  // Métricas para KPIs - combinando iteraciones (Fase 4)
   const metrics = useMemo(() => {
-    const totalItems = items.length
-    const lowStock = items.filter(i => (i.stock ?? 0) <= 5 && (i.stock ?? 0) > 0).length
-    const outOfStock = items.filter(i => (i.stock ?? 0) <= 0).length
-    const totalValue = items.reduce((acc, i) => acc + (i.price * (i.stock ?? 0)), 0)
+    let totalItems = 0
+    let lowStock = 0
+    let outOfStock = 0
+    let totalValue = 0
+    
+    for (const item of items) {
+      totalItems++
+      const stock = item.stock ?? 0
+      if (stock <= 5 && stock > 0) lowStock++
+      if (stock <= 0) outOfStock++
+      totalValue += item.price * stock
+    }
     
     return { totalItems, lowStock, outOfStock, totalValue }
   }, [items])
 
-  // 4. Handlers
-  const handleOpenCreate = () => {
+  // 4. Handlers memoizados
+  const handleOpenCreate = useCallback(() => {
     setSelectedItem(null)
     setIsDialogOpen(true)
-  }
+  }, [])
 
-  const handleOpenEdit = (item: InventoryItem) => {
+  const handleOpenEdit = useCallback((item: InventoryItem) => {
     setSelectedItem(item)
     setIsDialogOpen(true)
-  }
+  }, [])
 
-  const handleOpenDelete = (item: InventoryItem) => {
+  const handleOpenDelete = useCallback((item: InventoryItem) => {
     setSelectedItem(item)
     setIsDeleteDialogOpen(true)
-  }
+  }, [])
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!selectedItem) return
 
     setIsDeleting(true)
@@ -107,14 +116,13 @@ export function InventoryClient({ initialItems, tenantId }: InventoryClientProps
       if (message.includes("ACCESO_DENEGADO")) {
         toast.error("No tienes permiso para eliminar items.")
       } else {
-        console.error(error)
         toast.error("Error al eliminar el producto")
       }
     } finally {
       setIsDeleting(false)
       setSelectedItem(null)
     }
-  }
+  }, [selectedItem, loadInventory])
 
   return (
     <div className="space-y-6">
@@ -208,17 +216,15 @@ export function InventoryClient({ initialItems, tenantId }: InventoryClientProps
       )}
 
       {!isLoading && !error && filteredItems.length === 0 && (
-        <div className="py-20 text-center text-muted-foreground/50 border-2 border-dashed rounded-xl bg-muted/30">
-          <Package className="mx-auto h-12 w-12 mb-4 opacity-20" />
-          <p className="text-lg font-medium">No se encontraron items</p>
-          <p className="text-sm">Empieza agregando tu primer producto.</p>
-          <button 
-            onClick={handleOpenCreate}
-            className="mt-4 text-primary font-bold hover:underline"
-          >
-            Añadir Producto +
-          </button>
-        </div>
+        <EmptyState
+          icon={Package}
+          title="No se encontraron items"
+          description={search ? "No hay productos que coincidan con tu búsqueda." : "Empieza agregando tu primer producto al inventario."}
+          action={{
+            label: search ? "Limpiar búsqueda" : "Añadir Producto",
+            onClick: search ? () => setSearch("") : handleOpenCreate
+          }}
+        />
       )}
 
       {/* Lista de Items */}

@@ -1,15 +1,11 @@
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
-import { logger } from '@/lib/logger';
-
-if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
-  logger.warn('MERCADOPAGO_ACCESS_TOKEN is not defined in environment variables');
-}
+import { env } from '@/lib/env';
 
 /**
  * MercadoPago Client Configuration
  */
 export const mpClient = new MercadoPagoConfig({
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
+  accessToken: env.MERCADOPAGO_ACCESS_TOKEN,
   options: { timeout: 5000 }
 });
 

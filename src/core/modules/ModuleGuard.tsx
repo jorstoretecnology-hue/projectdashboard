@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from "react"
-import { useModule } from "./module-registry"
+import { useModuleContext } from "@/providers/ModuleContext"
 
 interface ModuleGuardProps {
   module: string
@@ -19,13 +19,13 @@ interface ModuleGuardProps {
  * Solo aplica gobernanza de módulos.
  */
 export function ModuleGuard({ module, children }: ModuleGuardProps) {
-  const mod = useModule(module)
+  const { isModuleActive, isLoading } = useModuleContext()
 
-  // Módulo inexistente
-  if (!mod) return null
+  // Esperar a que cargue antes de decidir
+  if (isLoading) return null
 
-  // Estados no renderizables
-  if (mod.status !== "ACTIVE") return null
+  // Si el módulo no está activo para este tenant, no renderizar
+  if (!isModuleActive(module)) return null
 
   return <>{children}</>
 }

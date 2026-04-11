@@ -15,8 +15,9 @@ import { Search, Plus, Trash2, Utensils, User, ShoppingCart, Loader2, Camera, Cr
 import { useTenant } from "@/providers"
 import { inventoryService } from "@/modules/inventory/services/inventory.service"
 import { InventoryItem } from "@/modules/inventory/types"
-import { CreateSaleDTO, CreateSaleItemDTO } from "@/modules/sales/types"
+import { CreateSaleDTO, CreateSaleItemDTO, PaymentMethod } from "@/modules/sales/types"
 import { salesService } from "@/modules/sales/services/sales.service"
+import { logger } from "@/lib/logger"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 
@@ -72,17 +73,16 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
 
       try {
         const { data, error } = await supabase
-          .from('inventory_items')
-          .select('id, name, price, stock, sku, type')
+          .from('products')
+          .select('id, name, price, stock, sku, type, category')
           .eq('tenant_id', tenantId)
           .ilike('name', `%${debouncedSearch}%`)
-          .gt('stock', 0)
           .limit(20)
 
         if (error) throw error
-        setInventory((data as InventoryItem[]) ?? [])
+        setInventory((data as unknown as InventoryItem[]) ?? [])
       } catch (err) {
-        console.error("Error loading inventory:", err)
+        logger.error("Error loading inventory in POS", { err, tenantId, search: debouncedSearch })
         toast.error("Error al cargar productos")
       } finally {
         setIsLoading(false)
@@ -159,7 +159,7 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
 
       const payload: CreateSaleDTO = {
         customer_id: selectedCustomerId,
-        payment_method: selectedPaymentMethod as any,
+        payment_method: selectedPaymentMethod as PaymentMethod,
         items: selectedItems.map(({ name, ...rest }) => rest),
         metadata: finalMetadata,
         notes: `Pedido ${metadata['mesa'] ? 'Mesa ' + metadata['mesa'] : 'Venta Realizada'}`

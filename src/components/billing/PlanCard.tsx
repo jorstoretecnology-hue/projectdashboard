@@ -77,13 +77,12 @@ export function PlanCard({ planKey, planInfo, isCurrent, onUpgrade }: PlanCardPr
         <Button
           className={cn(
             "w-full h-11 font-semibold transition-all",
-            isCurrent && "opacity-50 cursor-not-allowed"
+            isCurrent ? "border-emerald-500/50 hover:bg-emerald-500/5 hover:text-emerald-500" : ""
           )}
           variant={isCurrent ? "outline" : isPremium ? "default" : "outline"}
-          disabled={isCurrent}
           onClick={() => onUpgrade(planKey)}
         >
-          {isCurrent ? '✓ Plan Actual' : 'Actualizar Plan'}
+          {isCurrent ? 'Abrir opciones del plan' : 'Actualizar Plan'}
         </Button>
       </CardFooter>
     </Card>

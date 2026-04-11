@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { buildActiveModules, type ActiveModule } from '@/core/modules/module-registry';
+import { logger } from '@/lib/logger';
 import { useUser } from './AuthContext';
 
 interface ModuleContextValue {
@@ -33,6 +34,9 @@ export const ModuleProvider = ({ children }: { children: ReactNode }) => {
     const loadModules = async () => {
       setIsLoading(true);
       try {
+        // En lugar de console.log, usamos el Logger estructurado (Regla 1.7)
+        logger.log('[ModuleContext] Iniciando chequeo de módulos', { userId: user.id });
+
         // Leer módulos activos del tenant desde Supabase
         const { data: profile } = await supabase
           .from('profiles')
@@ -41,21 +45,34 @@ export const ModuleProvider = ({ children }: { children: ReactNode }) => {
           .single();
 
         if (!profile?.tenant_id) {
-          setActiveModuleSlugs(['dashboard', 'settings', 'billing']);
+          logger.warn('[ModuleContext] Perfil sin tenant_id asociado', { userId: user.id });
+          setActiveModuleSlugs([]);
           return;
         }
+        
+        logger.log('[ModuleContext] Perfil cargado', { tenantId: profile.tenant_id });
 
-        const { data: tenantModules } = await supabase
+        const { data: tenantModules, error } = await supabase
           .from('tenant_modules')
           .select('module_slug')
           .eq('tenant_id', profile.tenant_id)
           .eq('is_active', true);
 
+        if (error) {
+          logger.error('[ModuleContext] Error en Supabase al cargar módulos', { error });
+        }
+
         const slugs = (tenantModules || []).map(m => m.module_slug);
-        setActiveModuleSlugs(slugs.length > 0 ? slugs : ['dashboard', 'settings', 'billing']);
+        
+        if (slugs.length === 0) {
+          logger.warn('[ModuleContext] Tenant sin módulos activos', { 
+            tenant_id: profile.tenant_id 
+          });
+        }
+        setActiveModuleSlugs(slugs);
       } catch (err) {
-        console.error('[ModuleContext] Error loading modules:', err);
-        setActiveModuleSlugs(['dashboard', 'settings', 'billing']);
+        logger.error('[ModuleContext] Crash loading modules:', { err });
+        setActiveModuleSlugs([]);
       } finally {
         setIsLoading(false);
       }

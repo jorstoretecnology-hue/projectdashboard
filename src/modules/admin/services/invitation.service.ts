@@ -5,6 +5,8 @@ import { logger } from '@/lib/logger';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/lib/supabase/database.types';
 
+type InvitationsTable = Database['public']['Tables']['invitations'];
+
 export interface Invitation {
   id: string;
   email: string;
@@ -21,7 +23,7 @@ export class InvitationService {
   private audit: AuditLogService;
 
   constructor(supabase?: SupabaseClient<Database>) {
-    this.supabase = supabase || createClient() as unknown as SupabaseClient<Database>;
+    this.supabase = supabase || (createClient() as unknown as SupabaseClient<Database>);
     this.audit = new AuditLogService(this.supabase);
   }
 
@@ -37,8 +39,8 @@ export class InvitationService {
     // Generar un token aleatorio seguro
     const token = crypto.randomUUID();
 
-    const { data: invitation, error } = await (this.supabase
-      .from('invitations' as any) as any)
+    const { data: invitation, error } = await this.supabase
+      .from('invitations')
       .insert({
         email: data.email.toLowerCase().trim(),
         tenant_id: data.tenantId,
@@ -48,7 +50,7 @@ export class InvitationService {
         status: 'pending',
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 días
       })
-      .select("id, email, tenant_id, app_role, token, status, expires_at, created_at")
+      .select('id, email, tenant_id, app_role, token, status, expires_at, created_at')
       .single();
 
     if (error) {
@@ -62,7 +64,7 @@ export class InvitationService {
       action: 'CREATE',
       entityType: 'USER', // Lo tratamos como pre-usuario
       entityId: (invitation as { id: string })?.id,
-      newData: { email: data.email, role: data.role }
+      newData: { email: data.email, role: data.role },
     });
 
     return invitation;
@@ -72,9 +74,11 @@ export class InvitationService {
    * Obtiene una invitación por su token y verifica que sea válida
    */
   async getInvitationByToken(token: string) {
-    const { data, error } = await (this.supabase
-      .from('invitations' as any) as any)
-      .select('id, email, tenant_id, app_role, token, status, expires_at, created_at, tenants(name)')
+    const { data, error } = await this.supabase
+      .from('invitations')
+      .select(
+        'id, email, tenant_id, app_role, token, status, expires_at, created_at, tenants(name)',
+      )
       .eq('token', token)
       .eq('status', 'pending')
       .gt('expires_at', new Date().toISOString())
@@ -92,8 +96,8 @@ export class InvitationService {
    * Marca una invitación como aceptada
    */
   async acceptInvitation(id: string) {
-    const { error } = await (this.supabase
-      .from('invitations' as any) as any)
+    const { error } = await this.supabase
+      .from('invitations')
       .update({ status: 'accepted' })
       .eq('id', id);
 
@@ -104,8 +108,8 @@ export class InvitationService {
    * Lista invitaciones de un tenant
    */
   async listByTenant(tenantId: string) {
-    const { data, error } = await (this.supabase
-      .from('invitations' as any) as any)
+    const { data, error } = await this.supabase
+      .from('invitations')
       .select('id, email, app_role, status, expires_at, created_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
@@ -115,8 +119,9 @@ export class InvitationService {
   }
 }
 
-const defaultClient = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SUPABASE_URL) 
-  ? createClient() 
-  : null as any;
+const defaultClient =
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SUPABASE_URL
+    ? createClient()
+    : (null as any);
 
 export const invitationService = new InvitationService(defaultClient);

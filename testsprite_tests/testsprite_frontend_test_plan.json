@@ -1,0 +1,490 @@
+[
+  {
+    "id": "TC001",
+    "title": "Sign in and reach tenant dashboard",
+    "description": "Verifies an existing user can sign in with valid credentials and lands on the dashboard with tenant metrics/modules/usage displayed.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify tenant metrics, active modules, and usage summaries are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "View dashboard tenant summary",
+    "description": "Verifies an authenticated user can open the dashboard and see key tenant metrics, active modules, and usage summaries.",
+    "category": "Dashboard (tenant view)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify key tenant metrics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify active modules and usage summaries are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Complete onboarding to create an organization and reach dashboard",
+    "description": "Verifies an authenticated user can complete onboarding by providing organization name, industry, and plan and is redirected to the dashboard afterwards.",
+    "category": "Onboarding Flow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /onboarding"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the organization name field with Test Organization"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid industry"
+      },
+      {
+        "type": "action",
+        "description": "Select a plan option"
+      },
+      {
+        "type": "action",
+        "description": "Submit the onboarding form to create the organization"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify tenant metrics, active modules, and usage summaries are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Review current plan and confirm upgrade intent",
+    "description": "Verifies an authenticated user can review their current plan on Billing, preview a different plan, confirm upgrade intent, and reach an upgrade confirmation screen.",
+    "category": "Billing & Plan Preview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the billing page"
+      },
+      {
+        "type": "action",
+        "description": "Select a different plan option to preview changes"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the upgrade intent"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an upgrade confirmation screen is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "View current plan details and quota limits",
+    "description": "Verifies an authenticated user can view the current plan and see quota limits and usage summary on the Billing page.",
+    "category": "Billing & Plan Preview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the billing page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the current plan information is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify quota limits and usage summary are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Switch tenant context from the dashboard",
+    "description": "Verifies an authorized multi-tenant user can switch the active tenant using the tenant selector and the dashboard refreshes to reflect the selected tenant context.",
+    "category": "Dashboard (tenant view)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open the tenant selector"
+      },
+      {
+        "type": "action",
+        "description": "Select a different tenant from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the dashboard tenant context updates to the selected tenant"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify tenant metrics, active modules, and usage summaries refresh for the selected tenant"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC007",
+    "title": "Expand quota details to see per-module limits and usage",
+    "description": "Verifies an authenticated user can expand quota details on Billing and see per-module limits and usage information.",
+    "category": "Billing & Plan Preview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the billing page"
+      },
+      {
+        "type": "action",
+        "description": "Open quota details"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify per-module quota limits are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify per-module usage information is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC008",
+    "title": "Switch plan previews without committing changes",
+    "description": "Verifies an authenticated user can switch between plan preview options on Billing and the displayed preview updates without entering an upgrade confirmation flow.",
+    "category": "Billing & Plan Preview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the billing page"
+      },
+      {
+        "type": "action",
+        "description": "Select a different plan option to preview changes"
+      },
+      {
+        "type": "action",
+        "description": "Select another plan option to preview changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the plan preview reflects the most recently selected plan"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC009",
+    "title": "Deny access for incorrect password",
+    "description": "Verifies a user entering a correct email with an incorrect password is denied access and sees an access-denied error message.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with an incorrect password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an access denied error message is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user remains on the login page"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC010",
+    "title": "Require organization name during onboarding",
+    "description": "Verifies onboarding blocks submission when organization name is blank and shows a required-field validation error.",
+    "category": "Onboarding Flow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /onboarding"
+      },
+      {
+        "type": "action",
+        "description": "Leave the organization name field blank"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid industry"
+      },
+      {
+        "type": "action",
+        "description": "Select a plan option"
+      },
+      {
+        "type": "action",
+        "description": "Submit the onboarding form to create the organization"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a required-field validation error is visible for organization name"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user remains on the onboarding page"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC011",
+    "title": "Reject invalid email format on login",
+    "description": "Verifies the login form prevents submission with an invalid email format and shows an inline email validation error.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with invalid email format"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with any value"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an inline email validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user remains on the login page"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC012",
+    "title": "Plan preview shows no-change state when selecting the current plan",
+    "description": "Verifies that selecting the current plan in the plan preview results in a no-change state rather than presenting an upgrade intent confirmation.",
+    "category": "Billing & Plan Preview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth/login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the billing page"
+      },
+      {
+        "type": "action",
+        "description": "Select the current plan in the plan preview options"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a no-change state is displayed for the plan preview"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the upgrade intent confirmation control is not available"
+      }
+    ],
+    "priority": "Low"
+  }
+]

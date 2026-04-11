@@ -984,6 +984,35 @@ npm run security:validate # Valida umbrales críticos
 
 ---
 
+## 🏎️ REGLAS DE EFICIENCIA DE TOKENS
+
+> **Severidad**: 🟠 ALTA | **Propósito**: Optimización de costos y velocidad de respuesta
+
+### Regla 6.1: Exclusión de Directorios
+NUNCA buscar ni leer en estas carpetas (añadir a `--exclude` o ignore patterns):
+- `node_modules/`
+- `.next/`
+- `.git/`
+- `dist/`
+- `build/`
+- `.qwen/`
+- `.qodo/`
+- `.antigravity/` (excepto docs)
+- `tsconfig.tsbuildinfo`
+- `package-lock.json` (solo leer versiones si es necesario)
+
+### Regla 6.2: Límites de Lectura
+- NUNCA leer archivos > 50KB completos de forma recursiva.
+- Para archivos grandes (backups SQL, logs): Usar `grep` o herramientas de búsqueda con patrones EXACTOS.
+- Leer solo el bloque de interés (StartLine/EndLine).
+
+### Regla 6.3: Búsquedas Quirúrgicas
+Al buscar código, siempre usar rutas específicas. Evitar búsquedas recursivas desde la raíz si se conoce el módulo.
+- **✅ CORRECTO**: `grep -r "pattern" src/modules/sales/ --include="*.ts"`
+- **❌ PROHIBIDO**: `grep -r "pattern" .`
+
+---
+
 ## ✅ CHECKLIST DE CONFIGURACIÓN ANTIGRAVITY
 
 - [x] Reglas de seguridad definidas (OWASP, ISO 27001)
