@@ -37,7 +37,16 @@ export function usePayments() {
 
         if (pgError) throw pgError
 
-        const mappedPayments: Payment[] = (data || []).map((p: any) => ({
+        type PaymentRow = {
+          id: string
+          amount: number
+          currency: string
+          status: string
+          description: string
+          paid_at: string | null
+          created_at: string
+        }
+        const mappedPayments: Payment[] = (data || []).map((p: PaymentRow) => ({
           id: p.id,
           amount: p.amount,
           currency: p.currency || 'USD',

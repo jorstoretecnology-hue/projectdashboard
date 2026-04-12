@@ -88,7 +88,7 @@ export function PaymentHistory() {
                     {formatCurrency(payment.amount)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Badge variant={statusVariants[payment.status].variant} className="capitalize">
+                    <Badge variant={statusVariants[payment.status]?.variant ?? 'secondary'} className="capitalize">
                       {statusVariants[payment.status].label}
                     </Badge>
                   </TableCell>

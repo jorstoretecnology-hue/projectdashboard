@@ -64,7 +64,7 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
     if (error) throw error;
 
     // Usar helper centralizado para mapeo
-    const customers = (data || []).map((dbItem: any) => fromDbCustomer(dbItem));
+    const customers = (data || []).map((dbItem: Parameters<typeof fromDbCustomer>[0]) => fromDbCustomer(dbItem));
 
     return {
       data: customers,
