@@ -1,6 +1,70 @@
 # CHANGELOG.md
 
-## [2026-04-11] Sesión 5 — Motor de Suscripciones y Add-ons
+## [2026-04-12] Sesión 7 — Inmunidad Operativa y Sistema de Bloqueo
+
+### 💳 Gestión de Facturación (Inmunidad Operativa)
+
+- **Optimización de TenantContext**: Unificación de la consulta de datos de empresa, suscripciones y add-ons en una sola llamada atómica a Supabase. Se reducen roundtrips y se asegura la consistencia de estados.
+- **useSubscriptionGuard**: Nuevo hook para centralizar la lógica de protección de rutas y acciones basadas en el estado de la suscripción (`active`, `past_due`, `suspended`).
+- **SubscriptionBlockedOverlay**: Componente de interfaz que bloquea el acceso a funciones operativas (ventas, pedidos) si el cliente está en mora, manteniendo acceso a las facturas y área de pago.
+- **Lógica Híbrida de Módulos**: El helper `isModuleActive` ahora detecta módulos provenientes tanto del plan base como de add-ons comprados independientemente.
+
+### 🔧 Ajustes Técnicos
+
+- **Casts Controlados**: Se implementó un cast `as unknown` temporal en `TenantContext.tsx` para manejar la tabla `tenant_subscription_items` hasta la próxima regeneración de tipos globales (Línea 212).
+- **Sincronización de Contextos**: Eliminada la latencia entre el cambio de estado de pago y el reflejo en la interfaz del Dashboard.
+
+### ✅ Verificación
+
+- `npx tsc` — 0 errores.
+- Flujo de bloqueo validado visualmente con estados simulados.
+
+## [2026-04-12] Sesión 6 — Refactor RLS + sale_items tenant_id + Fix RPC
+
+### 🔐 Refactor RLS (6 migraciones vía MCP)
+
+- `rls_refactor_1` — get_current_user_tenant_id() y is_super_admin() migradas
+  a JWT puro. Eliminadas queries a profiles en cada evaluación RLS.
+  Impacto: cada request ya no dispara N queries a profiles por políticas.
+
+- `rls_refactor_2` — Políticas duplicadas eliminadas:
+  tenants: 14 → 5 | invitations: 10 → 3 | suppliers: 2 → 1 | purchase_orders: 2 → 1
+
+- `rls_refactor_3` — profiles: 11 → 6 políticas. Eliminadas redundantes en español
+  y duplicados de superadmin.
+
+- `rls_refactor_4` — sale_items.tenant_id agregada (NOT NULL).
+  Aislamiento directo — elimina JOIN con sales en cada operación RLS.
+  4 filas existentes migradas con tenant_id correcto.
+  Bug corregido: fn_calculate_sale_totals intentaba escribir NEW.tax
+  desde sale_items (columna que no existe ahí). Trigger reescrito
+  para operar correctamente sobre sales.
+
+- `fix_create_sale_transaction` — RPC actualizada:
+  - tenant_id agregado en INSERT a sale_items (crítico — NOT NULL)
+  - Parámetros p_discount y p_tax_rate migrados NUMERIC → INTEGER
+  - Cálculo de IVA: ROUND(base \* p_tax_rate / 100) en INTEGER COP
+
+- `drop_legacy_create_sale_transaction_numeric` — eliminada versión
+  antigua con parámetros NUMERIC para evitar ambigüedad de overloads.
+
+### ✅ Verificación código TypeScript
+
+- sales.service.ts — sin cambios necesarios. RPC se llama correctamente.
+- tax_rate ya era z.number().int().nonnegative().max(100) en Zod.
+- p_tax_rate se pasa directo (19, no 0.19) — alineado con nueva firma.
+
+### 📊 Estado de políticas RLS tras refactor
+
+| Tabla           | Antes       | Después    |
+| --------------- | ----------- | ---------- |
+| tenants         | 14          | 5          |
+| invitations     | 10          | 3          |
+| profiles        | 11          | 6          |
+| suppliers       | 2           | 1          |
+| purchase_orders | 2           | 1          |
+| sale_items      | 4 heredadas | 4 directas |
+| Total DB        | 89          | ~72        |
 
 ### 🗄️ Migraciones aplicadas (4 migraciones vía MCP)
 

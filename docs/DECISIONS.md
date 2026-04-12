@@ -165,6 +165,43 @@ Tablas separadas: plans (precio base) + tenant_subscription_items (add-ons).
 
 ---
 
+## [2026-04-12] RLS: JWT puro en helpers — sin queries a profiles
+
+**Decisión:** get_current_user_tenant_id() e is_super_admin() leen
+del JWT, nunca de la tabla profiles.
+
+**Razón:** Con 72+ políticas activas, cada request disparaba N queries
+a profiles (una por política evaluada). JWT es inmutable en el request,
+cero roundtrips adicionales.
+
+**Regla:** Cualquier nueva política RLS debe usar get_current_user_tenant_id()
+o el JWT directo. Nunca un SELECT a profiles dentro de una política.
+
+---
+
+## [2026-04-12] sale_items con tenant_id directo
+
+**Decisión:** sale_items.tenant_id NOT NULL, poblado desde sales en la RPC.
+
+**Razón:** El aislamiento heredado (JOIN con sales) es frágil y costoso.
+Cada ítem debe saber a qué tenant pertenece sin depender de su padre.
+Principio: "Si el dato no es exacto, no pertenece a la base de datos."
+
+---
+
+## [2026-04-12] Inmunidad Operativa: Guards de Suscripción
+
+**Decisión:** Implementar un sistema de bloqueo centralizado via `useSubscriptionGuard`.
+
+**Razón:** Para el modelo SaaS en Colombia, es vital asegurar el flujo de caja. Si un cliente entra en estado `past_due` o `suspended`, el sistema debe limitar la operación técnica de forma inmediata y automática, sin depender de validaciones manuales en cada vista.
+
+**Implementación:**
+
+- `SubscriptionBlockedOverlay` previene la interacción con componentes críticos.
+- El estado se deriva de una única query unificada en `TenantContext`.
+
+---
+
 ## Checklist de deuda técnica — estado actual
 
 ✅ Precios NUMERIC → INTEGER COP (Sesión 2)
@@ -172,6 +209,8 @@ Tablas separadas: plans (precio base) + tenant_subscription_items (add-ons).
 ✅ dashboard/page.tsx → Server Component (Sesión 3)
 ✅ POSDialog lógica de industria → work_orders (Sesión 4)
 ✅ Motor de suscripciones y add-ons (Sesión 5)
+✅ Refactor RLS Atómico y JWT-first (Sesión 6)
+✅ Sistema de Inmunidad Operativa (Sesión 7)
 ⬜ Fotos base64 → Supabase Storage
 ⬜ Regenerar tipos Supabase (database.types.ts)
 ⬜ UI de Billing — consumir vw_tenant_billing_summary

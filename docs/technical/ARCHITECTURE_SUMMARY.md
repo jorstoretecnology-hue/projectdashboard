@@ -1,16 +1,17 @@
 # 🤖 ANTIGRAVITY AI CONTEXT HUB
 
 > **Documento Maestro para Asistentes de IA** - Dashboard Universal SaaS
-> 
-> **Última actualización:** 15 de marzo de 2026  
-> **Versión del Proyecto:** 4.6.0  
-> **Estado:** 🛡️ Hardened & Modular (Audit 8.5/10)
+>
+> **Última actualización:** 12 de abril de 2026  
+> **Versión del Proyecto:** 6.1.0  
+> **Estado:** 🛡️ Hardened & Operational Immunity (Audit 9.8/10)
 
 ---
 
 ## 🎯 PROPÓSITO DE ESTE DOCUMENTO
 
 Este es el **único punto de verdad** que cualquier IA de Antigravity debe leer al iniciar una sesión de trabajo. Contiene:
+
 - Contexto arquitectónico esencial
 - Estado actual del proyecto
 - Tareas prioritarias
@@ -22,34 +23,38 @@ Este es el **único punto de verdad** que cualquier IA de Antigravity debe leer 
 ## 📚 JERARQUÍA DE DOCUMENTACIÓN
 
 ### Nivel 1 — Lectura Obligatoria (SIEMPRE empezar aquí)
-| Documento | Propósito | Cuándo leer |
-|-----------|-----------|-------------|
-| **`./docs/PROGRESS_TRACKER.md`** | Estado actual, qué se hizo, qué sigue | **PRIMERO** en cada sesión |
-| **`./docs/MODULE_BLUEPRINT.md`** | Patrón para crear módulos | Al desarrollar features nuevas |
-| **`./ARCHITECTURE_SUMMARY.md`** (este archivo) | Arquitectura y contexto | Siempre como referencia |
+
+| Documento                                      | Propósito                             | Cuándo leer                    |
+| ---------------------------------------------- | ------------------------------------- | ------------------------------ |
+| **`./docs/PROGRESS_TRACKER.md`**               | Estado actual, qué se hizo, qué sigue | **PRIMERO** en cada sesión     |
+| **`./docs/MODULE_BLUEPRINT.md`**               | Patrón para crear módulos             | Al desarrollar features nuevas |
+| **`./ARCHITECTURE_SUMMARY.md`** (este archivo) | Arquitectura y contexto               | Siempre como referencia        |
 
 ### Nivel 2 — Consulta Específica
-| Documento | Propósito | Cuándo leer |
-|-----------|-----------|-------------|
-| `./docs/SECURITY_CHECKLIST.md` | Seguridad y RLS | Al tocar auth/permisos |
+
+| Documento                            | Propósito                | Cuándo leer              |
+| ------------------------------------ | ------------------------ | ------------------------ |
+| `./docs/SECURITY_CHECKLIST.md`       | Seguridad y RLS          | Al tocar auth/permisos   |
 | `./docs/SECURITY_PIPELINE_README.md` | Auditoría CI/CD con JSON | Al ejecutar validaciones |
-| `./docs/DATABASE_SCHEMA.md` | Esquema de DB | Al escribir queries |
-| `./docs/API_SPECIFICATION.md` | Endpoints API | Al crear/consumir APIs |
-| `./docs/BUSINESS_FLOWS.md` | Flujos de negocio | Al implementar lógica |
-| `./docs/PERMISSIONS_MATRIX.md` | Matriz de permisos | Al validar acceso |
+| `./docs/DATABASE_SCHEMA.md`          | Esquema de DB            | Al escribir queries      |
+| `./docs/API_SPECIFICATION.md`        | Endpoints API            | Al crear/consumir APIs   |
+| `./docs/BUSINESS_FLOWS.md`           | Flujos de negocio        | Al implementar lógica    |
+| `./docs/PERMISSIONS_MATRIX.md`       | Matriz de permisos       | Al validar acceso        |
 
 ### Nivel 3 — Estrategia y Largo Plazo
-| Documento | Propósito | Cuándo leer |
-|-----------|-----------|-------------|
-| `./docs/PRODUCT_STRATEGY.md` | Visión del producto | Al planear features |
-| `./docs/ROADMAP_12M.md` | Roadmap 12 meses | Al priorizar |
-| `./docs/IMPLEMENTATION_ROADMAP.md` | Plan de implementación | Al ejecutar fases |
+
+| Documento                          | Propósito              | Cuándo leer         |
+| ---------------------------------- | ---------------------- | ------------------- |
+| `./docs/PRODUCT_STRATEGY.md`       | Visión del producto    | Al planear features |
+| `./docs/ROADMAP_12M.md`            | Roadmap 12 meses       | Al priorizar        |
+| `./docs/IMPLEMENTATION_ROADMAP.md` | Plan de implementación | Al ejecutar fases   |
 
 ---
 
 ## 🏗️ ARQUITECTURA TÉCNICA (RESUMEN EJECUTIVO)
 
 ### Stack Tecnológico
+
 ```
 Next.js 16 (App Router + Turbopack)
 ├── TypeScript 5.3 (estricto, prohibido `any`)
@@ -62,6 +67,7 @@ Next.js 16 (App Router + Turbopack)
 ```
 
 ### Estructura de Código
+
 ```
 src/
 ├── app/                    # App Router (orquestación)
@@ -120,59 +126,61 @@ src/
 
 ## ⚡ REGLAS INMUTABLES (VIOLAR = CRITICAL BUG)
 
-### 1. Multi-tenancy con RLS
-```typescript
-// ✅ CORRECTO: RLS siempre aplicado
-const { data } = await supabase
-  .from('customers')
-  .select('id, name, email')
-  .eq('tenant_id', await getRequiredTenantId())
+### 1. Multi-tenancy con RLS (JWT-First)
 
-// ❌ PROHIBIDO: Query sin filtro de tenant
+```typescript
+// ✅ CORRECTO: Helper basado en JWT (0 queries adicionales)
 const { data } = await supabase
-  .from('customers')
-  .select('*')  // ❌ Sin tenant_id, sin campos explícitos
+  .from('sale_items')
+  .select('id, name, quantity')
+  .eq('tenant_id', get_current_user_tenant_id()); // RLS atómico directo
+
+// ❌ PROHIBIDO: Consultar 'profiles' dentro de políticas RLS
+// (Impacto: N queries por request, alta latencia)
 ```
 
 ### 2. Server-Side Tenant Resolution
+
 ```typescript
 // ✅ CORRECTO: Tenant resuelto en servidor
 async function createCustomer(data: CreateCustomerDTO) {
-  const tenantId = await getRequiredTenantId() // ← Server-side
-  return db.insert({ ...data, tenant_id: tenantId })
+  const tenantId = await getRequiredTenantId(); // ← Server-side
+  return db.insert({ ...data, tenant_id: tenantId });
 }
 
 // ❌ PROHIBIDO: Tenant pasado desde cliente
 async function createCustomer(data: { tenant_id: string }) {
-  return db.insert(data) // ← tenant_id viene del cliente
+  return db.insert(data); // ← tenant_id viene del cliente
 }
 ```
 
 ### 3. Type Safety Estricto
+
 ```typescript
 // ✅ CORRECTO: Tipos explícitos
 interface Customer {
-  id: string
-  name: string
-  email: string
+  id: string;
+  name: string;
+  email: string;
 }
 
 // ❌ PROHIBIDO: any (64 ocurrencias para eliminar)
 function createCustomer(data: any) {
-  return db.insert(data)
+  return db.insert(data);
 }
 ```
 
 ### 4. Validación Zod en Inputs
+
 ```typescript
 // ✅ CORRECTO: Validar con Zod antes de procesar
 const createCustomerSchema = z.object({
   first_name: z.string().min(2),
   email: z.string().email(),
-})
+});
 
 async function createCustomerAction(rawData: unknown) {
-  const data = createCustomerSchema.parse(rawData)
+  const data = createCustomerSchema.parse(rawData);
   // ... procesar
 }
 
@@ -183,32 +191,34 @@ async function createCustomerAction(data: any) {
 ```
 
 ### 5. Dependency Injection para Supabase
+
 ```typescript
 // ✅ CORRECTO: Cliente inyectado
 class CustomerService {
   constructor(private supabase: SupabaseClient) {}
 
   async list() {
-    return this.supabase.from('customers').select('id, name')
+    return this.supabase.from('customers').select('id, name');
   }
 }
 
 // ❌ PROHIBIDO: Cliente global en servicios
 class CustomerService {
   async list() {
-    const supabase = createClient() // ← No hacer en servicios
+    const supabase = createClient(); // ← No hacer en servicios
   }
 }
 ```
 
 ### 6. Security Pipeline con Validación JSON
+
 ```bash
 # ✅ CORRECTO: Ejecutar auditoría antes de deploy
 npm run security:audit    # Genera reporte MD + JSON
 npm run security:validate # Valida umbrales críticos
 
 # ❌ PROHIBIDO: Deploy sin validación
-# - El pipeline falla si hay: type errors, console.log, select(*), 
+# - El pipeline falla si hay: type errors, console.log, select(*),
 #   vulnerabilidades críticas/altas, tests fallidos, missing RLS
 ```
 
@@ -217,6 +227,7 @@ npm run security:validate # Valida umbrales críticos
 ## 🎯 ESTADO ACTUAL DEL PROYECTO
 
 ### ✅ Completado (Versión 4.0.0)
+
 - [x] Next.js 16 con App Router y Turbopack
 - [x] Autenticación Supabase (Email + Google OAuth)
 - [x] Onboarding progresivo (3 pasos: Identidad → Industria → Plan)
@@ -234,6 +245,7 @@ npm run security:validate # Valida umbrales críticos
 - [x] Testing con Vitest
 
 ### 🚧 En Progreso / Próximamente
+
 - [ ] Pagos con MercadoPago/Stripe (adapter pattern listo)
 - [ ] Internacionalización (i18n)
 - [ ] Integración fiscal (facturación electrónica Colombia)
@@ -241,20 +253,22 @@ npm run security:validate # Valida umbrales críticos
 - [ ] Módulo de membresías (gym)
 
 ### 📊 Métricas de Código
-| Métrica | Valor |
-|---------|-------|
-| Líneas totales | ~25,000 |
-| Archivos TypeScript | ~220 |
-| Componentes React | ~110 |
-| Endpoints API | ~15 |
-| Tablas DB | ~20 |
-| Cobertura de tests | ~60% |
+
+| Métrica             | Valor   |
+| ------------------- | ------- |
+| Líneas totales      | ~25,000 |
+| Archivos TypeScript | ~220    |
+| Componentes React   | ~110    |
+| Endpoints API       | ~15     |
+| Tablas DB           | ~20     |
+| Cobertura de tests  | ~60%    |
 
 ---
 
 ## 🔥 PRIORIDADES INMEDIATAS (AUDITORÍA MARZO 2026)
 
 ### Crítico (Semana 1)
+
 1. **Eliminar archivos de debug/test de producción**
    - `src/app/api/debug-role/route.ts` ← ELIMINAR
    - `src/app/api/test-auth/route.ts` ← ELIMINAR
@@ -276,6 +290,7 @@ npm run security:validate # Valida umbrales críticos
    - Usar `unknown` + type guards
 
 ### Alto Impacto (Semana 2-3)
+
 5. **Centralizar tipos en `src/types/index.ts`**
    - Mover tipos duplicados de `config/tenants.ts`, `config/industries/types.ts`
    - Eliminar imports circulares
@@ -299,42 +314,44 @@ npm run security:validate # Valida umbrales críticos
 ## 📝 PATRONES DE CÓDIGO ESTABLECIDOS
 
 ### Patrón: Server Action con Validación
+
 ```typescript
 // src/modules/customers/actions.ts
-'use server'
+'use server';
 
-import { z } from 'zod'
-import { createCustomerSchema } from '@/lib/schemas/customers'
-import { customerService } from './services/customer.service'
-import { getRequiredTenantId } from '@/lib/supabase/auth'
-import { auditLogService } from '@/core/security/audit.service'
+import { z } from 'zod';
+import { createCustomerSchema } from '@/lib/schemas/customers';
+import { customerService } from './services/customer.service';
+import { getRequiredTenantId } from '@/lib/supabase/auth';
+import { auditLogService } from '@/core/security/audit.service';
 
 export async function createCustomerAction(rawData: unknown) {
   // 1. Validar input con Zod
-  const data = createCustomerSchema.parse(rawData)
-  
+  const data = createCustomerSchema.parse(rawData);
+
   // 2. Resolver tenant en servidor
-  const tenantId = await getRequiredTenantId()
-  
+  const tenantId = await getRequiredTenantId();
+
   // 3. Ejecutar servicio
   const customer = await customerService.create({
     ...data,
-    tenant_id: tenantId
-  })
-  
+    tenant_id: tenantId,
+  });
+
   // 4. Auditar acción
   await auditLogService.log({
     action: 'CREATE',
     entityType: 'customer',
     entityId: customer.id,
-    userId: (await getUser()).id
-  })
-  
-  return customer
+    userId: (await getUser()).id,
+  });
+
+  return customer;
 }
 ```
 
 ### Patrón: Server Component con Fetch
+
 ```typescript
 // src/app/(app)/customers/page.tsx
 import { createClient } from '@/lib/supabase/server'
@@ -343,53 +360,54 @@ import { CustomersClient } from './CustomersClient'
 export default async function CustomersPage() {
   const supabase = await createClient()
   const tenantId = await getRequiredTenantId()
-  
+
   // Fetch directo en servidor (NO useEffect)
   const { data: customers } = await supabase
     .from('customers')
     .select('id, first_name, last_name, email, company_name')
     .eq('tenant_id', tenantId)
     .limit(100)
-  
-  return <CustomersClient 
-    initialCustomers={customers} 
+
+  return <CustomersClient
+    initialCustomers={customers}
     tenantId={tenantId}
   />
 }
 ```
 
 ### Patrón: Service con Repository
+
 ```typescript
 // src/modules/customers/services/customer.service.ts
-import { SupabaseClient } from '@supabase/supabase-js'
-import { CreateCustomerDTO, Customer } from '@/types'
+import { SupabaseClient } from '@supabase/supabase-js';
+import { CreateCustomerDTO, Customer } from '@/types';
 
 export class CustomerService {
   constructor(private supabase: SupabaseClient) {}
-  
+
   async list(tenantId: string, limit = 100) {
     const { data, error } = await this.supabase
       .from('customers')
       .select('id, first_name, last_name, email, company_name, status')
       .eq('tenant_id', tenantId)
       .limit(limit)
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    return data.map(this.mapToDomain)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data.map(this.mapToDomain);
   }
-  
+
   async create(data: CreateCustomerDTO) {
     const { data: customer, error } = await this.supabase
       .from('customers')
       .insert(data)
       .select()
-      .single()
-    
-    if (error) throw error
-    return this.mapToDomain(customer)
+      .single();
+
+    if (error) throw error;
+    return this.mapToDomain(customer);
   }
-  
+
   private mapToDomain(dbCustomer: any): Customer {
     return {
       id: dbCustomer.id,
@@ -397,14 +415,15 @@ export class CustomerService {
       lastName: dbCustomer.last_name,
       email: dbCustomer.email,
       // ... mapeo explícito
-    }
+    };
   }
 }
 
-export const customerService = new CustomerService(supabase)
+export const customerService = new CustomerService(supabase);
 ```
 
 ### Patrón: Componente Cliente con Formulario
+
 ```typescript
 // src/components/customers/CustomerDialog.tsx
 'use client'
@@ -424,7 +443,7 @@ export function CustomerDialog({ open, onOpenChange }) {
       email: '',
     }
   })
-  
+
   const onSubmit = async (data) => {
     try {
       await createCustomerAction(data)
@@ -435,7 +454,7 @@ export function CustomerDialog({ open, onOpenChange }) {
       toast.error('Error al crear cliente')
     }
   }
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -452,9 +471,25 @@ export function CustomerDialog({ open, onOpenChange }) {
 
 ---
 
+### Patrón: Inmunidad Operativa (Subscription Guards)
+
+Para asegurar el flujo de caja, el sistema implementa un bloqueo preventivo:
+
+- **`TenantContext`**: Centraliza la query unificada (Tenants + Subs + Addons).
+- **`useSubscriptionGuard()`**: Hook para proteger Server Actions y Rutas.
+- **`SubscriptionBlockedOverlay`**: Bloqueo visual para estados `past_due` o `suspended`.
+
+```typescript
+// ✅ CORRECTO: Proteger interacción crítica
+if (isSubscriptionBlocked) return <SubscriptionBlockedOverlay />
+```
+
+---
+
 ## 🛠️ COMANDOS DE DESARROLLO
 
 ### Scripts Principales
+
 ```bash
 # Desarrollo
 npm run dev              # Servidor con Turbopack
@@ -478,6 +513,7 @@ npm run check            # type-check + lint + test (paralelo)
 ```
 
 ### Herramientas de Auditoría
+
 ```bash
 # Detectar código muerto
 npx ts-prune             # TypeScript no usado
@@ -493,16 +529,18 @@ npm outdated             # Dependencias desactualizadas
 ## 🐛 TROUBLESHOOTING RÁPIDO
 
 ### Hydration Mismatch
+
 ```tsx
 // ✅ Solución: Usar mounted flag
-const [mounted, setMounted] = useState(false)
-useEffect(() => setMounted(true), [])
+const [mounted, setMounted] = useState(false);
+useEffect(() => setMounted(true), []);
 
-if (!mounted) return <Skeleton />
-return <ComponentThatUsesTheme />
+if (!mounted) return <Skeleton />;
+return <ComponentThatUsesTheme />;
 ```
 
 ### RLS Policy Bloquea Datos
+
 ```sql
 -- Debug: Verificar políticas activas
 SELECT * FROM pg_policies WHERE tablename = 'customers';
@@ -516,27 +554,30 @@ ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 
 // Fix: Forzar logout local si el JWT es inválido
 if (error.status === 403 || error.message.includes('sub claim')) {
-  await supabase.auth.signOut({ scope: 'local' })
-  window.location.reload()
+await supabase.auth.signOut({ scope: 'local' })
+window.location.reload()
 }
-```
+
+````
 
 ### Stuck on Loading (Onboarding)
 ```typescript
 // Fix: Usar revalidatePath y reset de estado en server action
 // Ver e:\ProyectDashboard\src\app\onboarding\actions.ts
-```
+````
 
 ---
 
 ## 📞 CONTACTO Y SOPORTE
 
 ### Canales de Comunicación
+
 - **GitHub Issues:** Bugs y feature requests
 - **Slack Antigravity:** Canal #dashboard-universal
 - **Email:** soporte@antigravity.com
 
 ### Horarios de Soporte
+
 - **Lunes a Viernes:** 9:00 AM - 6:00 PM (Bogotá)
 - **Sábados:** 9:00 AM - 1:00 PM (Bogotá)
 - **Emergencias:** 24/7 vía Slack
@@ -545,15 +586,15 @@ if (error.status === 403 || error.message.includes('sub claim')) {
 
 ## 📈 PRÓXIMOS HITOS
 
-| Hito | Fecha Estimada | Estado |
-|------|----------------|--------|
-| v4.1.0 - Pagos MercadoPago | Marzo 2026 | 🚧 En desarrollo |
-| v4.2.0 - Módulo de Reservas | Abril 2026 | 📋 Planificado |
-| v4.3.0 - Facturación Electrónica | Mayo 2026 | 📋 Planificado |
-| v5.0.0 - Multi-sede + i18n | Junio 2026 | 🎯 En planificación |
+| Hito                             | Fecha Estimada | Estado              |
+| -------------------------------- | -------------- | ------------------- |
+| v4.1.0 - Pagos MercadoPago       | Marzo 2026     | 🚧 En desarrollo    |
+| v4.2.0 - Módulo de Reservas      | Abril 2026     | 📋 Planificado      |
+| v4.3.0 - Facturación Electrónica | Mayo 2026      | 📋 Planificado      |
+| v5.0.0 - Multi-sede + i18n       | Junio 2026     | 🎯 En planificación |
 
 ---
 
 **Fin del Documento Maestro**
 
-*¿Necesitas más detalles? Consulta la documentación específica en `./docs/`*
+_¿Necesitas más detalles? Consulta la documentación específica en `./docs/`_
