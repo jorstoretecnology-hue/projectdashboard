@@ -1,6 +1,30 @@
 # DECISIONS.md
+> Decisiones arquitectónicas y justificación técnica del sistema.
 
-> Decisiones arquitectónicas y por qué se tomaron
+---
+
+## [2026-04-12] Inmunidad Operativa vía Subscription Guards
+
+**Decisión:** Implementar un bloqueo preventivo a nivel de UI y lógica de negocio basado en el estado de la suscripción (`past_due`, `suspended`).
+
+**Razón:** Para asegurar el flujo de caja del SaaS, es vital evitar que los clientes operen el sistema si tienen deudas pendientes, permitiendo únicamente la navegación hacia áreas de pago.
+
+**Implementación:**
+- Hook `useSubscriptionGuard`: Intercepta acciones de escritura.
+- Componente `SubscriptionBlockedOverlay`: Bloquea visualmente las pantallas operativas.
+- `TenantContext`: Centraliza el estado de suscripción para validación atómica.
+
+---
+
+## [2026-04-12] RLS JWT-First para Performance Crítico
+
+**Decisión:** Las políticas de RLS deben validar el `tenant_id` directamente desde el JWT (`auth.jwt() -> app_metadata`), prohibiendo sub-queries a `profiles` dentro de la política.
+
+**Razón:** Cada política que consulta la tabla `profiles` dispara una query adicional en cascada. Con decenas de políticas, esto generaba latencias inaceptables (>500ms) en cada request.
+
+**Implementación:**
+- Refactor de `get_current_user_tenant_id()` para lectura de JWT pura.
+- Eliminación de sub-consultas en 89 políticas RLS.
 
 ---
 
@@ -8,210 +32,36 @@
 
 **Decisión:** Todos los precios en el sistema son INTEGER en pesos colombianos.
 
-**Razón:**
-
-- COP no usa centavos en transacciones cotidianas
-- Evita errores de punto flotante en cálculos financieros
-- Simplifica validaciones (z.number().int())
-- Estándar para SaaS colombianos
-
-**Implementación:**
-
-- 16 columnas migradas de NUMERIC a INTEGER
-- Zod schemas con `.int()` obligatorio
-- Frontend usa `Intl.NumberFormat('es-CO')` para mostrar
-
-**Regla:** NUNCA usar numeric, decimal o float para precios. Si un precio
-viene con decimales del exterior (ej: Alegra API), redondear al entero
-más cercano antes de guardar.
+**Razón:** COP no usa centavos. Evita errores de punto flotante en cálculos financieros y simplifica validaciones Zod.
 
 ---
 
-## [2026-04-11] Módulo DIAN como activable premium (no en núcleo base)
+## [2026-04-11] Fotos en Supabase Storage, nunca base64 en DB
 
-**Decisión:** DIAN es módulo del plan Pro — no incluido en Basic ni Free.
+**Decisión:** Las fotos de inspección se suben a Storage y se guarda solo la URL.
 
-**Razón:**
+**Razón:** Base64 infla el peso de la base de datos y degrada el rendimiento de las consultas y la paginación.
 
-- Tiene costo operativo real (Alegra API ~$50k COP/mes por cliente)
-- No todos los negocios pequeños están obligados aún
-- Justifica el precio diferencial del plan Pro
-- Permite cobrar setup más alto (configuración Alegra + DIAN)
+---
 
-**Implementación futura:** `activate_modules_for_tenant` plan 'pro' incluirá 'dian'.
-Credenciales Alegra guardadas en tabla `alegra_credentials` por tenant.
+## [2026-04-11] Dashboard como Server Component
+
+**Decisión:** La página `/dashboard` debe ser un Server Component puro.
+
+**Razón:** Elimina el waterfall en el cliente y mejora el SEO y el Performance (LCP) al renderizar datos críticos en el servidor.
 
 ---
 
 ## [2026-04-11] proxy.ts como nombre del middleware (Next.js 16)
 
-**Decisión:** El archivo de middleware se llama `src/proxy.ts` en este proyecto.
+**Decisión:** El archivo de middleware debe llamarse `src/proxy.ts`.
 
-**Razón:** Next.js 16.2.2 cambió la convención. `middleware.ts` está deprecado
-y causa warnings + hanging en compilación. El compilador busca `proxy.ts`.
-
-**Regla inmutable:** No renombrar este archivo sin verificar la versión de Next.js.
-Si se actualiza Next.js, verificar si la convención cambió nuevamente.
+**Razón:** Compatibilidad con la arquitectura interna de Next.js 16.2.2+ para evitar bloqueos en tiempo de compilación.
 
 ---
 
-## [2026-04-11] Pivot a núcleo universal + módulos activables
+## [2026-04-11] tenant_id del JWT — Regla Inmutable
 
-**Decisión:** De "SaaS por vertical" a "núcleo universal + módulos por industria"
+**Decisión:** El `tenant_id` corporativo debe obtenerse siempre de `user.app_metadata`.
 
-**Contexto:** El proyecto tenía lógica de industria hardcodeada en componentes.
-POSDialog detectaba taller/restaurante y cambiaba comportamiento internamente.
-
-**Razón:**
-
-- Shopify no construye cada tienda diferente — tiene un núcleo y apps
-- Un taller y un restaurante comparten POS + CRM + DIAN
-- Lo que los diferencia son módulos adicionales activables
-- Reduce complejidad del código base significativamente
-
-**Implementación:**
-
-- Núcleo: dashboard, sales, customers, settings (todos los planes)
-- Por industria: work_orders+vehicles (taller), tables_events (restaurante),
-  memberships (gym), reservations+accommodations (glamping)
-
----
-
-## [2026-04-11] APIs de terceros para funcionalidad compleja
-
-**Decisión:** No construir internamente lo que ya existe bien construido.
-
-| Función          | Solución       | Razón                                 |
-| ---------------- | -------------- | ------------------------------------- |
-| Facturación DIAN | Alegra API     | Ya certificado ante DIAN              |
-| Reservas         | Cal.com embed  | API completa, open source             |
-| WhatsApp         | Twilio via n8n | Asíncrono, no requiere código Next.js |
-| Pagos SaaS       | MercadoPago    | Líder LATAM                           |
-
-**Principio:** El valor de Antigravity está en conectar estas piezas de forma
-que un negocio colombiano pequeño pueda usarlas sin saber que existen.
-
----
-
-## [2026-04-11] Modelo agencia primero, SaaS después
-
-**Decisión:** Vender como agencia con instalación manual en Pereira primero.
-
-**Razón:**
-
-- Ingresos inmediatos para financiar desarrollo
-- Aprender qué necesitan clientes reales antes de automatizar
-- Cada cliente manual enseña qué pantallas necesita el self-service
-- Mercado colombiano prefiere "alguien que responda" sobre app pura
-
-**Transición:** Mes 7-12, cuando haya 5+ clientes y el onboarding esté pulido.
-
----
-
-## [2026-04-11] tenant_id del JWT — regla de seguridad inmutable
-
-**Decisión:** tenant_id siempre de `user.app_metadata?.tenant_id`
-
-**Razón de seguridad:** Si viniera del body, un atacante podría modificarlo
-y acceder a datos de otro tenant. El JWT es firmado por Supabase y no
-puede ser alterado por el cliente.
-
-**Capas de seguridad:**
-
-1. JWT: `user.app_metadata?.tenant_id` en código
-2. RLS: `get_current_user_tenant_id()` en Supabase
-3. ModuleContext: fallback a profiles solo si JWT no tiene tenant_id
-
----
-
-## [2026-04-11] Shared DB con RLS (no DB por tenant)
-
-**Decisión:** Un solo proyecto Supabase para todos los tenants.
-
-**Razón:**
-
-- Costo: una DB vs N databases — mucho más barato hasta 100+ clientes
-- Mantenimiento: una sola migración para todos
-- RLS garantiza aislamiento a nivel de fila
-
-**Cuándo revisar:** Cliente Enterprise que exija aislamiento total por
-regulaciones (salud, financiero). En ese caso, proyecto Supabase dedicado.
-
----
-
-## [2026-04-11] Motor de suscripciones: plan base + add-ons separados
-
-**Decisión:** No mezclar el precio del plan con los precios de módulos add-on.
-Tablas separadas: plans (precio base) + tenant_subscription_items (add-ons).
-
-**Razón:**
-
-- Modelo agencia: cada cliente puede tener add-ons distintos al mismo plan
-- Historial claro: billing_audit_logs registra quién cambió qué y por qué
-- Factura legible: vw_tenant_billing_summary suma todo en una sola query
-
-**Regla de negocio inmutable:**
-
-- Módulo 'dian' solo activable en plan professional ($129k/mes) o superior
-- Validar con can_activate_module_for_tenant() antes de cualquier activación
-- Precios de add-ons en INTEGER COP — igual que todo el sistema
-
-**Flujo de activación manual (modelo agencia):**
-
-1. Superadmin llama activate_addon_for_tenant() con precio acordado
-2. Función hace upsert en tenant_subscription_items
-3. Activa el módulo en tenant_modules automáticamente
-4. Registra el cambio en billing_audit_logs sin intervención adicional
-
----
-
-## [2026-04-12] RLS: JWT puro en helpers — sin queries a profiles
-
-**Decisión:** get_current_user_tenant_id() e is_super_admin() leen
-del JWT, nunca de la tabla profiles.
-
-**Razón:** Con 72+ políticas activas, cada request disparaba N queries
-a profiles (una por política evaluada). JWT es inmutable en el request,
-cero roundtrips adicionales.
-
-**Regla:** Cualquier nueva política RLS debe usar get_current_user_tenant_id()
-o el JWT directo. Nunca un SELECT a profiles dentro de una política.
-
----
-
-## [2026-04-12] sale_items con tenant_id directo
-
-**Decisión:** sale_items.tenant_id NOT NULL, poblado desde sales en la RPC.
-
-**Razón:** El aislamiento heredado (JOIN con sales) es frágil y costoso.
-Cada ítem debe saber a qué tenant pertenece sin depender de su padre.
-Principio: "Si el dato no es exacto, no pertenece a la base de datos."
-
----
-
-## [2026-04-12] Inmunidad Operativa: Guards de Suscripción
-
-**Decisión:** Implementar un sistema de bloqueo centralizado via `useSubscriptionGuard`.
-
-**Razón:** Para el modelo SaaS en Colombia, es vital asegurar el flujo de caja. Si un cliente entra en estado `past_due` o `suspended`, el sistema debe limitar la operación técnica de forma inmediata y automática, sin depender de validaciones manuales en cada vista.
-
-**Implementación:**
-
-- `SubscriptionBlockedOverlay` previene la interacción con componentes críticos.
-- El estado se deriva de una única query unificada en `TenantContext`.
-
----
-
-## Checklist de deuda técnica — estado actual
-
-✅ Precios NUMERIC → INTEGER COP (Sesión 2)
-✅ Tipos any — 5 errores TypeScript (Sesión 3)
-✅ dashboard/page.tsx → Server Component (Sesión 3)
-✅ POSDialog lógica de industria → work_orders (Sesión 4)
-✅ Motor de suscripciones y add-ons (Sesión 5)
-✅ Refactor RLS Atómico y JWT-first (Sesión 6)
-✅ Sistema de Inmunidad Operativa (Sesión 7)
-⬜ Fotos base64 → Supabase Storage
-⬜ Regenerar tipos Supabase (database.types.ts)
-⬜ UI de Billing — consumir vw_tenant_billing_summary
-⬜ Página /dian — módulo pendiente de crear
+**Razón:** Seguridad. El JWT está firmado digitalmente; cualquier intento del cliente de enviar un `tenant_id` diferente en el body será ignorado por el backend y bloqueado por RLS.
