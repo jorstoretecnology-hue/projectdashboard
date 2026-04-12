@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useState } from 'react';
 import { 
   Trees, 
   Utensils, 
@@ -19,13 +18,15 @@ import {
   Sparkles,
   LayoutGrid
 } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { toast } from 'sonner';
-import { useTenant } from '@/providers/TenantContext';
-import { cn } from '@/lib/utils';
+
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { useTenant } from '@/providers/TenantContext';
 
 // Mock Data para el PoC
 const CABINS = [
@@ -47,7 +48,7 @@ const KITCHEN_ORDERS = [
 export default function DemoGlampingPage() {
   const { currentTenant } = useTenant();
 
-  const isModuleActive = React.useMemo(() => {
+  const isModuleActive = useMemo(() => {
     return currentTenant?.activeModules.includes('Inventory');
   }, [currentTenant]);
 

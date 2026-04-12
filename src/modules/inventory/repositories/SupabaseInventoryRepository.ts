@@ -1,8 +1,10 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "@/lib/supabase/database.types";
-import { IInventoryRepository } from "../interfaces/IInventoryRepository";
-import { InventoryItem } from "../types";
-import { CreateProductDTO, UpdateProductDTO, ProductQueryDTO } from "@/lib/api/schemas/products";
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import type { CreateProductDTO, UpdateProductDTO, ProductQueryDTO } from '@/lib/api/schemas/products';
+import type { Database } from '@/lib/supabase/database.types';
+
+import type { IInventoryRepository } from '../interfaces/IInventoryRepository';
+import type { InventoryItem } from '../types';
 
 type DBProduct = Database['public']['Tables']['products']['Row'];
 
@@ -12,7 +14,10 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
   async findAll(tenantId: string, query: ProductQueryDTO) {
     let supabaseQuery = this.supabase
       .from('products')
-      .select('id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at', { count: 'exact' })
+      .select(
+        'id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at',
+        { count: 'exact' },
+      )
       .eq('tenant_id', tenantId)
       .is('deleted_at', null);
 
@@ -25,9 +30,9 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
     }
 
     if (query.category_id) {
-       // El campo en products es category (string) o category_id? 
-       // Según migration 1 fue category VARCHAR(100). Según schema products es category.
-       // Dejaremos category por ahora hasta unificar.
+      // El campo en products es category (string) o category_id?
+      // Según migration 1 fue category VARCHAR(100). Según schema products es category.
+      // Dejaremos category por ahora hasta unificar.
     }
 
     const from = (query.page - 1) * query.limit;
@@ -53,7 +58,9 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
   async findById(id: string, tenantId: string): Promise<InventoryItem | null> {
     const { data, error } = await this.supabase
       .from('products')
-      .select('id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at')
+      .select(
+        'id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at',
+      )
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .is('deleted_at', null)
@@ -66,7 +73,9 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
   async findBySku(sku: string, tenantId: string): Promise<InventoryItem | null> {
     const { data, error } = await this.supabase
       .from('products')
-      .select('id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at')
+      .select(
+        'id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at',
+      )
       .eq('sku', sku)
       .eq('tenant_id', tenantId)
       .is('deleted_at', null)
@@ -86,13 +95,15 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
         stock: data.stock,
         sku: data.sku,
         industry_type: data.industry_type,
-        metadata: data.metadata as any, // Json in DB
+        metadata: data.metadata as Record<string, unknown>, // Json in DB
         threshold_low: data.threshold_low,
         threshold_critical: data.threshold_critical,
-        category: (data as any).category || 'General', // Fallback for transition
+        category: (data as { category?: string }).category || 'General', // Fallback for transition
         tenant_id: tenantId,
       })
-      .select()
+      .select(
+        'id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at',
+      )
       .single();
 
     if (error) throw error;
@@ -102,10 +113,12 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
   async update(id: string, data: UpdateProductDTO, tenantId: string): Promise<InventoryItem> {
     const { data: updatedProduct, error } = await this.supabase
       .from('products')
-      .update(data as any)
+      .update(data as Record<string, unknown>)
       .eq('id', id)
       .eq('tenant_id', tenantId)
-      .select()
+      .select(
+        'id, tenant_id, name, description, price, stock, category, sku, image, industry_type, metadata, is_blocked, location_id, state, tax_rate, tax_type, threshold_critical, threshold_low, type, deleted_at, created_at, updated_at',
+      )
       .single();
 
     if (error) throw error;
@@ -146,4 +159,3 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
     };
   }
 }
-

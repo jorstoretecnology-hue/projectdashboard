@@ -1,115 +1,99 @@
-# Estado del Proyecto — Antigravity SaaS
-**Última actualización:** 15 de Marzo 2026  
-**Próxima sesión objetivo:** MercadoPago + Billing page
+# PROJECT_STATE.md
+
+> Última actualización: Abril 11, 2026 — Sesión 5
+> Motor de Suscripciones y Add-ons
 
 ---
 
-## ✅ Funcionando en producción
+## Estado general: 🟢 ESTABLE — BASE SÓLIDA
+
+---
+
+## ¿Qué funciona hoy?
 
 ### Infraestructura
-- Multi-tenant con RLS y `get_current_user_tenant_id()` con fallback
-- Auth completa: login, registro, recuperación de contraseña (OTP pendiente mejora)
-- Middleware/proxy.ts protegiendo rutas por rol
-- Rate limiting con Upstash (tolerante a fallos)
-- Signed URLs para bucket `signatures`
 
-### Base de datos
-- 9 industrias: taller, restaurante, supermercado, ferreteria, gym, glamping, discoteca
-- 15 módulos en `modules_catalog`
-- Módulos automáticos por plan e industria (trigger activo)
-- Pricing por vertical en `industry_pricing` (21 registros)
-- `get_tenant_price(tenant_id, plan_slug, billing_cycle)` RPC funcionando
-- `activate_modules_for_tenant()` RPC funcionando
-- DB limpia: 0 tenants duplicados u huérfanos
+- ✅ Next.js 16.2.2 con Turbopack
+- ✅ `proxy.ts` como middleware (Next.js 16 — NUNCA renombrar a middleware.ts)
+- ✅ Supabase conectado (proyecto: kpdadwtxfazhtoqnttdh / DashboardProject)
+- ✅ Variables de entorno: `.env.local` completo (URL + ANON_KEY + SERVICE_ROLE_KEY)
+- ✅ Vercel deploy configurado
 
-### Módulos por plan
-- **Free:** dashboard, inventory, sales
-- **Starter:** + customers, purchases, reports, billing, settings, users
-- **Pro/Enterprise:** + work_orders, vehicles, reservations, memberships, accommodations, tables_events
+### Auth y Multi-tenant
 
-### Módulos activos verificados en producción
-| Tenant | Industria | Plan | Módulos |
-|--------|-----------|------|---------|
-| ACME Corporation | taller | enterprise | 11 ✅ |
-| Agencia Demo Pro | glamping | professional | 11 ✅ |
-| Global Solutions Ltd | restaurante | enterprise | 10 ✅ |
-| Retail Plus | ferreteria | starter | 9 ✅ |
-| TechStart Inc | supermercado | professional | 9 ✅ |
-| Demo Client | gym | free | 3 ✅ |
-| jaomart | taller | free | 3 ✅ |
+- ✅ Login / registro / onboarding completo (4 pasos)
+- ✅ `app_metadata.tenant_id` + `app_role: OWNER` escritos en JWT al completar onboarding
+- ✅ RLS habilitado en todas las tablas
+- ✅ ModuleContext: lee JWT primero, fallback a profiles
+- ✅ TenantContext funcionando
 
----
+### Sistema de Módulos
 
-## 🟡 En desarrollo / Pendiente
+- ✅ 16 módulos en `modules_catalog` (incluye dian)
+- ✅ `activate_modules_for_tenant()` con núcleo universal por plan + industria
+- ✅ Dashboard renderiza módulos activos dinámicamente desde DB
+- ✅ Sidebar dinámico por tenant
+- ✅ 13 tenants actualizados con módulos correctos
 
-### Prioridad ALTA
-- **MercadoPago real** — tablas listas, falta adaptador y webhooks
-- **Billing page** — debe leer de `industry_pricing`, actualmente mock
-- **Onboarding → llamar RPC** — agregar `activate_modules_for_tenant()` al completar registro
+### Base de Datos — COMPLETAMENTE LIMPIA ✅
 
-### Prioridad MEDIA
-- **OTP 6 dígitos** — reemplazar magic link de recuperación
-- **Fotos de inspección en Storage** — actualmente base64 en JSONB (TODO en código)
-- **service_orders** — tabla básica, falta vehicle_id, customer_id, labor_cost
+- ✅ 16 columnas de precio migradas de NUMERIC a INTEGER COP
+- ✅ Vista `v_dashboard_stats` recreada con INTEGER
+- ✅ Trigger `fn_sync_sale_total_on_discount` recreado con INTEGER
+- ✅ Schemas Zod actualizados con `.int()` en todos los campos monetarios
+- ✅ Módulo `dian` en `modules_catalog` y en `MODULE_DEFINITIONS`
 
-### Prioridad BAJA
-- **Consolidar migraciones SQL** — 70+ migraciones, limpiar en algún momento
-- **Rate limiting en endpoints individuales** — actualmente solo en middleware global
-- **App móvil** — futura fase
+### Módulos con UI funcional
+
+- ✅ Dashboard (KPIs, tendencias, actividad reciente)
+- ✅ Ventas / POS (POSDialog funcional)
+- ✅ Clientes / CRM (lista, crear, editar)
+- ✅ Inventario (productos, stock)
+- ✅ Configuración
+- ✅ Billing (estructura base)
+- ✅ Superadmin `/console` (tenants, módulos, usuarios, industrias)
 
 ---
 
-## 🔴 Conocido y bloqueante
+## Session Summary (2026-04-11) — Sesión 5
 
-- **Facturación DIAN** — sin esto no se puede vender a clientes colombianos reales
-- **Sin clientes pagando** — el producto está listo pero sin ingresos
+### Migraciones billing aplicadas
 
----
+| Migración                             | Estado |
+| ------------------------------------- | ------ |
+| billing_tenant_subscription_items     | ✅     |
+| billing_audit_logs                    | ✅     |
+| billing_summary_view                  | ✅     |
+| billing_activate_module_with_price_fn | ✅     |
 
-## Decisiones técnicas clave
+### Nuevas tablas y objetos DB
 
-| Decisión | Por qué |
-|----------|---------|
-| Shared DB + RLS (no DB por tenant) | Simplicidad, costo, suficiente para el mercado objetivo |
-| /console/* (no /superadmin/*) | Ofuscación de rutas de admin |
-| Precios en INTEGER COP | Nunca decimales en precios colombianos |
-| Módulos en lowercase | Sincronización con tenant_modules en DB |
-| industry_pricing separado de plans | Permite pricing por vertical sin cambiar estructura de planes |
+| Objeto                           | Tipo    | Notas                                 |
+| -------------------------------- | ------- | ------------------------------------- |
+| tenant_subscription_items        | tabla   | add-ons por tenant, INTEGER COP       |
+| billing_audit_logs               | tabla   | historial inmutable, solo SUPER_ADMIN |
+| vw_tenant_billing_summary        | vista   | plan + add-ons + total mensual        |
+| activate_addon_for_tenant()      | función | upsert + audit log automático         |
+| can_activate_module_for_tenant() | función | valida reglas (dian = pro mínimo)     |
 
----
+### Pending / Known Issues
 
-## Stack técnico
+| #   | Issue                           | Notas                                    |
+| --- | ------------------------------- | ---------------------------------------- |
+| 1   | Fotos base64 → Supabase Storage | InspectionCamera aún guarda base64       |
+| 2   | Regenerar database.types.ts     | work-orders.service.ts usa as unknown as |
+| 3   | UI Billing page                 | Consumir vw_tenant_billing_summary       |
+| 4   | Página /dian                    | Módulo en catálogo pero sin página       |
 
-| Capa | Tecnología | Versión |
-|------|-----------|---------|
-| Framework | Next.js | 16.1.1 |
-| Runtime | Node.js | 20+ |
-| DB | Supabase (PostgreSQL) | último |
-| Auth | Supabase Auth | — |
-| Estilos | Tailwind CSS | v3 |
-| Componentes | Radix UI / shadcn | — |
-| Validación | Zod | — |
-| Emails | Resend | — |
-| Errores | Sentry | — |
-| Rate limit | Upstash Redis | — |
-| Pagos | MercadoPago | pendiente |
-| Deploy | Vercel | — |
+### Cómo consumir vw_tenant_billing_summary
 
----
-
-## Agentes IA en el proyecto
-
-| Agente | Rol | Herramienta |
-|--------|-----|-------------|
-| Claude | Orquestador, arquitecto, prompts | claude.ai |
-| Antigravity | Ejecutor UI/React/Next.js | Gemini IDE |
-| Qwen | Ejecutor CLI/DB/migraciones | Qwen Code CLI |
-
----
-
-## Próxima sesión
-
-**Objetivo:** Integrar MercadoPago para poder cobrar  
-**Prerequisito:** Tener credenciales de MP (client_id, access_token, public_key)  
-**Agente principal:** Claude genera prompts → Antigravity implementa → Qwen ejecuta webhooks  
-**Definición de éxito:** Un tenant puede hacer upgrade de Free a Starter y ser cobrado realmente
+```ts
+// Server Component — src/app/(app)/billing/page.tsx
+const { data: billing } = await supabase
+  .from('vw_tenant_billing_summary')
+  .select(
+    'plan_slug,plan_name,plan_base_price,addons_total,total_monthly,addons_count,addons_detail',
+  )
+  .eq('tenant_id', tenantId)
+  .single();
+```

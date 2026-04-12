@@ -1,16 +1,30 @@
 /**
- * Formatea un número como moneda (COP por defecto para LATAM/Colombia)
+ * Formateadores estáticos para mejorar el rendimiento (evita re-instanciar en cada render/llamada)
  */
-export function formatCurrency(amount: number, currency = 'COP'): string {
+const currencyFormatter = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+})
+
+const dateHeaderFormatter = new Intl.DateTimeFormat('es-CO', {
+  dateStyle: 'medium',
+})
+
+const dateTimeFormatter = new Intl.DateTimeFormat('es-CO', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
+
+/**
+ * Formatea un número como moneda (COP por defecto)
+ */
+export function formatCurrency(amount: number): string {
   try {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
+    return currencyFormatter.format(amount)
   } catch (error) {
-    return `${currency} ${amount.toLocaleString()}`
+    return `$ ${amount.toLocaleString()}`
   }
 }
 
@@ -18,19 +32,22 @@ export function formatCurrency(amount: number, currency = 'COP'): string {
  * Formatea una fecha en formato legible (es-CO)
  */
 export function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('es-CO', {
-    dateStyle: 'medium',
-  }).format(d)
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date
+    return dateHeaderFormatter.format(d)
+  } catch (error) {
+    return String(date)
+  }
 }
 
 /**
  * Formatea una fecha y hora (es-CO)
  */
 export function formatDateTime(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('es-CO', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(d)
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date
+    return dateTimeFormatter.format(d)
+  } catch (error) {
+    return String(date)
+  }
 }

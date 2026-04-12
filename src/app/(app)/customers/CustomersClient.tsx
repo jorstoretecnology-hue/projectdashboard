@@ -1,16 +1,14 @@
 "use client"
 
-import { useMemo, useState, useDeferredValue, useCallback } from "react"
 import { Users, Loader2, UserCheck, UserPlus, Users2, UserX } from "lucide-react"
+import { useQueryState, parseAsString } from "nuqs"
+import { useMemo, useState, useDeferredValue, useCallback } from "react"
 import { toast } from "sonner"
-import { Card, CardContent } from "@/components/ui/card"
-import { CustomerHeader } from "@/components/customers/CustomerHeader"
-import { CustomerToolbar } from "@/components/customers/CustomerToolbar"
-import { CustomerTable } from "@/components/customers/CustomerTable"
+
 import { CustomerDialog } from "@/components/customers/CustomerDialog"
-import { deleteCustomerAction } from "@/modules/customers/actions"
-import { customersService } from "@/modules/customers/services/customers.service"
-import { Customer } from "@/modules/customers/types"
+import { CustomerHeader } from "@/components/customers/CustomerHeader"
+import { CustomerTable } from "@/components/customers/CustomerTable"
+import { CustomerToolbar } from "@/components/customers/CustomerToolbar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,21 +19,25 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Card, CardContent } from "@/components/ui/card"
+import { deleteCustomerAction } from "@/modules/customers/actions"
+import { customersService } from "@/modules/customers/services/customers.service"
+import type { Customer } from "@/modules/customers/types"
 
 interface CustomersClientProps {
   initialCustomers: Customer[]
   tenantId: string
-  isModuleActive: boolean
 }
 
-export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: CustomersClientProps) {
-  // 1. Estado UI
+export function CustomersClient({ initialCustomers, tenantId }: CustomersClientProps) {
+  // 1. Estado UI - Sincronizado con URL vía nuqs
+  const [search, setSearch] = useQueryState('q', parseAsString.withDefault('').withOptions({ shallow: false, clearOnDefault: true }));
+  const deferredSearch = useDeferredValue(search)
+  
   const [items, setItems] = useState<Customer[]>(initialCustomers)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  const [search, setSearch] = useState("")
-  const deferredSearch = useDeferredValue(search)
   const [view, setView] = useState<"grid" | "list">("list")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -141,7 +143,7 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Total Clientes</p>
-                <div className="text-2xl font-bold text-foreground">
+                <div className="text-2xl font-bold text-foreground tabular-nums">
                   {metrics.total}
                 </div>
               </div>
@@ -155,7 +157,7 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Activos</p>
-                <div className="text-2xl font-bold text-foreground">
+                <div className="text-2xl font-bold text-foreground tabular-nums">
                   {metrics.active}
                 </div>
               </div>
@@ -169,7 +171,7 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Leads Nuevos</p>
-                <div className="text-2xl font-bold text-foreground">
+                <div className="text-2xl font-bold text-foreground tabular-nums">
                   {metrics.leads}
                 </div>
               </div>
@@ -183,7 +185,7 @@ export function CustomersClient({ initialCustomers, tenantId, isModuleActive }: 
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Inactivos</p>
-                <div className="text-2xl font-bold text-foreground">
+                <div className="text-2xl font-bold text-foreground tabular-nums">
                   {metrics.inactive}
                 </div>
               </div>

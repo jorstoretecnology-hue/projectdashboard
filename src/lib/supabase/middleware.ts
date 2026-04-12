@@ -25,7 +25,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set({ name, value, ...options }))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -37,25 +37,16 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Obtenemos el usuario una sola vez aquí
+  // Obtenemos el usuario una sola vez aquí de forma segura
   const { data: { user } } = await supabase.auth.getUser()
 
-  let profile = null
-  if (user) {
-    // Si hay usuario, intentamos obtener su perfil (importante para el rol)
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('app_role, tenant_id')
-      .eq('id', user.id)
-      .single()
-    
-    profile = profileData
-  }
+  // ELIMINADO: Consulta a 'profiles' en cada request (Cuello de botella)
+  // Confiamos en user.app_metadata para tenant_id y roles
 
   return { 
     response: supabaseResponse, 
     user, 
-    profile,
-    supabase // Pasamos la instancia por si se necesita más adelante
+    profile: null, // El perfil ya no se carga en el middleware por performance
+    supabase 
   }
 }

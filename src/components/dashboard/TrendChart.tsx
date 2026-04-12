@@ -1,6 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+'use client'
+
 import dynamic from 'next/dynamic';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const ResponsiveContainer = dynamic(
   () => import('recharts').then((mod) => mod.ResponsiveContainer),
@@ -9,13 +11,6 @@ const ResponsiveContainer = dynamic(
     loading: () => <div className="h-[250px] animate-pulse bg-muted rounded-lg" />,
   },
 );
-
-const ChartLoader = ({ variant }: { variant: 'area' | 'line' }) => {
-  const AreaChart = dynamic(() => import('recharts').then((mod) => mod.AreaChart));
-  const LineChart = dynamic(() => import('recharts').then((mod) => mod.LineChart));
-
-  return variant === 'area' ? <AreaChart /> : <LineChart />;
-};
 
 /**
  * Nivel Intermedio (BI) - Trend Visualization
@@ -50,10 +45,10 @@ export function TrendChart({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </CardHeader>
       <CardContent>
-        <div style={{ height }}>
+        <div style={{ width: '100%', height, minHeight: height }}>
           <ResponsiveContainer width="100%" height="100%">
             {variant === 'area' ? (
               <DynamicAreaChart data={data} dataKey={dataKey} />

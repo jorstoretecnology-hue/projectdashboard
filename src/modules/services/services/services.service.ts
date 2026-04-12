@@ -1,18 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { 
-  CreateVehicleDTO, 
-  UpdateVehicleDTO, 
+
+import type {
+  CreateVehicleDTO,
   VehicleQueryDTO,
   CreateServiceOrderDTO,
-  UpdateServiceOrderDTO,
   CreateServiceItemDTO,
-  ServiceQueryDTO
+  ServiceQueryDTO,
 } from '@/lib/api/schemas/services';
 
 export class ServicesService {
   constructor(
     private supabase: SupabaseClient,
-    private tenantId: string
+    private tenantId: string,
   ) {}
 
   // -----------------------------------------------------
@@ -25,7 +24,10 @@ export class ServicesService {
 
     let q = this.supabase
       .from('vehicles')
-      .select('*, customer:customers(first_name, last_name, email)', { count: 'exact' })
+      .select(
+        'id, tenant_id, state, priority, description, created_at, updated_at, customer_id, vehicle_id, customer:customers(first_name, last_name, email)',
+        { count: 'exact' },
+      )
       .eq('tenant_id', this.tenantId);
 
     if (search) {
@@ -49,7 +51,7 @@ export class ServicesService {
       .eq('tenant_id', this.tenantId)
       .eq('plate', data.plate)
       .single();
-    
+
     if (existing) throw new Error(`Vehicle with plate ${data.plate} already exists`);
 
     const { data: vehicle, error } = await this.supabase
@@ -72,7 +74,10 @@ export class ServicesService {
 
     let q = this.supabase
       .from('services')
-      .select('*, vehicle:vehicles(plate, brand, model), customer:customers(first_name, last_name)', { count: 'exact' })
+      .select(
+        'id, tenant_id, state, priority, description, created_at, customer_id, vehicle_id, vehicle:vehicles(plate, brand, model), customer:customers(first_name, last_name)',
+        { count: 'exact' },
+      )
       .eq('tenant_id', this.tenantId);
 
     if (state) q = q.eq('state', state);
@@ -91,7 +96,9 @@ export class ServicesService {
   async getServiceOrderById(id: string) {
     const { data, error } = await this.supabase
       .from('services')
-      .select('*, items:service_items(*), vehicle:vehicles(*), customer:customers(*)')
+      .select(
+        'id, tenant_id, state, priority, description, metadata, created_at, updated_at, customer_id, vehicle_id, items:service_items(id, product_id, description, quantity, unit_price, subtotal), vehicle:vehicles(id, plate, brand, model, year), customer:customers(id, first_name, last_name, email, phone)',
+      )
       .eq('id', id)
       .eq('tenant_id', this.tenantId)
       .single();
@@ -113,7 +120,7 @@ export class ServicesService {
         priority: data.priority,
         description: data.description,
         created_by: userId,
-        state: 'RECIBIDO'
+        state: 'RECIBIDO',
       })
       .select('id, customer_id, vehicle_id, state, priority, description, created_at')
       .single();
@@ -135,7 +142,7 @@ export class ServicesService {
         item_type: data.item_type,
         quantity: data.quantity,
         unit_price: data.unit_price,
-        subtotal
+        subtotal,
       })
       .select('id, service_id, product_id, description, quantity, unit_price, subtotal')
       .single();
@@ -149,12 +156,12 @@ export class ServicesService {
       p_service_id: id,
       p_tenant_id: this.tenantId,
       p_user_id: userId,
-      p_new_state: newState
+      p_new_state: newState,
     });
 
     if (error) {
-       if (error.message.includes('Stock insuficiente')) throw new Error(error.message);
-       throw error;
+      if (error.message.includes('Stock insuficiente')) throw new Error(error.message);
+      throw error;
     }
     return data;
   }

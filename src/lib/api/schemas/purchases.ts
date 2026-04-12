@@ -37,7 +37,7 @@ export const supplierQuerySchema = z.object({
 export const purchaseItemSchema = z.object({
   product_id: z.string().uuid(),
   quantity: z.number().int().positive(),
-  unit_cost: z.number().nonnegative(), // Costo unitario acordado
+  unit_cost: z.number().int().nonnegative(), // Costo unitario acordado
 });
 
 export const createPurchaseOrderSchema = z.object({

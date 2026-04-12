@@ -1,32 +1,21 @@
 "use client"
 
+import { Search, Plus, Trash2, User, ShoppingCart, Loader2, CreditCard } from "lucide-react"
 import { useState, useEffect } from "react"
+import { toast } from "sonner"
+import { useDebounce } from 'use-debounce'
+
+import { CustomerSelect } from "@/components/customers/CustomerSelect"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter 
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Search, Plus, Trash2, Utensils, User, ShoppingCart, Loader2, Camera, CreditCard } from "lucide-react"
-import { useTenant } from "@/providers"
-import { inventoryService } from "@/modules/inventory/services/inventory.service"
-import { InventoryItem } from "@/modules/inventory/types"
-import { CreateSaleDTO, CreateSaleItemDTO, PaymentMethod } from "@/modules/sales/types"
-import { salesService } from "@/modules/sales/services/sales.service"
-import { logger } from "@/lib/logger"
-import { toast } from "sonner"
-import { Badge } from "@/components/ui/badge"
-
-import { getIndustryConfig } from "@/config/industries"
-import { InspectionCamera } from "./InspectionCamera"
-import { InspectionChecklist } from "./InspectionChecklist"
-import { useDebounce } from 'use-debounce'
-import { createClient } from '@/lib/supabase/client'
-import { CustomerSelect } from "@/components/customers/CustomerSelect"
 import { 
   Select as UISelect, 
   SelectContent as UISelectContent, 
@@ -34,6 +23,16 @@ import {
   SelectTrigger as UISelectTrigger, 
   SelectValue as UISelectValue 
 } from "@/components/ui/select"
+import { logger } from "@/lib/logger"
+import { createClient } from '@/lib/supabase/client'
+import type { InventoryItem } from "@/modules/inventory/types"
+import type { CreateSaleDTO, CreateSaleItemDTO, PaymentMethod } from "@/modules/sales/types"
+import { useTenant } from "@/providers"
+import { salesService } from "@/modules/sales/services/sales.service"
+
+
+
+
 
 interface POSDialogProps {
   open: boolean
@@ -42,7 +41,7 @@ interface POSDialogProps {
 }
 
 export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
-  const [step, setStep] = useState<1 | 2 | 3>(1) // 1: Seleccion, 2: Inspección, 3: Resumen/Meta
+  const [step, setStep] = useState<1 | 2>(1) // 1: Selección, 2: Resumen/Pago
   const [search, setSearch] = useState("")
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -55,14 +54,10 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
   const [metadata, setMetadata] = useState<Record<string, unknown>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Estado de Inspección
-  const [inspectionPhotos, setInspectionPhotos] = useState<string[]>([])
-  const [checklistItems, setChecklistItems] = useState<string[]>([])
-  
   // Esquema dinámico
   const { currentTenant } = useTenant();
-  const industryConfig = currentTenant?.industryType ? getIndustryConfig(currentTenant.industryType) : null;
   const metadataSchema = (currentTenant as { settings?: { metadata_schema?: { sale?: string[] } } })?.settings?.metadata_schema?.sale || [];
+  const confirmLabel = (currentTenant as { settings?: { pos_confirm_label?: string } })?.settings?.pos_confirm_label ?? 'Confirmar Venta';
 
   useEffect(() => {
     if (!open) return
@@ -100,8 +95,6 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
       setStep(1)
       setSelectedItems([])
       setMetadata({})
-      setInspectionPhotos([])
-      setChecklistItems([])
     }
   }, [open])
 
@@ -127,21 +120,14 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
     setSelectedItems(selectedItems.filter(i => i.product_id !== productId))
   }
 
-
   const handleMetadataChange = (key: string, value: string) => {
     setMetadata(prev => ({ ...prev, [key]: value }))
-  }
-
-  const handleChecklistToggle = (item: string) => {
-    setChecklistItems(prev => 
-      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
-    )
   }
 
   const handleSubmit = async () => {
     if (selectedItems.length === 0) return toast.error("Añade al menos un producto")
     
-    // Validar si hay campos requeridos en el esquema (opcional, todos texto por ahora)
+    // Validar si hay campos requeridos en el esquema
     const missingFields = metadataSchema.filter((field: string) => !metadata[field])
     if (metadataSchema.length > 0 && missingFields.length > 0) {
       return toast.error(`Faltan campos: ${missingFields.join(", ")}`)
@@ -149,24 +135,26 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
 
     setIsSubmitting(true)
     try {
-      // Consolidar todos los metadatos (incluyendo inspección)
       const finalMetadata = {
         ...metadata,
-        inspection_checklist: checklistItems,
-        inspection_photos: inspectionPhotos, // TODO: Subir a storage antes si es base64
         system_source: 'pos_dynamic'
       }
 
       const payload: CreateSaleDTO = {
         customer_id: selectedCustomerId,
         payment_method: selectedPaymentMethod as PaymentMethod,
-        items: selectedItems.map(({ name, ...rest }) => rest),
+        items: selectedItems.map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          notes: item.notes
+        })),
         metadata: finalMetadata,
-        notes: `Pedido ${metadata['mesa'] ? 'Mesa ' + metadata['mesa'] : 'Venta Realizada'}`
+        notes: 'Venta Realizada'
       }
       
       await salesService.create(payload)
-      toast.success("¡Pedido enviado correctamente!")
+      toast.success("¡Venta registrada correctamente!")
       onOpenChange(false)
     } catch (err: unknown) {
       const error = err as Error;
@@ -176,37 +164,13 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
     }
   }
 
-  const nextStep = () => {
-    if (step === 1) {
-      if (industryConfig?.requiresInspection) {
-        setStep(2)
-      } else {
-        setStep(3)
-      }
-    } else if (step === 2) {
-      setStep(3)
-    }
-  }
-
-  const prevStep = () => {
-    if (step === 3) {
-      if (industryConfig?.requiresInspection) {
-        setStep(2)
-      } else {
-        setStep(1)
-      }
-    } else if (step === 2) {
-      setStep(1)
-    }
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 border-b">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <ShoppingCart className="w-6 h-6 text-primary" />
-            Nueva Orden {step === 2 && "- Inspección"} {step === 3 && "- Resumen"}
+            Nueva Venta {step === 2 && "- Resumen"}
           </DialogTitle>
         </DialogHeader>
 
@@ -296,54 +260,15 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
                   <Button 
                     className="w-full font-bold" 
                     disabled={selectedItems.length === 0}
-                    onClick={nextStep}
+                    onClick={() => setStep(2)}
                   >
                     Continuar <Plus className="ml-2 w-4 h-4" />
                   </Button>
                 </div>
               </div>
             </>
-          ) : step === 2 ? (
-            /* PASO 2: INSPECCIÓN (Solo si aplica) */
-            <div className="flex-1 overflow-y-auto p-10 max-w-2xl mx-auto space-y-8">
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold flex items-center gap-2 border-b pb-2">
-                  <Camera className="w-6 h-6 text-primary" /> Inspección de Entrada
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Registra el estado actual y captura evidencia visual para seguridad del negocio y del cliente.
-                </p>
-                
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <Label className="text-xs font-bold uppercase text-muted-foreground">Checklist de Recepción</Label>
-                    <InspectionChecklist 
-                      items={industryConfig?.inspectionConfig?.items || []}
-                      completedItems={checklistItems}
-                      onItemToggle={handleChecklistToggle}
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-xs font-bold uppercase text-muted-foreground">Evidencia Fotográfica</Label>
-                    <InspectionCamera 
-                      photos={inspectionPhotos}
-                      onPhotosChange={setInspectionPhotos}
-                      suggestedPhotos={industryConfig?.inspectionConfig?.suggestedPhotos}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-6">
-                <Button variant="outline" className="flex-1" onClick={prevStep}>Volver</Button>
-                <Button className="flex-[2] font-black" onClick={nextStep}>
-                  Continuar a Resumen
-                </Button>
-              </div>
-            </div>
           ) : (
-            /* PASO 3: METADATOS / RESUMEN */
+            /* PASO 2: METADATOS / RESUMEN */
             <div className="flex-1 overflow-y-auto p-10 max-w-xl mx-auto space-y-8">
               <div className="space-y-4">
                 <h3 className="text-lg font-bold flex items-center gap-2 border-b pb-2">
@@ -391,12 +316,6 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
                 <h4 className="font-bold text-sm uppercase text-primary mb-4">Resumen Final</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between"><span>Items:</span> <span>{selectedItems.length}</span></div>
-                  {industryConfig?.requiresInspection && (
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Inspección:</span> 
-                      <span>{checklistItems.length} ítems / {inspectionPhotos.length} fotos</span>
-                    </div>
-                  )}
                   <div className="flex justify-between text-lg font-black border-t pt-2 mt-2">
                     <span>A PAGAR:</span> 
                     <span>${selectedItems.reduce((acc, i) => acc + (i.quantity * (i.unit_price || 0)), 0).toLocaleString()}</span>
@@ -405,13 +324,13 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
               </div>
 
               <div className="flex gap-4">
-                <Button variant="outline" className="flex-1" onClick={prevStep}>Volver</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>Volver</Button>
                 <Button 
                   className="flex-[2] font-black" 
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : "ENVIAR A COCINA"}
+                  {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : confirmLabel}
                 </Button>
               </div>
             </div>
@@ -421,4 +340,3 @@ export function POSDialog({ open, onOpenChange, tenantId }: POSDialogProps) {
     </Dialog>
   )
 }
-

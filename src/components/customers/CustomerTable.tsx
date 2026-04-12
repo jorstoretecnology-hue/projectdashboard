@@ -1,13 +1,6 @@
-'use client';
+import { MoreHorizontal, Pencil, Trash2, Mail, Phone } from 'lucide-react';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,13 +9,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Mail, Phone, Calendar } from 'lucide-react';
-import { Customer } from '@/modules/customers/types';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { useUser } from '@/providers';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { PERMISSIONS } from '@/config/permissions';
+import { formatDate } from '@/lib/formatters';
+import type { Customer } from '@/modules/customers/types';
+import { useUser } from '@/providers';
 
 interface CustomerTableProps {
   customers: Customer[];
@@ -41,19 +39,19 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
     switch (status) {
       case 'active':
         return (
-          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-green-200">
+          <span className="bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-emerald-500/20">
             Activo
           </span>
         );
       case 'lead':
         return (
-          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-blue-200">
+          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-primary/20">
             Lead
           </span>
         );
       case 'inactive':
         return (
-          <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-gray-200">
+          <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border border-border">
             Inactivo
           </span>
         );
@@ -63,22 +61,22 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
   };
 
   return (
-    <div className="rounded-md border bg-card shadow-sm overflow-hidden">
+    <div className="rounded-xl border bg-card shadow-sm overflow-hidden animate-in fade-in duration-500">
       <Table>
-        <TableHeader className="bg-muted/50">
+        <TableHeader className="bg-muted/30">
           <TableRow>
-            <TableHead className="font-bold">Cliente / Empresa</TableHead>
-            <TableHead className="font-bold">Estado</TableHead>
-            <TableHead className="font-bold">Contacto</TableHead>
-            <TableHead className="font-bold">Registro</TableHead>
+            <TableHead className="font-bold text-xs uppercase tracking-wider">Cliente / Empresa</TableHead>
+            <TableHead className="font-bold text-xs uppercase tracking-wider">Estado</TableHead>
+            <TableHead className="font-bold text-xs uppercase tracking-wider">Contacto</TableHead>
+            <TableHead className="font-bold text-xs uppercase tracking-wider">Registro</TableHead>
             {hasActions && (
-              <TableHead className="text-right font-bold w-[100px]">Acciones</TableHead>
+              <TableHead className="text-right font-bold w-[100px] text-xs uppercase tracking-wider">Acciones</TableHead>
             )}
           </TableRow>
         </TableHeader>
         <TableBody>
           {customers.map((customer) => (
-            <TableRow key={customer.id} className="hover:bg-muted/30 transition-colors group">
+            <TableRow key={customer.id} className="hover:bg-muted/20 transition-colors group">
               <TableCell>
                 <div className="flex flex-col">
                   <span className="font-semibold text-foreground">
@@ -86,7 +84,7 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
                   </span>
                   {customer.companyName && (
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <span className="text-[10px] opacity-50">🏢</span> {customer.companyName}
+                      <span className="text-[10px] opacity-50" aria-hidden="true">🏢</span> {customer.companyName}
                     </span>
                   )}
                 </div>
@@ -95,22 +93,20 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
               <TableCell>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 text-xs">
-                    <Mail size={12} className="text-primary/60" />
+                    <Mail size={12} className="text-primary/60" aria-hidden="true" />
                     <span className="text-muted-foreground">{customer.email}</span>
                   </div>
                   {customer.phone && (
                     <div className="flex items-center gap-2 text-xs">
-                      <Phone size={12} className="text-primary/60" />
-                      <span className="text-muted-foreground">{customer.phone}</span>
+                      <Phone size={12} className="text-primary/60" aria-hidden="true" />
+                      <span className="text-muted-foreground tabular-nums">{customer.phone}</span>
                     </div>
                   )}
                 </div>
               </TableCell>
               <TableCell>
-                <div className="text-xs text-muted-foreground">
-                  {customer.createdAt
-                    ? format(new Date(customer.createdAt), "d 'de' MMMM", { locale: es })
-                    : '-'}
+                <div className="text-xs text-muted-foreground tabular-nums">
+                  {customer.createdAt ? formatDate(customer.createdAt) : '-'}
                 </div>
               </TableCell>
               {hasActions && (
@@ -121,31 +117,33 @@ export function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProp
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-full hover:bg-background shadow-sm border"
+                          className="h-8 w-8 rounded-full hover:bg-background shadow-sm border border-border/50"
                           aria-label="Abrir menú de acciones"
                         >
-                          <MoreHorizontal size={14} />
+                          <MoreHorizontal size={14} aria-hidden="true" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40 rounded-xl elevation-3">
-                        <DropdownMenuLabel className="text-xs">Gestionar Cliente</DropdownMenuLabel>
+                      <DropdownMenuContent align="end" className="w-44 rounded-xl elevation-3 border-border/50">
+                        <DropdownMenuLabel className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Gestionar</DropdownMenuLabel>
                         <DropdownMenuSeparator />
 
                         {canEdit && (
                           <DropdownMenuItem
-                            className="gap-2 cursor-pointer"
+                            className="gap-2 cursor-pointer focus:bg-primary/10 focus:text-primary transition-colors"
                             onClick={() => onEdit(customer)}
+                            aria-label={`Editar perfil de ${customer.firstName}`}
                           >
-                            <Pencil size={14} /> Editar Perfil
+                            <Pencil size={14} aria-hidden="true" /> Editar Perfil
                           </DropdownMenuItem>
                         )}
 
                         {canDelete && (
                           <DropdownMenuItem
-                            className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                            className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer transition-colors"
                             onClick={() => onDelete(customer)}
+                            aria-label={`Eliminar a ${customer.firstName}`}
                           >
-                            <Trash2 size={14} /> Eliminar
+                            <Trash2 size={14} aria-hidden="true" /> Eliminar
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>

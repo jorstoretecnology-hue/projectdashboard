@@ -1,13 +1,14 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { createClient } from '@/lib/supabase/client';
+
 
 import type { TenantConfig, PlanType, TenantBranding } from '@/config/tenants';
-import { tenantService } from '@/modules/tenants/services/tenant.service';
 import { useTenantBranding } from '@/hooks/useTenantBranding';
 import { useTenantRealtime } from '@/hooks/useTenantRealtime';
 import { logger } from '@/lib/logger';
+import { createClient } from '@/lib/supabase/client';
+import { tenantService } from '@/modules/tenants/services/tenant.service';
 import type { IndustryType } from '@/types';
 
 import { useUser } from './AuthContext';
@@ -125,7 +126,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       plan: db.plan as PlanType,
       industryType: db.industry_type as IndustryType,
       activeModules: db.active_modules || [],
-      featureFlags: (db.feature_flags || []) as any[], // Temporarily as any[] until specific flags are defined
+      featureFlags: (db.feature_flags || []) as string[], // Cast to string[] as temporary measure
       isActive: db.is_active ?? true,
       branding: (db.branding && Object.keys(db.branding).length > 0 
         ? db.branding 

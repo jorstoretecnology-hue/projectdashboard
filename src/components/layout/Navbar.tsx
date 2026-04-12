@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 
-import { CommandSearch } from './CommandSearch';
-import { TenantSelector } from './TenantSelector';
-
 import { useUser } from '@/providers';
 
-export const Navbar = () => {
+import { CommandSearch } from './CommandSearch';
+import { MobileSidebar } from './MobileSidebar';
+import { TenantSelector } from './TenantSelector';
+
+
+export function Navbar() {
   const { user, signOut } = useUser();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -59,20 +61,29 @@ export const Navbar = () => {
     <>
       <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          {/* Search Bar - Modern & Compact */}
-          <div
-            onClick={() => setIsSearchOpen(true)}
-            className="cursor-pointer hidden md:flex items-center w-full max-w-sm bg-muted/50 hover:bg-muted/80 border border-transparent hover:border-border/50 rounded-full px-4 py-2 transition-all duration-200 group"
-          >
-            <Search
-              size={16}
-              className="text-muted-foreground/70 group-hover:text-primary transition-colors"
-            />
-            <span className="ml-3 text-sm text-muted-foreground/70 font-medium">Buscar...</span>
-            <div className="ml-auto flex gap-1 transform scale-90 opacity-60">
-              <kbd className="hidden sm:inline-flex items-center h-5 px-1.5 text-[10px] font-medium bg-background border border-border rounded shadow-sm">
-                ⌘K
-              </kbd>
+          <div className="flex items-center gap-4">
+            <MobileSidebar />
+            
+            <div className="flex flex-col">
+              <h2 className="text-sm font-bold text-foreground">Dashboard</h2>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Control Central</p>
+            </div>
+
+            {/* Search Bar - Modern & Compact */}
+            <div
+              onClick={() => setIsSearchOpen(true)}
+              className="cursor-pointer hidden md:flex items-center w-full min-w-[320px] max-w-sm bg-muted/50 hover:bg-muted/80 border border-transparent hover:border-border/50 rounded-full px-4 py-2 transition-all duration-200 group ml-2"
+            >
+              <Search
+                size={16}
+                className="text-muted-foreground/70 group-hover:text-primary transition-colors"
+              />
+              <span className="ml-3 text-sm text-muted-foreground/70 font-medium">Buscar...</span>
+              <div className="ml-auto flex gap-1 transform scale-90 opacity-60">
+                <kbd className="hidden sm:inline-flex items-center h-5 px-1.5 text-[10px] font-medium bg-background border border-border rounded shadow-sm">
+                  ⌘K
+                </kbd>
+              </div>
             </div>
           </div>
 
@@ -82,7 +93,7 @@ export const Navbar = () => {
             className="md:hidden p-2 hover:bg-muted/80 rounded-full transition-colors"
             aria-label="Abrir búsqueda"
           >
-            <Search size={20} className="text-muted-foreground" />
+            <Search size={22} className="text-muted-foreground" />
           </button>
 
           {/* Right Section Actions */}
@@ -94,7 +105,8 @@ export const Navbar = () => {
             {mounted && (
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="relative p-2.5 hover:bg-muted/80 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 text-muted-foreground hover:text-foreground"
+                className="relative p-2.5 bg-secondary/30 hover:bg-muted rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 text-muted-foreground hover:text-foreground border border-border/50"
+                aria-label={`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`}
               >
                 {theme === 'dark' ? (
                   <Sun
@@ -111,9 +123,12 @@ export const Navbar = () => {
             )}
 
             {/* Notifications */}
-            <button className="relative p-2.5 hover:bg-muted/80 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 text-muted-foreground hover:text-foreground">
+            <button 
+              className="relative p-2.5 bg-secondary/30 hover:bg-muted rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 text-muted-foreground hover:text-foreground border border-border/50"
+              aria-label="Ver notificaciones"
+            >
               <Bell size={18} />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-background animate-pulse" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-background animate-pulse" />
             </button>
 
             {/* User Menu */}
@@ -179,4 +194,4 @@ export const Navbar = () => {
       <CommandSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
-};
+}

@@ -1,16 +1,16 @@
-export type ModuleStatus = 'ACTIVE' | 'INACTIVE' | 'RESTRICTED' | 'DORMANT' | 'ERROR'
+export type ModuleStatus = 'ACTIVE' | 'INACTIVE' | 'RESTRICTED' | 'DORMANT' | 'ERROR';
 
 export interface ModuleNavItem {
-  label: string
-  path: string
-  icon: string // Lucide icon name — obligatorio ahora
+  label: string;
+  path: string;
+  icon: string; // Lucide icon name — obligatorio ahora
 }
 
 export interface ActiveModule {
-  key: string
-  status: ModuleStatus
-  permissions: string[]
-  navigation: ModuleNavItem[]
+  key: string;
+  status: ModuleStatus;
+  permissions: string[];
+  navigation: ModuleNavItem[];
 }
 
 // Definición canónica de todos los módulos disponibles en el sistema
@@ -50,6 +50,17 @@ export const MODULE_DEFINITIONS: Record<string, Omit<ActiveModule, 'status'>> = 
     key: 'billing',
     permissions: ['billing.view', 'billing.manage'],
     navigation: [{ label: 'Facturación', path: '/billing', icon: 'Receipt' }],
+  },
+  dian: {
+    key: 'dian',
+    permissions: ['dian.view', 'dian.create'],
+    navigation: [
+      {
+        label: 'Facturación DIAN',
+        path: '/dian',
+        icon: 'FileText',
+      },
+    ],
   },
   settings: {
     key: 'settings',
@@ -91,7 +102,7 @@ export const MODULE_DEFINITIONS: Record<string, Omit<ActiveModule, 'status'>> = 
     permissions: ['tables_events.view', 'tables_events.create', 'tables_events.update'],
     navigation: [{ label: 'Mesas y Eventos', path: '/tables-events', icon: 'UtensilsCrossed' }],
   },
-}
+};
 
 /**
  * Construye SOLO los módulos activos del tenant.
@@ -102,21 +113,23 @@ export const MODULE_DEFINITIONS: Record<string, Omit<ActiveModule, 'status'>> = 
  * @returns Solo los módulos con status ACTIVE, en el orden de los slugs del tenant
  */
 export function buildActiveModules(activeModuleSlugs: string[]): ActiveModule[] {
-  const normalizedSlugs = activeModuleSlugs.map(s => s.toLowerCase())
+  const normalizedSlugs = activeModuleSlugs.map((s) => s.toLowerCase());
 
   return normalizedSlugs
-    .map(slug => {
-      const def = MODULE_DEFINITIONS[slug]
+    .map((slug) => {
+      const def = MODULE_DEFINITIONS[slug];
       if (!def) {
         // Slug en DB pero no en registry — loguear en desarrollo
         if (process.env.NODE_ENV === 'development') {
-          console.warn(`[ModuleRegistry] Slug desconocido: "${slug}" — agregar a MODULE_DEFINITIONS`)
+          console.warn(
+            `[ModuleRegistry] Slug desconocido: "${slug}" — agregar a MODULE_DEFINITIONS`,
+          );
         }
-        return null
+        return null;
       }
-      return { ...def, status: 'ACTIVE' as ModuleStatus }
+      return { ...def, status: 'ACTIVE' as ModuleStatus };
     })
-    .filter((m): m is ActiveModule => m !== null)
+    .filter((m): m is ActiveModule => m !== null);
 }
 
 /**
@@ -124,10 +137,10 @@ export function buildActiveModules(activeModuleSlugs: string[]): ActiveModule[] 
  * Útil para el panel de superadmin que muestra todos los módulos disponibles.
  */
 export function buildAllModulesWithStatus(activeModuleSlugs: string[]): ActiveModule[] {
-  const slugsSet = new Set(activeModuleSlugs.map(s => s.toLowerCase()))
+  const slugsSet = new Set(activeModuleSlugs.map((s) => s.toLowerCase()));
 
-  return Object.values(MODULE_DEFINITIONS).map(def => ({
+  return Object.values(MODULE_DEFINITIONS).map((def) => ({
     ...def,
     status: slugsSet.has(def.key) ? ('ACTIVE' as ModuleStatus) : ('INACTIVE' as ModuleStatus),
-  }))
+  }));
 }

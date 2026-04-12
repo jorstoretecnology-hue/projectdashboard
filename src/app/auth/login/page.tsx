@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Loader2, Eye, EyeOff, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Eye, EyeOff, LayoutDashboard, ShieldCheck } from 'lucide-react';
-import { toast } from 'sonner';
+import { createClient } from '@/lib/supabase/client';
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -78,42 +80,42 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex overflow-hidden bg-slate-950">
+    <div className="relative min-h-screen w-full flex overflow-hidden bg-background">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/login-bg.png"
           alt="Premium Background"
           fill
-          className="object-cover opacity-40"
+          className="object-cover opacity-30"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-950/40 to-slate-950/80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/60 to-background/90" />
       </div>
 
       {/* Decorative Blur Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/10 rounded-full blur-[120px]" />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/5 rounded-full blur-[120px]" />
 
       <div className="relative z-10 w-full flex flex-col items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-[440px] space-y-8">
           {/* Logo / Brand */}
           <div className="flex flex-col items-center text-center space-y-4">
-            <div className="p-3 glass-faint rounded-2xl animate-float">
+            <div className="p-3 glass-card rounded-2xl animate-float">
               <LayoutDashboard className="h-10 w-10 text-primary" />
             </div>
             <div className="space-y-2">
               <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
                 Smart Business <span className="text-primary italic">OS</span>
               </h1>
-              <p className="text-slate-400 text-lg font-medium">
+              <p className="text-muted-foreground text-lg font-medium">
                 Acceso a tu consola de control empresarial
               </p>
             </div>
           </div>
 
           {/* Login Card */}
-          <div className="glass-card rounded-3xl p-8 sm:p-10 border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]">
+          <div className="glass-card rounded-3xl p-8 sm:p-10 border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,1)]">
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-semibold text-slate-300 ml-1">
@@ -123,6 +125,8 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="alex@rivera.com"
+                  autoComplete="email"
+                  spellCheck={false}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -147,6 +151,7 @@ export default function LoginPage() {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -156,6 +161,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -164,13 +170,13 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold text-lg rounded-xl shadow-[0_8px_16px_-4px_rgba(139,92,246,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold text-lg rounded-xl shadow-[0_8px_16px_-4px_rgba(var(--primary-rgb),0.3)] transition-all hover:scale-[1.02] active:scale-[0.98]"
                 disabled={loading || cooldown}
               >
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : cooldown ? (
-                  'Espera unos segundos...'
+                  'Espera unos segundos…'
                 ) : (
                   'Entrar al Dashboard'
                 )}
@@ -193,8 +199,9 @@ export default function LoginPage() {
               variant="outline"
               className="w-full h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 rounded-xl transition-all"
               onClick={handleGoogleLogin}
+              aria-label="Iniciar sesión con Google"
             >
-              <svg className="mr-3 h-5 w-5" viewBox="0 0 488 512">
+              <svg className="mr-3 h-5 w-5" viewBox="0 0 488 512" aria-hidden="true">
                 <path
                   fill="currentColor"
                   d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
@@ -206,7 +213,7 @@ export default function LoginPage() {
 
           {/* Footer Info */}
           <div className="flex flex-col items-center space-y-6">
-            <p className="text-slate-400 text-sm">
+            <p className="text-muted-foreground text-sm">
               ¿No tienes una cuenta?{' '}
               <Link
                 href={`/auth/register${token ? `?token=${token}` : ''}`}

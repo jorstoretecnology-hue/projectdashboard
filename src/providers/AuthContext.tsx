@@ -1,31 +1,32 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
-import { logoutAction } from '@/modules/auth/actions/logout'
-import { logger } from '@/lib/logger'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react'
 
-import { Permission, hasPermission, FeatureFlag } from '@/config/permissions'
+import type { Permission, FeatureFlag } from '@/config/permissions';
+import { hasPermission } from '@/config/permissions'
+import { logger } from '@/lib/logger'
+import { createClient } from '@/lib/supabase/client'
+import { logoutAction } from '@/modules/auth/actions/logout'
 
 interface AuthContextType {
   user: User | null
   session: Session | null
   role: string | null
-  can: (permission: Permission) => boolean
-  canAccessFeature: (feature: FeatureFlag) => boolean
   isLoading: boolean
+  can: (permission: Permission) => boolean
+  canAccessFeature: (flag: FeatureFlag) => boolean
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ 
+export function AuthProvider({
   children,
   initialSession = null,
   initialUser = null
-}: { 
+}: {
   children: React.ReactNode,
   initialSession?: Session | null,
   initialUser?: User | null
@@ -36,6 +37,7 @@ export function AuthProvider({
   const [isLoading, setIsLoading] = useState(true) // Siempre empezar en loading para sincronizar rol
   const supabase = createClient()
   const router = useRouter()
+  const lastEventRef = useRef<string | null>(null)
 
   useEffect(() => {
     const supabaseClient = createClient()
@@ -47,8 +49,8 @@ export function AuthProvider({
         // AUTO-RECOVERY: Si el JWT es inválido (usuario eliminado, token corrupto),
         // limpiar cookies locales para evitar que el error persista.
         // Esto elimina la necesidad de que el usuario limpie caché manualmente.
-        if (error.message?.includes('does not exist') || 
-            error.message?.includes('invalid') || 
+        if (error.message?.includes('does not exist') ||
+            error.message?.includes('invalid') ||
             error.status === 403) {
           logger.log('[AuthContext] Auto-recovery: clearing stale session')
           await supabaseClient.auth.signOut({ scope: 'local' })
@@ -61,7 +63,7 @@ export function AuthProvider({
       }
 
       setUser(initialUser)
-      
+
       // Intentar obtener la sesión (aunque getUser es el preferido para validación)
       supabaseClient.auth.getSession().then(({ data: { session: currentSession } }) => {
         setSession(currentSession)
@@ -82,24 +84,44 @@ export function AuthProvider({
     })
 
     // Escuchar cambios en la autenticación - FIRMA ESTRICTA SUGERIDA (_unused_session)
-    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event, currentSession) => {
+    // Escuchar cambios en la autenticación - FIRMA ESTRICTA SUGERIDA (_unused_session)
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event) => {
       // Log sanitizado para desarrollo
       if (process.env.NODE_ENV !== 'production') {
         logger.log(`[AuthContext] Auth Event: ${event}`)
       }
-      
-      // FIX DEADLOCK: El callback onAuthStateChange no debe ser asíncrono.
-      // Delegamos la lógica pesada a una función separada en el ciclo de eventos (event loop).
+
+      // FIX: SIGNED_IN → solo hacer refresh la primera vez
+      if (event === 'SIGNED_IN') {
+        if (lastEventRef.current !== 'SIGNED_IN') {
+          lastEventRef.current = 'SIGNED_IN'
+          router.refresh()
+        }
+        return
+      }
+
+      // FIX: SIGNED_OUT → limpiar referencia y redirigir
+      if (event === 'SIGNED_OUT') {
+        lastEventRef.current = null
+        router.push('/auth/login')
+        return
+      }
+
+      // FIX: TOKEN_REFRESHED → NO hacer router.refresh()
+      // El token se renueva en background — no recargar la UI
+      if (event === 'TOKEN_REFRESHED') {
+        return
+      }
+
+      // Otros eventos: actualizar estado normalmente
       const processAuthChange = async () => {
-        // VALIDACIÓN REAL: Ignoramos el objeto session del callback y consultamos al servidor
         const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser()
-        
+
         if (userError || !currentUser) {
           if (userError) {
             logger.warn('[AuthContext] Auth Change Error:', userError)
-            // AUTO-RECOVERY: Limpiar sesión local si el JWT es inválido
-            if (userError.message?.includes('does not exist') || 
-                userError.message?.includes('invalid') || 
+            if (userError.message?.includes('does not exist') ||
+                userError.message?.includes('invalid') ||
                 userError.status === 403) {
               logger.log('[AuthContext] Auto-recovery: clearing stale session on auth change')
               await supabaseClient.auth.signOut({ scope: 'local' })
@@ -110,34 +132,22 @@ export function AuthProvider({
           setRole(null)
         } else {
           setUser(currentUser)
-          
-          // Obtenemos la sesión de forma segura solo para tokens si es necesario
+
           const { data: { session: newSession } } = await supabaseClient.auth.getSession()
           setSession(newSession)
-          
-          // Sincronizar ROL desde base de datos
+
           const { data } = await supabaseClient.from('profiles')
             .select('app_role')
             .eq('id', currentUser.id)
             .single()
-          
+
           const finalRole = data?.app_role || currentUser.app_metadata?.app_role || 'VIEWER'
           setRole(finalRole)
         }
 
         setIsLoading(false)
-
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-          router.refresh()
-        }
-
-        if (event === 'SIGNED_OUT') {
-          router.push('/auth/login')
-          router.refresh()
-        }
       };
 
-      // Soltamos la microtarea para romper el deadlock del SDK
       Promise.resolve().then(processAuthChange);
     })
 
@@ -146,7 +156,7 @@ export function AuthProvider({
     }
   }, [router])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await logoutAction()
     } catch (error: unknown) {
@@ -159,29 +169,31 @@ export function AuthProvider({
       await supabase.auth.signOut()
       window.location.href = '/auth/login'
     }
-  }
+  }, [supabase.auth]);
 
-  const checkPermission = (p: Permission) => {
+  const checkPermission = useCallback((p: Permission) => {
     const jwtPermissions = (user?.app_metadata?.permissions as string[]) || []
     if (jwtPermissions.length > 0) return jwtPermissions.includes(p)
     return hasPermission(role, p)
-  }
+  }, [user, role]);
 
-  const checkFeature = (f: FeatureFlag) => {
+  const checkFeature = useCallback((f: FeatureFlag) => {
     const jwtFeatures = (user?.app_metadata?.features as string[]) || []
     return jwtFeatures.includes(f)
-  }
+  }, [user]);
+
+  const value = useMemo(() => ({ 
+    user, 
+    session, 
+    role, 
+    can: checkPermission, 
+    canAccessFeature: checkFeature, 
+    isLoading, 
+    signOut 
+  }), [user, session, role, checkPermission, checkFeature, isLoading, signOut]);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
-      role, 
-      can: checkPermission, 
-      canAccessFeature: checkFeature, 
-      isLoading, 
-      signOut 
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

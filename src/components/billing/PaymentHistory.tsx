@@ -1,6 +1,10 @@
 'use client'
 
-import { usePayments, Payment } from '@/hooks/use-payments'
+import { Receipt, AlertCircle } from 'lucide-react'
+
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -9,11 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import type { Payment } from '@/hooks/use-payments';
+import { usePayments } from '@/hooks/use-payments'
 import { formatCurrency, formatDate } from '@/lib/formatters'
-import { Receipt, AlertCircle } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
 
 const statusVariants: Record<Payment['status'], { label: string, variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   paid: { label: 'Pagado', variant: 'default' }, // Greenish in theme
@@ -83,7 +85,7 @@ export function PaymentHistory() {
                     {payment.description}
                   </TableCell>
                   <TableCell className="text-right font-mono font-medium">
-                    {formatCurrency(payment.amount, payment.currency)}
+                    {formatCurrency(payment.amount)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant={statusVariants[payment.status].variant} className="capitalize">

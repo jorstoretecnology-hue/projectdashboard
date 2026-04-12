@@ -1,0 +1,42 @@
+[
+  {
+    "id": "TC001",
+    "title": "postauthloginwithvalidcredentials",
+    "description": "Verify that POST /auth/login with valid credentials returns 200 status and a JWT token without tenant_id initially."
+  },
+  {
+    "id": "TC002",
+    "title": "postonboardingwithvalidjwtandorgdata",
+    "description": "Verify that POST /onboarding with valid JWT and organization data returns 200 status and an updated JWT containing app_metadata.tenant_id."
+  },
+  {
+    "id": "TC003",
+    "title": "getapicustomerswithvalidjwt",
+    "description": "Verify that GET /api/customers with valid Authorization header returns 200 status and a list of customers scoped to the tenant."
+  },
+  {
+    "id": "TC004",
+    "title": "postapicustomerswithvalidpayload",
+    "description": "Verify that POST /api/customers with valid Authorization and valid customer payload returns 201 Created with new customer id."
+  },
+  {
+    "id": "TC005",
+    "title": "postapicustomerswithinvalidpayload",
+    "description": "Verify that POST /api/customers with invalid payload fails Zod validation and returns 422 Validation error."
+  },
+  {
+    "id": "TC006",
+    "title": "postapiinventoryproductswithvalidpayload",
+    "description": "Verify that POST /api/inventory/products with valid Authorization and valid product payload returns 201 Created with product id."
+  },
+  {
+    "id": "TC007",
+    "title": "patchapiinventoryproductsidstockwithvaliddelta",
+    "description": "Verify that PATCH /api/inventory/products/:id/stock with valid Authorization and stock_delta updates stock and returns 200 with updated stock level."
+  },
+  {
+    "id": "TC008",
+    "title": "getapibillingsummarywithvalidjwt",
+    "description": "Verify that GET /api/billing/summary with valid Authorization returns 200 with tenant billing summary from vw_tenant_billing_summary."
+  }
+]

@@ -1,17 +1,26 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
-import { createClient } from "@/lib/supabase/server"
+import Link from "next/link"
+
+import { Button } from "@/components/ui/button"
 import { getRequiredTenantId } from "@/lib/supabase/auth"
-import { salesService } from "@/modules/sales/services/sales.service"
+import { createClient } from "@/lib/supabase/server"
+import type { Sale } from "@/modules/sales/types"
+
 import { SalesClient } from "./SalesClient"
 
 export default async function SalesDashboardPage() {
   const supabase = await createClient()
   const tenantId = await getRequiredTenantId()
 
-  // 1. Carga Inicial de Datos (Server Side)
-  const { data: initialSales } = await salesService.list(tenantId, { limit: 10 })
+  // Query Supabase directly from server component
+  const { data: salesRows } = await supabase
+    .from('sales')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  const initialSales = (salesRows || []) as Sale[]
 
   return (
     <div className="space-y-6 p-6">
@@ -33,9 +42,9 @@ export default async function SalesDashboardPage() {
         </div>
       </div>
 
-      <SalesClient 
-        initialSales={initialSales ?? []} 
-        tenantId={tenantId} 
+      <SalesClient
+        initialSales={initialSales ?? []}
+        tenantId={tenantId}
       />
     </div>
   )

@@ -71,8 +71,8 @@ export const updateServiceOrderSchema = z.object({
 export const createServiceItemSchema = z.object({
   product_id: z.string().uuid().optional(), // Opcional para Items libres (Mano de obra manual)? Recomendado usar productos.
   description: z.string().min(2),
-  quantity: z.number().positive(),
-  unit_price: z.number().nonnegative(),
+  quantity: z.number().int().positive(),
+  unit_price: z.number().int().nonnegative(),
   item_type: ServiceItemTypeEnum,
 });
 

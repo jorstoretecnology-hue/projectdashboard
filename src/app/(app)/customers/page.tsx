@@ -1,8 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users } from "lucide-react"
-import { createClient } from "@/lib/supabase/server"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getRequiredTenantId } from "@/lib/supabase/auth"
+import { createClient } from "@/lib/supabase/server"
 import { EnhancedCustomersService } from "@/modules/customers/services/customers.service"
+
 import { CustomersClient } from "./CustomersClient"
 
 export default async function CustomersPage() {
@@ -46,7 +48,6 @@ export default async function CustomersPage() {
       <CustomersClient 
         initialCustomers={initialCustomers} 
         tenantId={tenantId}
-        isModuleActive={isModuleActive}
       />
     </div>
   )

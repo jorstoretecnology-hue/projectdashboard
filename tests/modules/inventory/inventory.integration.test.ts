@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createInventoryItemAction } from '@/modules/inventory/actions';
+
 import { quotaEngine } from '@/core/quotas/engine';
 import { can, getRequiredTenantId } from '@/lib/supabase/auth';
-import { inventoryItemSchema } from '@/modules/inventory/types';
+import { createInventoryItemAction } from '@/modules/inventory/actions';
 
 // 1. Mocks de Infraestructura
 vi.mock('@/lib/supabase/server', () => ({

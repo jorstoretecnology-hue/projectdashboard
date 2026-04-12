@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+
 import { logger } from '@/lib/logger'
 import { ratelimit } from '@/lib/rate-limit'
+import { updateSession } from '@/lib/supabase/middleware'
 
 const PROTECTED_ROUTES = [
   '/dashboard', '/inventory', '/customers', '/sales',
@@ -29,7 +30,7 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: 
   });
 }
 
-export default async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
 
@@ -53,7 +54,7 @@ export default async function middleware(request: NextRequest) {
   }
 
   // 2. Sincronizar Sesión y obtener datos base (UNA SOLA VEZ)
-  const { response, user, profile } = await updateSession(request)
+  const { response, user } = await updateSession(request)
 
   const isPublic = PUBLIC_ROUTES.some(r => pathname.startsWith(r))
   const isProtected = PROTECTED_ROUTES.some(r => pathname.startsWith(r))
@@ -69,10 +70,9 @@ export default async function middleware(request: NextRequest) {
     return response
   }
 
-  // 4. Lógica para usuarios autenticados
-  const rawRole = profile?.app_role || user.app_metadata?.app_role || 'VIEWER'
-  const role = (rawRole as string).toUpperCase()
-  const tenantId = profile?.tenant_id || user.app_metadata?.tenant_id
+  // 4. Lógica para usuarios autenticados (JWT First)
+  const role = ((user.app_metadata?.app_role as string) || 'VIEWER').toUpperCase()
+  const tenantId = user.app_metadata?.tenant_id as string | undefined
 
   if (role === 'SUPER_ADMIN') {
     // Redirigir SuperAdmin al dashboard global solo desde la raíz o login

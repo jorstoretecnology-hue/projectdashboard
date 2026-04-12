@@ -3,8 +3,8 @@
 import { Search, Command, X } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 
-import { useModuleContext } from '@/providers/ModuleContext';
 import { useTenant } from '@/providers';
+import { useModuleContext } from '@/providers/ModuleContext';
 
 interface CommandSearchProps {
   isOpen: boolean;
@@ -81,18 +81,18 @@ export const CommandSearch = ({ isOpen, onClose }: CommandSearchProps) => {
           <Search className="text-muted-foreground mr-3" size={20} aria-hidden="true" />
           <input
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
-            placeholder="¿Qué necesitas buscar?..."
+            placeholder="¿Qué necesitas buscar?…"
+            className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/20 rounded-sm"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             aria-label="Buscar módulos"
           />
-          <button
+          <button 
             onClick={onClose}
+            className="p-2 hover:bg-muted rounded-lg text-muted-foreground transition-colors"
             aria-label="Cerrar búsqueda"
-            className="p-1 hover:bg-accent rounded text-muted-foreground"
           >
-            <X size={18} />
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 

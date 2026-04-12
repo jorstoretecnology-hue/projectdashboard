@@ -23,8 +23,8 @@ export const saleItemSchema = z.object({
   product_id: z.string().uuid(),
   quantity: z.number().int().positive('La cantidad debe ser mayor a 0'),
   // Opcional: permitir override de precio. Si no se envía, backend usa precio actual del producto.
-  unit_price: z.number().positive().optional(),
-  discount: z.number().min(0).default(0),
+  unit_price: z.number().int().positive().optional(),
+  discount: z.number().int().nonnegative().default(0),
   notes: z.string().optional(),
 });
 
@@ -33,10 +33,10 @@ export const createSaleSchema = z.object({
   customer_id: z.string().uuid(),
   payment_method: PaymentMethodEnum.default('CASH'),
   items: z.array(saleItemSchema).min(1, 'Debe haber al menos un producto en la venta'),
-  discount: z.number().min(0).default(0),
-  tax_rate: z.number().min(0).max(1).default(0), // Porcentaje decimal (e.g. 0.19)
+  discount: z.number().int().nonnegative().default(0),
+  tax_rate: z.number().int().nonnegative().max(100).default(0), // Percentage (e.g. 19)
   notes: z.string().optional(),
-  
+
   // Metadata (e.g. mesa, zona, etc)
   metadata: z.record(z.string(), z.any()).default({}),
 });

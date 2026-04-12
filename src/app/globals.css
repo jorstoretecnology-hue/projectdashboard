@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @config "../../tailwind.config.ts";
 
 :root {
@@ -35,29 +35,43 @@
 }
 
 .dark {
-  --background: 222 47% 5%;
+  /* Fondo orgánico Midnight Ink (no es gris plano, tiene profundidad) */
+  --background: 240 10% 3.9%;
   --foreground: 210 40% 98%;
-  --card: 222 47% 11%;
+
+  --card: 240 10% 6%;
   --card-foreground: 210 40% 98%;
-  --popover: 222 47% 11%;
+
+  --popover: 240 10% 6%;
   --popover-foreground: 210 40% 98%;
-  --primary: 221 83% 53%;
+
+  /* Primario: Digital Indigo (más eléctrico) */
+  --primary: 230 100% 67%;
   --primary-foreground: 210 40% 98%;
-  --secondary: 217 33% 17%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 217 33% 17%;
+
+  /* Acento: Emerald/Mint para estados y contraste */
+  --accent: 160 84% 39%;
   --accent-foreground: 210 40% 98%;
-  --destructive: 0 62% 30%;
+
+  --secondary: 240 10% 12%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 240 10% 12%;
+  --muted-foreground: 215 20% 65%;
+
+  --destructive: 0 84% 50%;
   --destructive-foreground: 210 40% 98%;
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 221 83% 53%;
+
+  /* Bordes suaves y tintados */
+  --border: 240 10% 15%;
+  --input: 240 10% 15%;
+  --ring: 230 100% 67%;
 
   /* Dark Sidebar Tokens */
-  --sidebar-background: 222 47% 11%;
+  --sidebar-background: 240 10% 6%;
   --sidebar-foreground: 215 20% 65%;
+
+  color-scheme: dark;
 }
 
 @layer base {
@@ -67,21 +81,44 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+
+  /* Accesibilidad y performance táctil */
+  button,
+  a,
+  [role='button'] {
+    touch-action: manipulation;
+  }
+
+  /* Soporte para usuarios con sensibilidad al movimiento */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer utilities {
   .gradient-hero {
-    background: linear-gradient(135deg, hsl(var(--gradient-start)) 0%, hsl(var(--gradient-end)) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
   }
 
   .glass-card {
-    @apply bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.5)];
   }
 
   .premium-bg {
-    background: radial-gradient(circle at top left, hsl(var(--primary) / 0.15), transparent 40%),
-                radial-gradient(circle at bottom right, hsl(var(--accent) / 0.1), transparent 40%),
-                hsl(var(--background));
+    background:
+      radial-gradient(circle at top left, hsl(var(--primary) / 0.12), transparent 45%),
+      radial-gradient(circle at bottom right, hsl(var(--accent) / 0.08), transparent 45%),
+      hsl(var(--background));
+  }
+
+  .glow-primary {
+    @apply shadow-[0_0_20px_rgba(var(--primary-rgb),0.2)];
   }
 }
-

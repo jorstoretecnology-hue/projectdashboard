@@ -1,10 +1,12 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+
 import { buildActiveModules, type ActiveModule } from '@/core/modules/module-registry';
 import { logger } from '@/lib/logger';
+import { createClient } from '@/lib/supabase/client';
+
 import { useUser } from './AuthContext';
 
 interface ModuleContextValue {
@@ -24,9 +26,20 @@ export const ModuleProvider = ({ children }: { children: ReactNode }) => {
   const supabase = createClient();
   const [activeModuleSlugs, setActiveModuleSlugs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastCheckedUser, setLastCheckedUser] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
+      if (lastCheckedUser) {
+        setLastCheckedUser(null);
+        setActiveModuleSlugs([]);
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    // Guard: Evitar recargas si el usuario es el mismo (excepto carga inicial)
+    if (user.id === lastCheckedUser && activeModuleSlugs.length > 0) {
       setIsLoading(false);
       return;
     }
@@ -34,44 +47,41 @@ export const ModuleProvider = ({ children }: { children: ReactNode }) => {
     const loadModules = async () => {
       setIsLoading(true);
       try {
-        // En lugar de console.log, usamos el Logger estructurado (Regla 1.7)
-        logger.log('[ModuleContext] Iniciando chequeo de módulos', { userId: user.id });
+        let tenantId = user.app_metadata?.tenant_id as string | undefined;
 
-        // Leer módulos activos del tenant desde Supabase
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('tenant_id')
-          .eq('id', user.id)
-          .single();
+        if (!tenantId) {
+          logger.warn('[ModuleContext] JWT sin tenant_id, buscando en profiles', {
+            userId: user.id,
+          });
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', user.id)
+            .single();
+          tenantId = profile?.tenant_id ?? undefined;
+        }
 
-        if (!profile?.tenant_id) {
-          logger.warn('[ModuleContext] Perfil sin tenant_id asociado', { userId: user.id });
+        if (!tenantId) {
+          logger.error('[ModuleContext] No se encontró tenant_id', { userId: user.id });
           setActiveModuleSlugs([]);
           return;
         }
-        
-        logger.log('[ModuleContext] Perfil cargado', { tenantId: profile.tenant_id });
 
         const { data: tenantModules, error } = await supabase
           .from('tenant_modules')
           .select('module_slug')
-          .eq('tenant_id', profile.tenant_id)
+          .eq('tenant_id', tenantId)
           .eq('is_active', true);
 
         if (error) {
-          logger.error('[ModuleContext] Error en Supabase al cargar módulos', { error });
+          logger.error('[ModuleContext] Error loading modules:', error);
         }
 
-        const slugs = (tenantModules || []).map(m => m.module_slug);
-        
-        if (slugs.length === 0) {
-          logger.warn('[ModuleContext] Tenant sin módulos activos', { 
-            tenant_id: profile.tenant_id 
-          });
-        }
+        const slugs = (tenantModules || []).map((m) => m.module_slug);
         setActiveModuleSlugs(slugs);
+        setLastCheckedUser(user.id);
       } catch (err) {
-        logger.error('[ModuleContext] Crash loading modules:', { err });
+        logger.error('[ModuleContext] Crash loading modules:', err);
         setActiveModuleSlugs([]);
       } finally {
         setIsLoading(false);
@@ -79,24 +89,30 @@ export const ModuleProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadModules();
-  }, [user?.id]);
+  }, [user?.id, lastCheckedUser, user.app_metadata?.tenant_id, activeModuleSlugs.length, supabase]);
 
-  const modules = buildActiveModules(activeModuleSlugs);
-  const isModuleActive = (slug: string) =>
-    activeModuleSlugs.map(s => s.toLowerCase()).includes(slug.toLowerCase());
+  // MEMOIZACIÓN: Evita que todos los componentes que escuchan el contexto se re-rendericen
+  // si los slugs no han cambiado.
+  const modules = useMemo(() => buildActiveModules(activeModuleSlugs), [activeModuleSlugs]);
 
-  return (
-    <ModuleContext.Provider value={{
+  const isModuleActive = useCallback(
+    (slug: string) => activeModuleSlugs.some((s) => s.toLowerCase() === slug.toLowerCase()),
+    [activeModuleSlugs],
+  );
+
+  const value = useMemo(
+    () => ({
       modules,
       activeModuleSlugs,
       isModuleActive,
       isLoading,
-      toggleModule: () => {}, // legacy no-op
+      toggleModule: () => {},
       mounted: !isLoading,
-    }}>
-      {children}
-    </ModuleContext.Provider>
+    }),
+    [modules, activeModuleSlugs, isModuleActive, isLoading],
   );
+
+  return <ModuleContext.Provider value={value}>{children}</ModuleContext.Provider>;
 };
 
 export const useModuleContext = () => {

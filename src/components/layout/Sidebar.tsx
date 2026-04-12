@@ -5,13 +5,14 @@
 // Fuente única de verdad: ModuleContext (lee de tenant_modules en Supabase)
 // MODULES_CONFIG eliminado — ver DECISIONS.md [2026-04-04]
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
-import { useModuleContext } from '@/providers/ModuleContext'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useState, useMemo } from 'react'
+
 import { cn } from '@/lib/utils'
+import { useModuleContext } from '@/providers/ModuleContext'
 
 // ─── IconRenderer ─────────────────────────────────────────────────────────────
 // Convierte el string del nombre del icono (ej: 'Package') en el componente
@@ -19,7 +20,7 @@ import { cn } from '@/lib/utils'
 // Si el nombre no existe en Lucide, muestra Square como fallback y avisa
 // en consola de desarrollo. Nunca rompe el layout.
 
-function IconRenderer({ name, className }: { name: string; className?: string }) {
+export function IconRenderer({ name, className }: { name: string; className?: string }) {
   const Icon = (LucideIcons as Record<string, unknown>)[name] as
     | React.ComponentType<{ className?: string }>
     | undefined
@@ -44,14 +45,16 @@ export function Sidebar() {
   const { modules, isLoading } = useModuleContext()
   const [collapsed, setCollapsed] = useState(false)
 
-  // ModuleContext ya retorna solo ACTIVE, pero el filtro aquí es
-  // defensa en profundidad por si algo cambia en el contexto.
-  const navItems = modules.filter(m => m.status === 'ACTIVE')
+  // Memoizar navItems para evitar recálculos en cada re-render del layout
+  const navItems = useMemo(() =>
+    modules.filter(m => m.status === 'ACTIVE'),
+    [modules]
+  );
 
   return (
     <aside
       className={cn(
-        'relative flex h-full flex-col border-r border-border bg-card transition-all duration-300',
+        'relative h-screen bg-card border-r border-border transition-all duration-300 flex-col z-30 hidden md:flex',
         collapsed ? 'w-16' : 'w-60'
       )}
     >
@@ -64,7 +67,7 @@ export function Sidebar() {
           'rounded-full border border-border bg-card shadow-sm',
           'hover:bg-muted transition-colors'
         )}
-        aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+        aria-label={collapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
       >
         {collapsed
           ? <ChevronRight className="h-3 w-3" />
