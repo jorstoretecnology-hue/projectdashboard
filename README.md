@@ -24,9 +24,9 @@ npm run dev
 
 ## ✨ Características
 
-**Versión**: 3.0.0  
-**Última actualización**: 7 de febrero, 2026  
-**Estado**: ✅ Producción Ready / Multi-tenant SaaS Core
+**Versión**: 6.1.0  
+**Última actualización**: 12 de abril, 2026  
+**Estado**: 🟢 Producción-Ready (Blindaje & Inmunidad Operativa)
 
 ### Core
 - ✅ **Next.js 16** con App Router y Turbopack
@@ -80,6 +80,9 @@ docs/                 # Documentación del proyecto
 
 
 ## 📚 Documentación
+
+### Resumen Ejecutivo
+- **[Estado del Proyecto](./PROJECT_STATE.md)** - 🆕 Snapshot actual, hitos y pendientes (Leerme primero)
 
 ### Para Desarrolladores
 - **[Documentación Completa](./docs/PROJECT.md)** - Guía detallada del proyecto
@@ -309,5 +312,5 @@ Este proyecto es de código abierto y está disponible bajo la licencia MIT.
 
 **Desarrollado con ❤️ usando Next.js, TypeScript y Tailwind CSS**
 
-**Versión**: 3.0.0  
-**Última actualización**: 2026-02-07
+**Versión**: 6.1.0  
+**Última actualización**: 2026-04-12
