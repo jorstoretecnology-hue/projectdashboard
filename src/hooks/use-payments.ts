@@ -40,13 +40,14 @@ export function usePayments() {
         type PaymentRow = {
           id: string
           amount: number
-          currency: string
+          currency: string | null
           status: string
-          description: string
+          description: string | null
           paid_at: string | null
-          created_at: string
+          created_at: string | null
         }
-        const mappedPayments: Payment[] = (data || []).map((p: PaymentRow) => ({
+        const rows = (data || []) as PaymentRow[]
+        const mappedPayments: Payment[] = rows.map((p) => ({
           id: p.id,
           amount: p.amount,
           currency: p.currency || 'USD',

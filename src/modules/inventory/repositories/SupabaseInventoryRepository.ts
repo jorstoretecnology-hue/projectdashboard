@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { CreateProductDTO, UpdateProductDTO, ProductQueryDTO } from '@/lib/api/schemas/products';
-import type { Database } from '@/lib/supabase/database.types';
+import type { Database, Json } from '@/lib/supabase/database.types';
 
 import type { IInventoryRepository } from '../interfaces/IInventoryRepository';
 import type { InventoryItem } from '../types';
@@ -95,7 +95,7 @@ export class SupabaseInventoryRepository implements IInventoryRepository {
         stock: data.stock,
         sku: data.sku,
         industry_type: data.industry_type,
-        metadata: data.metadata as Record<string, unknown>, // Json in DB
+        metadata: data.metadata as unknown as Json, // Json in DB
         threshold_low: data.threshold_low,
         threshold_critical: data.threshold_critical,
         category: (data as { category?: string }).category || 'General', // Fallback for transition

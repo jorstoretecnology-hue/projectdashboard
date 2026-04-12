@@ -4,7 +4,6 @@ import { Activity, Users, TrendingUp, Package, Layers, DollarSign } from 'lucide
 import { KPICard } from '@/components/dashboard/KPICard'
 import {
   RecentActivitiesTable,
-  type RecentActivity,
 } from '@/components/dashboard/RecentActivitiesTable'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { createClient } from '@/lib/supabase/server'
@@ -18,7 +17,12 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   const tenantId = user?.app_metadata?.tenant_id as string | undefined
 
-  const [{ count: inventoryCount }, { count: customerCount }] = tenantId
+  const [
+    { count: inventoryCount },
+    { count: customerCount },
+    { data: todaySales },
+    { data: recentEvents },
+  ] = tenantId
     ? await Promise.all([
         supabase
           .from('products')
@@ -30,12 +34,26 @@ export default async function DashboardPage() {
           .select('id', { count: 'exact', head: true })
           .eq('tenant_id', tenantId)
           .is('deleted_at', null),
+        supabase
+          .from('sales')
+          .select('total')
+          .eq('tenant_id', tenantId)
+          .gte('created_at', new Date().toISOString().split('T')[0])
+          .neq('state', 'CANCELADA')
+          .is('deleted_at', null),
+        supabase
+          .from('domain_events')
+          .select('id, event_type, entity_type, created_at')
+          .eq('tenant_id', tenantId)
+          .order('created_at', { ascending: false })
+          .limit(5),
       ])
-    : [{ count: 0 }, { count: 0 }]
+    : [{ count: 0 }, { count: 0 }, { data: [] }, { data: [] }]
 
   const metrics = {
     inventoryUsage: inventoryCount ?? 0,
     customerUsage: customerCount ?? 0,
+    dailySales: (todaySales ?? []).reduce((acc, s) => acc + (s.total ?? 0), 0),
   }
 
   return (
@@ -77,12 +95,13 @@ export default async function DashboardPage() {
               />
               <KPICard
                 title="Ventas del Día"
-                value="$0"
-                description="Sin transacciones registradas"
-                trend={{
-                  value: 0,
-                  label: 'vs ayer',
-                }}
+                value={new Intl.NumberFormat('es-CO', {
+                  style: 'currency',
+                  currency: 'COP',
+                  minimumFractionDigits: 0,
+                }).format(metrics.dailySales)}
+                description={metrics.dailySales > 0 ? 'Total facturado hoy' : 'Sin ventas hoy'}
+                trend={{ value: 0, label: 'vs ayer' }}
                 icon={DollarSign}
                 variant="default"
               />
@@ -118,26 +137,24 @@ export default async function DashboardPage() {
             </h2>
             <RecentActivitiesTable
               activities={
-                [
-                  {
-                    id: '1',
-                    description: 'Cliente "Acme Corp" creado',
-                    type: 'create',
-                    timestamp: new Date(Date.now() - 1000 * 60 * 15),
-                  },
-                  {
-                    id: '2',
-                    description: 'Producto "Widget Pro" actualizado',
-                    type: 'update',
-                    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-                  },
-                  {
-                    id: '3',
-                    description: 'Inventario ajustado: +50 unidades',
-                    type: 'other',
-                    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-                  },
-                ] as RecentActivity[]
+                (recentEvents ?? []).map((e) => ({
+                  id: e.id,
+                  description: `${e.entity_type.replace('_', ' ')}: ${
+                    e.event_type.includes('insert') || e.event_type === 'INSERT'
+                      ? 'creado'
+                      : e.event_type.includes('update') || e.event_type === 'UPDATE'
+                        ? 'actualizado'
+                        : e.event_type
+                  }`,
+                  type: (
+                    e.event_type.includes('insert') || e.event_type === 'INSERT'
+                      ? 'create'
+                      : e.event_type.includes('update') || e.event_type === 'UPDATE'
+                        ? 'update'
+                        : 'other'
+                  ) as 'create' | 'update' | 'other',
+                  timestamp: new Date(e.created_at ?? Date.now()),
+                }))
               }
               maxItems={5}
             />

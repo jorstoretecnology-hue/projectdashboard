@@ -61,7 +61,6 @@ export async function createTenantAction(
 
   // 2. Obtener módulos default por industria
   const { getIndustryConfig } = await import('@/config/industries');
-  // @ts-expect-error - industry is validated as string but getIndustryConfig expects specific literal
   const industryConfig = getIndustryConfig(industry as string);
   const defaultModules = industryConfig?.defaultModules || ['Dashboard', 'Settings'];
 

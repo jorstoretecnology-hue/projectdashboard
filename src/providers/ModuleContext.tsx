@@ -89,7 +89,7 @@ export const ModuleProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadModules();
-  }, [user?.id, lastCheckedUser, user.app_metadata?.tenant_id, activeModuleSlugs.length, supabase]);
+  }, [user?.id, lastCheckedUser, user?.app_metadata?.tenant_id, activeModuleSlugs.length, supabase]);
 
   // MEMOIZACIÓN: Evita que todos los componentes que escuchan el contexto se re-rendericen
   // si los slugs no han cambiado.
