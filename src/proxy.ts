@@ -34,22 +34,29 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
 
-  // 1. Rate Limiting con Timeout (No bloquear si Upstash tarda más de 600ms)
-  if (!pathname.includes('.') && !pathname.startsWith('/_next')) {
-    try {
-      const { success } = await withTimeout(
-        ratelimit.limit(ip),
-        600,
-        { success: true }
-      )
-      if (!success) {
-        return new NextResponse('Too Many Requests', { 
-          status: 429,
-          headers: { 'Content-Type': 'text/plain' }
-        })
+  // 1. Rate Limiting con Timeout
+  // En desarrollo: saltar completamente si no está configurado Upstash
+  const isDev = process.env.NODE_ENV === 'development'
+  const hasRedis = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+
+  if (!isDev || (isDev && hasRedis)) {
+    if (!pathname.includes('.') && !pathname.startsWith('/_next')) {
+      try {
+        const timeoutMs = isDev ? 150 : 600
+        const { success } = await withTimeout(
+          ratelimit.limit(ip),
+          timeoutMs,
+          { success: true }
+        )
+        if (!success) {
+          return new NextResponse('Too Many Requests', {
+            status: 429,
+            headers: { 'Content-Type': 'text/plain' }
+          })
+        }
+      } catch (e) {
+        logger.warn('[RateLimit] Error or Timeout, skipping:', e)
       }
-    } catch (e) {
-      logger.warn('[RateLimit] Error or Timeout, skipping:', e)
     }
   }
 

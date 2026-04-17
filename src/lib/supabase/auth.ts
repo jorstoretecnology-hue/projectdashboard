@@ -1,9 +1,13 @@
-import { createClient } from './server'
+import { headers } from 'next/headers'
 import { cache } from 'react'
-import { Permission, hasPermission, FeatureFlag } from '@/config/permissions'
+
+import type { Permission, FeatureFlag } from '@/config/permissions';
+import { hasPermission } from '@/config/permissions'
 import { AuditLogService } from '@/core/security/audit.service'
 import { logger } from '@/lib/logger'
-import { headers } from 'next/headers'
+
+import { createClient } from './server'
+
 
 /**
  * Obtiene el usuario actual.
@@ -11,17 +15,43 @@ import { headers } from 'next/headers'
  * Si no está disponible o se requiere el objeto completo validado, usa Supabase.
  */
 export const getUser = cache(async () => {
-  // 1. Intentar obtener datos básicos de los headers (inyectados por el middleware)
+  // 1. Intentar obtener datos de los headers inyectados por el middleware (ultra rápido, sin HTTP)
   try {
     const headerList = await headers()
     const userId = headerList.get('x-user-id')
-    
-    // Si tenemos el ID en los headers, para compatibilidad total con el resto de la app, 
-    // seguimos usando supabase.auth.getUser() pero ahora está cacheado por React.cache
+    const userEmail = headerList.get('x-user-email')
+    const userRole = headerList.get('x-user-role')
+    const tenantId = headerList.get('x-tenant-id')
+
+    // Si el middleware ya validó la sesión, usar los headers directamente (sin llamada HTTP)
+    if (userId) {
+      return {
+        id: userId,
+        email: userEmail || undefined,
+        email_confirmed_at: null,
+        phone: null,
+        created_at: '',
+        confirmed_at: null,
+        last_sign_in_at: null,
+        aud: 'authenticated',
+        updated_at: '',
+        app_metadata: {
+          app_role: userRole || 'VIEWER',
+          tenant_id: tenantId,
+          provider: 'email',
+          providers: ['email'],
+        },
+        user_metadata: {},
+        identities: [],
+        factors: [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any
+    }
   } catch (e) {
     // Si falla (ej: no estamos en un entorno con headers), seguimos normal
   }
 
+  // 2. Fallback: llamada HTTP a Supabase (solo en rutas públicas o sin middleware)
   const supabase = await createClient()
   try {
     const { data: { user }, error } = await supabase.auth.getUser()

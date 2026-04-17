@@ -29,6 +29,12 @@ export const PERMISSIONS = {
   SALES_CREATE: 'sales.create',
   SALES_MANAGE: 'sales.manage',
 
+  // DIAN / Facturación Electrónica
+  DIAN_VIEW: 'dian.view',
+  DIAN_CREATE: 'dian.create',
+  DIAN_MANAGE: 'dian.manage',
+  DIAN_SYNC: 'dian.sync',
+
   // SuperAdmin
   CENTRAL_CONSOLE: 'admin.console',
 } as const;
@@ -58,6 +64,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     PERMISSIONS.SALES_VIEW,
     PERMISSIONS.SALES_CREATE,
     PERMISSIONS.SALES_MANAGE,
+    PERMISSIONS.DIAN_VIEW,
+    PERMISSIONS.DIAN_CREATE,
   ],
 
   EMPLOYEE: [
@@ -81,6 +89,7 @@ export const FEATURES = {
   INVENTORY: 'inventory',
   BILLING: 'billing',
   SALES: 'sales',
+  DIAN: 'dian',
 } as const;
 
 export type FeatureFlag = typeof FEATURES[keyof typeof FEATURES];

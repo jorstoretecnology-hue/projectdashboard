@@ -1,6 +1,6 @@
 # AI_SYNC.md
 
-> Última actualización: Abril 11, 2026
+> Última actualización: Abril 12, 2026 — v6.1.1
 > Documento de coordinación entre agentes IA
 
 ---
@@ -21,7 +21,7 @@ Lo complejo se delega a n8n + APIs de terceros.
 
 - POS universal (sales ya existe, simplificar)
 - CRM (customers ya existe)
-- DIAN via Alegra API (pendiente)
+- DIAN via Alegra API (✅ UI + Provider implementado — pendiente migración DB + credenciales)
 - Dashboard con módulos activables (✅ funcionando)
 
 **Módulos activables por industria (no verticales hardcodeados):**
@@ -112,21 +112,21 @@ Usa TypeScript estricto. tenant_id SIEMPRE del JWT, nunca del body.
 
 ## Stack tecnológico
 
-| Capa              | Tecnología                              |
-| ----------------- | --------------------------------------- |
-| Frontend          | Next.js 16.2.2 App Router + Turbopack   |
-| Base de datos     | Supabase (PostgreSQL 17)                |
-| Auth              | Supabase Auth + RLS                     |
-| Estilos           | Tailwind CSS + Shadcn UI + Radix        |
-| Validación        | Zod                                     |
-| Pagos             | MercadoPago (LATAM)                     |
-| Facturación DIAN  | Alegra API (pendiente)                  |
-| Emails            | Resend                                  |
-| Monitoreo         | Sentry                                  |
-| Automatización    | n8n (self-hosted o cloud)               |
-| IA en producto    | Kimi K2 API (evaluando)                 |
-| Deploy            | Vercel                                  |
-| Proyecto Supabase | kpdadwtxfazhtoqnttdh (DashboardProject) |
+| Capa              | Tecnología                                   |
+| ----------------- | -------------------------------------------- |
+| Frontend          | Next.js 16.2.2 App Router + Turbopack        |
+| Base de datos     | Supabase (PostgreSQL 17)                     |
+| Auth              | Supabase Auth + RLS                          |
+| Estilos           | Tailwind CSS + Shadcn UI + Radix             |
+| Validación        | Zod                                          |
+| Pagos             | MercadoPago (LATAM)                          |
+| Facturación DIAN  | Alegra API (✅ UI + Provider — pendiente DB) |
+| Emails            | Resend                                       |
+| Monitoreo         | Sentry                                       |
+| Automatización    | n8n (self-hosted o cloud)                    |
+| IA en producto    | Kimi K2 API (evaluando)                      |
+| Deploy            | Vercel                                       |
+| Proyecto Supabase | kpdadwtxfazhtoqnttdh (DashboardProject)      |
 
 ---
 

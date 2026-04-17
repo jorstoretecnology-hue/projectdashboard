@@ -52,16 +52,24 @@ ADD COLUMN threshold_low INTEGER DEFAULT 10,
 ADD COLUMN threshold_critical INTEGER DEFAULT 3;
 ```
 
-#### **profiles** - Sincronizar roles con PERMISSIONS_MATRIX
+#### **profiles** - Sincronizar roles y asegurar integridad con Auth
 
 ```sql
--- Actualizar constraint de app_role
-ALTER TABLE profiles DROP CONSTRAINT profiles_app_role_check;
+-- La tabla profiles debe tener CASCADE con auth.users
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
+ALTER TABLE public.profiles
+  ADD CONSTRAINT profiles_id_fkey
+  FOREIGN KEY (id) REFERENCES auth.users(id)
+  ON DELETE CASCADE;
+
+-- app_role es la única fuente de verdad (columna role eliminada)
+ALTER TABLE profiles DROP COLUMN IF EXISTS role;
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_app_role_check;
 ALTER TABLE profiles ADD CONSTRAINT profiles_app_role_check
   CHECK (app_role IN ('SUPER_ADMIN', 'OWNER', 'ADMIN', 'EMPLOYEE', 'VIEWER'));
 ```
 
-#### **tenants** - Agregar configuración operativa
+#### **tenants** - Agregar configuración operativa y defaults
 
 ```sql
 ALTER TABLE tenants
@@ -71,6 +79,10 @@ ADD COLUMN settings JSONB DEFAULT '{
   "allow_negative_stock": false,
   "require_override_reason": true
 }'::jsonb;
+
+-- Asegurar defaults en arrays para evitar errores de hidración
+ALTER TABLE public.tenants ALTER COLUMN active_modules SET DEFAULT '{}';
+ALTER TABLE public.tenants ALTER COLUMN feature_flags SET DEFAULT '{}';
 ```
 
 ### ❌ Tablas Faltantes (Críticas)
@@ -88,7 +100,7 @@ CREATE TABLE sales (
 
   -- Relaciones
   customer_id UUID NOT NULL REFERENCES customers(id),
-  created_by UUID NOT NULL REFERENCES auth.users(id),
+  created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL, -- Preservar historial
 
   -- Estado del flujo (según BUSINESS_FLOWS.md)
   state VARCHAR(50) NOT NULL DEFAULT 'PAGADO'
@@ -123,11 +135,11 @@ CREATE TABLE sales (
 );
 
 -- Índices para rendimiento
-CREATE INDEX idx_sales_tenant_id ON sales(tenant_id);
-CREATE INDEX idx_sales_customer_id ON sales(customer_id);
-CREATE INDEX idx_sales_state ON sales(state);
 CREATE INDEX idx_sales_created_at ON sales(created_at DESC);
 CREATE INDEX idx_sales_created_by ON sales(created_by);
+CREATE INDEX IF NOT EXISTS idx_tenant_modules_active ON public.tenant_modules (tenant_id, module_slug, is_active);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant_status ON public.subscriptions (tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_profiles_tenant_email ON public.profiles (tenant_id, email);
 
 -- RLS Policies
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
@@ -686,6 +698,43 @@ CREATE TRIGGER trigger_update_product_state
   ON products
   FOR EACH ROW
   EXECUTE FUNCTION update_product_state();
+
+-- 9.2 Trigger: Perfil de Usuario con app_role
+-- Corregido: Ahora asigna 'OWNER' por defecto a nuevos usuarios para asegurar RLS
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, full_name, app_role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+    COALESCE(NEW.raw_user_meta_data->>'app_role', 'OWNER')
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 9.3 Trigger: Sincronización de tenants.plan con subscriptions
+-- Asegura que el plan cacheado en la tabla tenants sea siempre el de la suscripción activa
+CREATE OR REPLACE FUNCTION fn_sync_tenant_plan()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Solo actualizar si la suscripción está activa
+  IF NEW.status = 'active' THEN
+    UPDATE public.tenants
+    SET plan = NEW.plan_slug
+    WHERE id = NEW.tenant_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_sync_tenant_plan
+  AFTER INSERT OR UPDATE OF plan_slug, status
+  ON public.subscriptions
+  FOR EACH ROW
+  EXECUTE FUNCTION fn_sync_tenant_plan();
 ````
 
 ### 9.2 Trigger: Emitir evento cuando cambia el estado
@@ -1040,8 +1089,101 @@ Función RPC `restore_record(p_table_name, p_record_id)` (SECURITY DEFINER) que 
 
 ---
 
-**Estado**: ✅ **Esquema Completo Definido**  
-**Versión**: 1.1.0  
-**Última Actualización**: 2026-03-05  
-**Compatibilidad**: Supabase PostgreSQL 15+  
+## 🧾 12. Módulo DIAN (Facturación Electrónica Colombia)
+
+> Tablas para gestionar la configuración de proveedores de facturación electrónica y el registro inmutable de operaciones DIAN.
+
+### 12.1 `dian_provider_config`
+
+Almacena las credenciales encriptadas (AES-256-GCM) del proveedor de facturación electrónica seleccionado por cada tenant.
+
+```sql
+CREATE TABLE public.dian_provider_config (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+
+  provider_slug TEXT NOT NULL CHECK (provider_slug IN ('alegra', 'siigo')),
+  environment TEXT NOT NULL DEFAULT 'test' CHECK (environment IN ('test', 'production')),
+
+  credentials_encrypted TEXT NOT NULL,
+
+  is_active BOOLEAN DEFAULT true,
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  UNIQUE(tenant_id, provider_slug, environment)
+);
+
+-- Índices
+CREATE INDEX idx_dian_provider_tenant ON public.dian_provider_config(tenant_id);
+CREATE INDEX idx_dian_provider_active ON public.dian_provider_config(tenant_id, is_active);
+```
+
+| Columna                 | Tipo        | Nullable | Descripción                                     |
+| ----------------------- | ----------- | -------- | ----------------------------------------------- |
+| `id`                    | UUID        | NOT NULL | PK auto-generada                                |
+| `tenant_id`             | UUID        | NOT NULL | FK → tenants(id). Aislamiento multi-tenant      |
+| `provider_slug`         | TEXT        | NOT NULL | Identificador del proveedor (`alegra`, `siigo`) |
+| `environment`           | TEXT        | NOT NULL | Ambiente de operación (`test`, `production`)    |
+| `credentials_encrypted` | TEXT        | NOT NULL | Credenciales cifradas con AES-256-GCM           |
+| `is_active`             | BOOLEAN     | TRUE     | Indica si esta configuración está activa        |
+| `created_at`            | TIMESTAMPTZ | TRUE     | Marca de creación                               |
+| `updated_at`            | TIMESTAMPTZ | TRUE     | Última actualización                            |
+
+**RLS:** `SELECT`, `INSERT`, `UPDATE`, `DELETE` restringido a `tenant_id = get_current_user_tenant_id()` o `is_super_admin()`.
+
+### 12.2 `dian_invoice_logs`
+
+Registro inmutable de todas las operaciones de facturación electrónica. No permite `UPDATE` ni `DELETE`.
+
+```sql
+CREATE TABLE public.dian_invoice_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  sale_id UUID NOT NULL REFERENCES public.sales(id),
+
+  provider_slug TEXT,
+  operation TEXT NOT NULL CHECK (operation IN ('send', 'cancel', 'sync')),
+  status TEXT NOT NULL CHECK (status IN ('success', 'failed', 'pending')),
+  error_message TEXT,
+
+  provider_invoice_id TEXT,
+  cude TEXT,
+
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Índices
+CREATE INDEX idx_dian_logs_tenant ON public.dian_invoice_logs(tenant_id);
+CREATE INDEX idx_dian_logs_sale ON public.dian_invoice_logs(sale_id);
+CREATE INDEX idx_dian_logs_created ON public.dian_invoice_logs(tenant_id, created_at DESC);
+```
+
+| Columna               | Tipo        | Nullable | Descripción                                     |
+| --------------------- | ----------- | -------- | ----------------------------------------------- |
+| `id`                  | UUID        | NOT NULL | PK auto-generada                                |
+| `tenant_id`           | UUID        | NOT NULL | FK → tenants(id)                                |
+| `sale_id`             | UUID        | NOT NULL | FK → sales(id)                                  |
+| `provider_slug`       | TEXT        | TRUE     | Proveedor usado (NULL si falló antes de enviar) |
+| `operation`           | TEXT        | NOT NULL | Tipo de operación: `send`, `cancel`, `sync`     |
+| `status`              | TEXT        | NOT NULL | Resultado: `success`, `failed`, `pending`       |
+| `error_message`       | TEXT        | TRUE     | Detalle del error si aplica                     |
+| `provider_invoice_id` | TEXT        | TRUE     | ID asignado por el proveedor externo            |
+| `cude`                | TEXT        | TRUE     | Código Único de Documento Electrónico (DIAN)    |
+| `created_at`          | TIMESTAMPTZ | TRUE     | Marca de tiempo de la operación                 |
+
+**RLS:** Solo `SELECT` e `INSERT`. Sin `UPDATE` ni `DELETE` — logs son inmutables por requisito legal.
+
+### 12.3 Migración asociada
+
+- **Archivo:** `supabase/migrations/20260412000001_add_dian_module.sql`
+- **Contenido:** Crea ambas tablas + RLS + inserta `dian` en `modules_catalog`
+
+---
+
+**Estado**: ✅ **Esquema Completo Definido**
+**Versión**: 1.2.0
+**Última Actualización**: 2026-04-12
+**Compatibilidad**: Supabase PostgreSQL 15+
 **Mantenedor**: Smart Business OS Core Team

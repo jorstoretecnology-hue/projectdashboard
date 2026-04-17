@@ -1,5 +1,6 @@
 # AI_SYNC.md
-> Última actualización: Abril 12, 2026 — Sesión 7 (v6.1.0)
+
+> Última actualización: Abril 12, 2026 — Sesión 7 (v6.1.1)
 
 ---
 
@@ -8,6 +9,7 @@
 **Decisión:** Núcleo universal POS + CRM + DIAN. Lo complejo a n8n + APIs terceros.
 
 **Fuera del alcance:**
+
 - Reservas → Cal.com API
 - DIAN directo → Alegra API
 - WhatsApp → Twilio / Meta API via n8n
@@ -55,37 +57,37 @@ Nunca usar tipos any — siempre tipar explícitamente.
 
 ## Convenciones críticas — INMUTABLES
 
-| Concepto | Regla |
-|----------|-------|
-| **Middleware** | `src/proxy.ts` — Next.js 16. NUNCA renombrar a middleware.ts |
-| **tenant_id** | Siempre del JWT: `user.app_metadata?.tenant_id` |
-| **Precios** | INTEGER en COP. NUNCA numeric, decimal o float |
+| Concepto             | Regla                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| **Middleware**       | `src/proxy.ts` — Next.js 16. NUNCA renombrar a middleware.ts                                   |
+| **tenant_id**        | Siempre del JWT: `user.app_metadata?.tenant_id`                                                |
+| **Precios**          | INTEGER en COP. NUNCA numeric, decimal o float                                                 |
 | **Formateo precios** | `Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })` |
-| **Selects** | NUNCA `select('*')` — especificar columnas siempre |
-| **TypeScript** | NUNCA usar `any` — siempre tipar explícitamente |
-| **Zod precios** | `z.number().int().positive()` — siempre con `.int()` |
-| **Módulo IDs** | Siempre lowercase: 'pos', 'crm', 'dian' |
-| **Rutas admin** | `/console/*` (obfuscado) |
-| **Performance RLS**| **JWT-First**: Prohibido hacer queries a `profiles` dentro de políticas RLS |
-| **Inmunidad** | **Billing Guards**: Usar `useSubscriptionGuard` para bloquear escrituras por mora |
-| **Fotos** | Siempre URLs de Supabase Storage, nunca base64 en DB |
-| **Dashboard** | Server Component — nunca convertir a use client |
+| **Selects**          | NUNCA `select('*')` — especificar columnas siempre                                             |
+| **TypeScript**       | NUNCA usar `any` — siempre tipar explícitamente                                                |
+| **Zod precios**      | `z.number().int().positive()` — siempre con `.int()`                                           |
+| **Módulo IDs**       | Siempre lowercase: 'pos', 'crm', 'dian'                                                        |
+| **Rutas admin**      | `/console/*` (obfuscado)                                                                       |
+| **Performance RLS**  | **JWT-First**: Prohibido hacer queries a `profiles` dentro de políticas RLS                    |
+| **Inmunidad**        | **Billing Guards**: Usar `useSubscriptionGuard` para bloquear escrituras por mora              |
+| **Fotos**            | Siempre URLs de Supabase Storage, nunca base64 en DB                                           |
+| **Dashboard**        | Server Component — nunca convertir a use client                                                |
 
 ---
 
 ## Stack tecnológico
 
-| Capa | Tecnología |
-|------|-----------|
-| Frontend | Next.js 16.2.2 App Router + Turbopack |
-| Base de datos | Supabase PostgreSQL 17 (kpdadwtxfazhtoqnttdh) |
-| Auth | Supabase Auth + RLS |
-| Storage | Supabase Storage (buckets: products, signatures, inspections) |
-| Validación | Zod (siempre .int() en precios) |
-| Pagos SaaS | MercadoPago (parcial) |
-| Facturación DIAN | Alegra API (pendiente) |
-| Automatización | n8n |
-| IA en producto | Kimi K2 API (evaluando) |
+| Capa             | Tecnología                                                    |
+| ---------------- | ------------------------------------------------------------- |
+| Frontend         | Next.js 16.2.2 App Router + Turbopack                         |
+| Base de datos    | Supabase PostgreSQL 17 (kpdadwtxfazhtoqnttdh)                 |
+| Auth             | Supabase Auth + RLS                                           |
+| Storage          | Supabase Storage (buckets: products, signatures, inspections) |
+| Validación       | Zod (siempre .int() en precios)                               |
+| Pagos SaaS       | MercadoPago (parcial)                                         |
+| Facturación DIAN | Alegra API (pendiente)                                        |
+| Automatización   | n8n                                                           |
+| IA en producto   | Kimi K2 API (evaluando)                                       |
 
 ---
 
@@ -100,3 +102,13 @@ Nunca usar tipos any — siempre tipar explícitamente.
 - Se usa `select('*')` en código nuevo
 - Se usa `any` en TypeScript nuevo
 - Se guarda base64 en la DB en vez de URL de Storage
+
+---
+
+## 📑 Documentación Clave (Sesión 7)
+
+| Tema                   | Documento                                                                                                                   |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Core Hardening**     | [DATABASE_CORRECTION_REPORT_20260412.md](file:///e:/ProyectDashboard/docs/technical/DATABASE_CORRECTION_REPORT_20260412.md) |
+| **Admin UI & Modules** | [MODULE_MANAGEMENT_UI.md](file:///e:/ProyectDashboard/docs/technical/MODULE_MANAGEMENT_UI.md)                               |
+| **Esquema Técnico**    | [DATABASE_SCHEMA.md](file:///e:/ProyectDashboard/docs/technical/DATABASE_SCHEMA.md)                                         |

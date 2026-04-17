@@ -7,12 +7,14 @@
 ## 📐 1. Principios de Permisos
 
 ### Reglas de Oro
+
 1. **Mínimo Privilegio**: Los usuarios solo tienen acceso a lo que necesitan para su función.
 2. **Multi-tenancy Estricto**: Los permisos NUNCA permiten acceso cross-tenant.
 3. **Jerarquía Clara**: Cada rol hereda permisos del rol inferior.
 4. **Auditoría Obligatoria**: Acciones sensibles requieren registro inmutable.
 
 ### Jerarquía de Roles
+
 ```
 SUPER_ADMIN (Anthropic/Sistema)
     ↓
@@ -30,9 +32,11 @@ VIEWER (Solo Lectura)
 ## 👥 2. Definición de Roles
 
 ### SUPER_ADMIN (Nivel Sistema)
+
 **Descripción**: Personal de Anthropic con acceso global para soporte técnico.
 
 **Capacidades Especiales**:
+
 - Acceso cross-tenant (solo para debugging/soporte)
 - Ver logs de auditoría de todos los tenants
 - Modificar configuración de billing
@@ -40,14 +44,17 @@ VIEWER (Solo Lectura)
 - Impersonar usuarios para resolución de tickets
 
 **Restricciones**:
+
 - ❌ NO puede editar datos de negocio de clientes
 - ❌ NO puede ver información sensible (contraseñas, tokens)
 - ✅ Todas las acciones se registran en `super_admin_audit_log`
 
 ### OWNER (Dueño del Negocio)
+
 **Descripción**: El propietario o CEO del negocio. Tiene control total de su tenant.
 
 **Capacidades**:
+
 - ✅ Crear/editar/eliminar usuarios
 - ✅ Cambiar roles de usuarios
 - ✅ Ver reportes financieros completos
@@ -59,13 +66,16 @@ VIEWER (Solo Lectura)
 - ✅ Exportar datos completos
 
 **Restricciones**:
+
 - ❌ NO puede acceder a datos de otros tenants
 - ❌ NO puede cambiar su propio rol a inferior
 
 ### ADMIN (Gerente/Administrador)
+
 **Descripción**: Manager o gerente del negocio con permisos operativos amplios.
 
 **Capacidades**:
+
 - ✅ Gestión completa de inventario
 - ✅ Gestión completa de CRM (clientes)
 - ✅ Crear/editar ventas y compras
@@ -75,6 +85,7 @@ VIEWER (Solo Lectura)
 - ✅ Configurar automatizaciones (limitado)
 
 **Restricciones**:
+
 - ❌ NO puede crear/eliminar usuarios
 - ❌ NO puede cambiar roles
 - ❌ NO puede ver reportes de billing
@@ -82,9 +93,11 @@ VIEWER (Solo Lectura)
 - ❌ NO puede eliminar ventas completadas
 
 ### EMPLOYEE (Empleado Estándar)
+
 **Descripción**: Vendedor, técnico o empleado operativo.
 
 **Capacidades**:
+
 - ✅ Ver inventario (solo lectura de precios si está habilitado)
 - ✅ Registrar ventas (cotizaciones)
 - ✅ Ver clientes
@@ -93,6 +106,7 @@ VIEWER (Solo Lectura)
 - ✅ Ver sus propias ventas
 
 **Restricciones**:
+
 - ❌ NO puede editar precios
 - ❌ NO puede eliminar productos
 - ❌ NO puede hacer override de reglas
@@ -101,15 +115,18 @@ VIEWER (Solo Lectura)
 - ❌ NO puede ver reportes financieros
 
 ### VIEWER (Solo Lectura)
+
 **Descripción**: Rol para inversionistas, auditores o supervisores externos.
 
 **Capacidades**:
+
 - ✅ Ver dashboard principal
 - ✅ Ver inventario (sin precios)
 - ✅ Ver reportes públicos
 - ✅ Ver estadísticas generales
 
 **Restricciones**:
+
 - ❌ NO puede crear/editar/eliminar nada
 - ❌ NO puede ver información financiera sensible
 - ❌ NO puede acceder a configuraciones
@@ -120,133 +137,147 @@ VIEWER (Solo Lectura)
 
 ### 3.1 Dashboard
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Dashboard Principal | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Ver Health Score | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Ver Alertas Críticas | ✅ | ✅ | ✅ | ⚠️ Solo asignadas a él | ❌ |
-| Ver Métricas Financieras | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Configurar Widgets | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Acción                   | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE               | VIEWER |
+| ------------------------ | ----------- | ----- | ----- | ---------------------- | ------ |
+| Ver Dashboard Principal  | ✅          | ✅    | ✅    | ✅                     | ✅     |
+| Ver Health Score         | ✅          | ✅    | ✅    | ✅                     | ✅     |
+| Ver Alertas Críticas     | ✅          | ✅    | ✅    | ⚠️ Solo asignadas a él | ❌     |
+| Ver Métricas Financieras | ✅          | ✅    | ✅    | ❌                     | ❌     |
+| Configurar Widgets       | ✅          | ✅    | ✅    | ❌                     | ❌     |
 
 ### 3.2 Inventario (Productos)
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Lista de Productos | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Ver Precios | ✅ | ✅ | ✅ | ⚠️ Configurable | ❌ |
-| Crear Producto | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Editar Producto | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Editar Precio | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Eliminar Producto | ✅ | ✅ | ⚠️ Solo si no tiene ventas | ❌ | ❌ |
-| Ajustar Stock Manualmente | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Override Stock Negativo | ✅ | ✅ | ⚠️ Con auditoría | ❌ | ❌ |
-| Ver Movimientos de Stock | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Bloquear Producto | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Exportar Inventario | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Acción                    | SUPER_ADMIN | OWNER | ADMIN                      | EMPLOYEE        | VIEWER |
+| ------------------------- | ----------- | ----- | -------------------------- | --------------- | ------ |
+| Ver Lista de Productos    | ✅          | ✅    | ✅                         | ✅              | ✅     |
+| Ver Precios               | ✅          | ✅    | ✅                         | ⚠️ Configurable | ❌     |
+| Crear Producto            | ✅          | ✅    | ✅                         | ❌              | ❌     |
+| Editar Producto           | ✅          | ✅    | ✅                         | ❌              | ❌     |
+| Editar Precio             | ✅          | ✅    | ✅                         | ❌              | ❌     |
+| Eliminar Producto         | ✅          | ✅    | ⚠️ Solo si no tiene ventas | ❌              | ❌     |
+| Ajustar Stock Manualmente | ✅          | ✅    | ✅                         | ❌              | ❌     |
+| Override Stock Negativo   | ✅          | ✅    | ⚠️ Con auditoría           | ❌              | ❌     |
+| Ver Movimientos de Stock  | ✅          | ✅    | ✅                         | ✅              | ❌     |
+| Bloquear Producto         | ✅          | ✅    | ✅                         | ❌              | ❌     |
+| Exportar Inventario       | ✅          | ✅    | ✅                         | ❌              | ❌     |
 
 ### 3.3 CRM (Clientes)
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Clientes | ✅ | ✅ | ✅ | ✅ | ⚠️ Solo datos públicos |
-| Ver Historial de Compras | ✅ | ✅ | ✅ | ⚠️ Solo sus propias ventas | ❌ |
-| Crear Cliente | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Editar Cliente | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Eliminar Cliente | ✅ | ✅ | ⚠️ Solo si no tiene ventas | ❌ | ❌ |
-| Ver Datos Sensibles (email, teléfono) | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Exportar Lista de Clientes | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Fusionar Clientes Duplicados | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Acción                                | SUPER_ADMIN | OWNER | ADMIN                      | EMPLOYEE                   | VIEWER                 |
+| ------------------------------------- | ----------- | ----- | -------------------------- | -------------------------- | ---------------------- |
+| Ver Clientes                          | ✅          | ✅    | ✅                         | ✅                         | ⚠️ Solo datos públicos |
+| Ver Historial de Compras              | ✅          | ✅    | ✅                         | ⚠️ Solo sus propias ventas | ❌                     |
+| Crear Cliente                         | ✅          | ✅    | ✅                         | ✅                         | ❌                     |
+| Editar Cliente                        | ✅          | ✅    | ✅                         | ✅                         | ❌                     |
+| Eliminar Cliente                      | ✅          | ✅    | ⚠️ Solo si no tiene ventas | ❌                         | ❌                     |
+| Ver Datos Sensibles (email, teléfono) | ✅          | ✅    | ✅                         | ✅                         | ❌                     |
+| Exportar Lista de Clientes            | ✅          | ✅    | ✅                         | ❌                         | ❌                     |
+| Fusionar Clientes Duplicados          | ✅          | ✅    | ✅                         | ❌                         | ❌                     |
 
 ### 3.4 Ventas
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Ventas | ✅ | ✅ | ✅ | ⚠️ Solo propias | ⚠️ Solo totales |
-| Crear Cotización | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Aprobar Cotización | ✅ | ✅ | ✅ | ⚠️ Configurable | ❌ |
-| Confirmar Pago | ✅ | ✅ | ✅ | ⚠️ Configurable | ❌ |
-| Marcar Entregado | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Editar Venta (antes de pago) | ✅ | ✅ | ✅ | ⚠️ Solo propias | ❌ |
-| Eliminar Venta | ✅ | ✅ | ⚠️ Solo COTIZACIÓN o CANCELADA | ❌ | ❌ |
-| Cancelar Venta | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Aplicar Descuento | ✅ | ✅ | ✅ | ⚠️ Hasta 10% | ❌ |
-| Override Venta sin Stock | ✅ | ✅ | ⚠️ Con auditoría | ❌ | ❌ |
-| Ver Reporte de Ventas | ✅ | ✅ | ✅ | ⚠️ Solo propias | ❌ |
+| Acción                       | SUPER_ADMIN | OWNER | ADMIN                          | EMPLOYEE        | VIEWER          |
+| ---------------------------- | ----------- | ----- | ------------------------------ | --------------- | --------------- |
+| Ver Ventas                   | ✅          | ✅    | ✅                             | ⚠️ Solo propias | ⚠️ Solo totales |
+| Crear Cotización             | ✅          | ✅    | ✅                             | ✅              | ❌              |
+| Aprobar Cotización           | ✅          | ✅    | ✅                             | ⚠️ Configurable | ❌              |
+| Confirmar Pago               | ✅          | ✅    | ✅                             | ⚠️ Configurable | ❌              |
+| Marcar Entregado             | ✅          | ✅    | ✅                             | ✅              | ❌              |
+| Editar Venta (antes de pago) | ✅          | ✅    | ✅                             | ⚠️ Solo propias | ❌              |
+| Eliminar Venta               | ✅          | ✅    | ⚠️ Solo COTIZACIÓN o CANCELADA | ❌              | ❌              |
+| Cancelar Venta               | ✅          | ✅    | ✅                             | ❌              | ❌              |
+| Aplicar Descuento            | ✅          | ✅    | ✅                             | ⚠️ Hasta 10%    | ❌              |
+| Override Venta sin Stock     | ✅          | ✅    | ⚠️ Con auditoría               | ❌              | ❌              |
+| Ver Reporte de Ventas        | ✅          | ✅    | ✅                             | ⚠️ Solo propias | ❌              |
 
 ### 3.5 Compras (Purchase Orders)
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Órdenes de Compra | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Crear Orden de Compra | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Enviar Orden a Proveedor | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Marcar como Confirmada | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Registrar Recepción | ✅ | ✅ | ✅ | ⚠️ Configurable | ❌ |
-| Editar Orden (solo BORRADOR) | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Cancelar Orden | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Ver Costos | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Acción                       | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE        | VIEWER |
+| ---------------------------- | ----------- | ----- | ----- | --------------- | ------ |
+| Ver Órdenes de Compra        | ✅          | ✅    | ✅    | ❌              | ❌     |
+| Crear Orden de Compra        | ✅          | ✅    | ✅    | ❌              | ❌     |
+| Enviar Orden a Proveedor     | ✅          | ✅    | ✅    | ❌              | ❌     |
+| Marcar como Confirmada       | ✅          | ✅    | ✅    | ❌              | ❌     |
+| Registrar Recepción          | ✅          | ✅    | ✅    | ⚠️ Configurable | ❌     |
+| Editar Orden (solo BORRADOR) | ✅          | ✅    | ✅    | ❌              | ❌     |
+| Cancelar Orden               | ✅          | ✅    | ✅    | ❌              | ❌     |
+| Ver Costos                   | ✅          | ✅    | ✅    | ❌              | ❌     |
 
 ### 3.6 Servicios (Taller Mecánico)
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Servicios | ✅ | ✅ | ✅ | ⚠️ Solo asignados | ⚠️ Solo totales |
-| Crear Servicio | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Asignar Técnico | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Actualizar Estado | ✅ | ✅ | ✅ | ⚠️ Solo asignados | ❌ |
-| Marcar como Reparado | ✅ | ✅ | ✅ | ⚠️ Solo asignados | ❌ |
-| Marcar como Entregado | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Ver Costos/Repuestos | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Editar Costo Final | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Acción                | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE          | VIEWER          |
+| --------------------- | ----------- | ----- | ----- | ----------------- | --------------- |
+| Ver Servicios         | ✅          | ✅    | ✅    | ⚠️ Solo asignados | ⚠️ Solo totales |
+| Crear Servicio        | ✅          | ✅    | ✅    | ✅                | ❌              |
+| Asignar Técnico       | ✅          | ✅    | ✅    | ❌                | ❌              |
+| Actualizar Estado     | ✅          | ✅    | ✅    | ⚠️ Solo asignados | ❌              |
+| Marcar como Reparado  | ✅          | ✅    | ✅    | ⚠️ Solo asignados | ❌              |
+| Marcar como Entregado | ✅          | ✅    | ✅    | ✅                | ❌              |
+| Ver Costos/Repuestos  | ✅          | ✅    | ✅    | ❌                | ❌              |
+| Editar Costo Final    | ✅          | ✅    | ✅    | ❌                | ❌              |
 
 ### 3.7 Automatizaciones
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Plantillas Disponibles | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Activar/Desactivar Automatización | ✅ | ✅ | ⚠️ Limitado | ❌ | ❌ |
-| Configurar Parámetros | ✅ | ✅ | ⚠️ Limitado | ❌ | ❌ |
-| Cambiar Canal (WhatsApp/Email) | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Ver Log de Ejecuciones | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Reenviar Mensaje Fallido | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Crear Plantilla Custom | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Acción                            | SUPER_ADMIN | OWNER | ADMIN       | EMPLOYEE | VIEWER |
+| --------------------------------- | ----------- | ----- | ----------- | -------- | ------ |
+| Ver Plantillas Disponibles        | ✅          | ✅    | ✅          | ❌       | ❌     |
+| Activar/Desactivar Automatización | ✅          | ✅    | ⚠️ Limitado | ❌       | ❌     |
+| Configurar Parámetros             | ✅          | ✅    | ⚠️ Limitado | ❌       | ❌     |
+| Cambiar Canal (WhatsApp/Email)    | ✅          | ✅    | ❌          | ❌       | ❌     |
+| Ver Log de Ejecuciones            | ✅          | ✅    | ✅          | ❌       | ❌     |
+| Reenviar Mensaje Fallido          | ✅          | ✅    | ✅          | ❌       | ❌     |
+| Crear Plantilla Custom            | ✅          | ✅    | ❌          | ❌       | ❌     |
 
 ### 3.8 Configuración del Tenant
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Configuración | ✅ | ✅ | ⚠️ Limitado | ❌ | ❌ |
-| Editar Nombre/Logo | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Cambiar Plan | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Gestionar Billing | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Ver API Keys | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Regenerar API Keys | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Configurar Integraciones (Meta, Resend) | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Exportar Todos los Datos | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Eliminar Tenant | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Acción                                  | SUPER_ADMIN | OWNER | ADMIN       | EMPLOYEE | VIEWER |
+| --------------------------------------- | ----------- | ----- | ----------- | -------- | ------ |
+| Ver Configuración                       | ✅          | ✅    | ⚠️ Limitado | ❌       | ❌     |
+| Editar Nombre/Logo                      | ✅          | ✅    | ❌          | ❌       | ❌     |
+| Cambiar Plan                            | ✅          | ✅    | ❌          | ❌       | ❌     |
+| Gestionar Billing                       | ✅          | ✅    | ❌          | ❌       | ❌     |
+| Ver API Keys                            | ✅          | ✅    | ❌          | ❌       | ❌     |
+| Regenerar API Keys                      | ✅          | ✅    | ❌          | ❌       | ❌     |
+| Configurar Integraciones (Meta, Resend) | ✅          | ✅    | ❌          | ❌       | ❌     |
+| Exportar Todos los Datos                | ✅          | ✅    | ❌          | ❌       | ❌     |
+| Eliminar Tenant                         | ✅          | ✅    | ❌          | ❌       | ❌     |
 
 ### 3.9 Usuarios y Roles
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Usuarios del Tenant | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Crear Usuario | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Editar Usuario | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Eliminar Usuario | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Cambiar Rol | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Resetear Contraseña | ✅ | ✅ | ❌ | ⚠️ Solo propia | ❌ |
-| Ver Log de Actividad de Usuario | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Suspender Usuario | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Acción                          | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE       | VIEWER |
+| ------------------------------- | ----------- | ----- | ----- | -------------- | ------ |
+| Ver Usuarios del Tenant         | ✅          | ✅    | ✅    | ❌             | ❌     |
+| Crear Usuario                   | ✅          | ✅    | ❌    | ❌             | ❌     |
+| Editar Usuario                  | ✅          | ✅    | ❌    | ❌             | ❌     |
+| Eliminar Usuario                | ✅          | ✅    | ❌    | ❌             | ❌     |
+| Cambiar Rol                     | ✅          | ✅    | ❌    | ❌             | ❌     |
+| Resetear Contraseña             | ✅          | ✅    | ❌    | ⚠️ Solo propia | ❌     |
+| Ver Log de Actividad de Usuario | ✅          | ✅    | ❌    | ❌             | ❌     |
+| Suspender Usuario               | ✅          | ✅    | ❌    | ❌             | ❌     |
 
 ### 3.10 Auditoría
 
-| Acción | SUPER_ADMIN | OWNER | ADMIN | EMPLOYEE | VIEWER |
-|--------|-------------|-------|-------|----------|--------|
-| Ver Audit Log Completo | ✅ | ✅ | ⚠️ Limitado | ❌ | ❌ |
-| Ver Overrides Realizados | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Ver Cambios de Estado | ✅ | ✅ | ✅ | ⚠️ Solo propios | ❌ |
-| Exportar Audit Log | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Ver Quién Vio Qué (Privacy Log) | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Acción                          | SUPER_ADMIN | OWNER | ADMIN       | EMPLOYEE        | VIEWER |
+| ------------------------------- | ----------- | ----- | ----------- | --------------- | ------ |
+| Ver Audit Log Completo          | ✅          | ✅    | ⚠️ Limitado | ❌              | ❌     |
+| Ver Overrides Realizados        | ✅          | ✅    | ✅          | ❌              | ❌     |
+| Ver Cambios de Estado           | ✅          | ✅    | ✅          | ⚠️ Solo propios | ❌     |
+| Exportar Audit Log              | ✅          | ✅    | ❌          | ❌              | ❌     |
+| Ver Quién Vio Qué (Privacy Log) | ✅          | ✅    | ❌          | ❌              | ❌     |
+
+### 3.11 DIAN / Facturación Electrónica
+
+| Acción                              | SUPER_ADMIN | OWNER | ADMIN         | EMPLOYEE | VIEWER |
+| ----------------------------------- | ----------- | ----- | ------------- | -------- | ------ |
+| Ver Página DIAN                     | ✅          | ✅    | ✅            | ❌       | ❌     |
+| Configurar Proveedor (Alegra/Siigo) | ✅          | ✅    | ✅            | ❌       | ❌     |
+| Probar Conexión Proveedor           | ✅          | ✅    | ✅            | ❌       | ❌     |
+| Enviar Factura a DIAN               | ✅          | ✅    | ✅            | ❌       | ❌     |
+| Ver Historial de Operaciones        | ✅          | ✅    | ✅            | ❌       | ❌     |
+| Cancelar Factura Electrónica        | ✅          | ✅    | ⚠️ Solo OWNER | ❌       | ❌     |
+| Exportar Logs DIAN                  | ✅          | ✅    | ❌            | ❌       | ❌     |
+| Cambiar Ambiente (test/production)  | ✅          | ✅    | ❌            | ❌       | ❌     |
+| Regenerar Credenciales              | ✅          | ✅    | ❌            | ❌       | ❌     |
 
 ---
 
@@ -254,37 +285,37 @@ VIEWER (Solo Lectura)
 
 ### 4.1 Taller Mecánico - Permisos Adicionales
 
-| Acción | OWNER | ADMIN | TÉCNICO | RECEPCIONISTA |
-|--------|-------|-------|---------|---------------|
-| Registrar Ingreso de Vehículo | ✅ | ✅ | ❌ | ✅ |
-| Asignar Técnico | ✅ | ✅ | ❌ | ✅ |
-| Actualizar Estado Servicio | ✅ | ✅ | ⚠️ Solo asignados | ❌ |
-| Marcar como Reparado | ✅ | ✅ | ⚠️ Solo asignados | ❌ |
-| Marcar como Entregado | ✅ | ✅ | ❌ | ✅ |
-| Agregar Repuestos | ✅ | ✅ | ✅ | ❌ |
-| Editar Costo Final | ✅ | ✅ | ❌ | ❌ |
+| Acción                        | OWNER | ADMIN | TÉCNICO           | RECEPCIONISTA |
+| ----------------------------- | ----- | ----- | ----------------- | ------------- |
+| Registrar Ingreso de Vehículo | ✅    | ✅    | ❌                | ✅            |
+| Asignar Técnico               | ✅    | ✅    | ❌                | ✅            |
+| Actualizar Estado Servicio    | ✅    | ✅    | ⚠️ Solo asignados | ❌            |
+| Marcar como Reparado          | ✅    | ✅    | ⚠️ Solo asignados | ❌            |
+| Marcar como Entregado         | ✅    | ✅    | ❌                | ✅            |
+| Agregar Repuestos             | ✅    | ✅    | ✅                | ❌            |
+| Editar Costo Final            | ✅    | ✅    | ❌                | ❌            |
 
 ### 4.2 Restaurante - Permisos Adicionales
 
-| Acción | OWNER | ADMIN | CHEF | MESERO |
-|--------|-------|-------|------|--------|
-| Ver Menú | ✅ | ✅ | ✅ | ✅ |
-| Editar Menú | ✅ | ✅ | ⚠️ Solo precios | ❌ |
-| Crear Pedido | ✅ | ✅ | ❌ | ✅ |
-| Marcar Plato Preparado | ✅ | ✅ | ✅ | ❌ |
-| Marcar Pedido Servido | ✅ | ✅ | ❌ | ✅ |
-| Aplicar Descuento | ✅ | ✅ | ❌ | ⚠️ Hasta 5% |
+| Acción                 | OWNER | ADMIN | CHEF            | MESERO      |
+| ---------------------- | ----- | ----- | --------------- | ----------- |
+| Ver Menú               | ✅    | ✅    | ✅              | ✅          |
+| Editar Menú            | ✅    | ✅    | ⚠️ Solo precios | ❌          |
+| Crear Pedido           | ✅    | ✅    | ❌              | ✅          |
+| Marcar Plato Preparado | ✅    | ✅    | ✅              | ❌          |
+| Marcar Pedido Servido  | ✅    | ✅    | ❌              | ✅          |
+| Aplicar Descuento      | ✅    | ✅    | ❌              | ⚠️ Hasta 5% |
 
 ### 4.3 Gimnasio - Permisos Adicionales
 
-| Acción | OWNER | ADMIN | ENTRENADOR | RECEPCIONISTA |
-|--------|-------|-------|------------|---------------|
-| Ver Membresías | ✅ | ✅ | ⚠️ Solo clientes asignados | ✅ |
-| Crear Membresía | ✅ | ✅ | ❌ | ✅ |
-| Asignar Entrenador | ✅ | ✅ | ❌ | ✅ |
-| Registrar Asistencia | ✅ | ✅ | ✅ | ✅ |
-| Ver Rutinas de Clientes | ✅ | ✅ | ⚠️ Solo asignados | ❌ |
-| Editar Rutinas | ✅ | ✅ | ⚠️ Solo asignados | ❌ |
+| Acción                  | OWNER | ADMIN | ENTRENADOR                 | RECEPCIONISTA |
+| ----------------------- | ----- | ----- | -------------------------- | ------------- |
+| Ver Membresías          | ✅    | ✅    | ⚠️ Solo clientes asignados | ✅            |
+| Crear Membresía         | ✅    | ✅    | ❌                         | ✅            |
+| Asignar Entrenador      | ✅    | ✅    | ❌                         | ✅            |
+| Registrar Asistencia    | ✅    | ✅    | ✅                         | ✅            |
+| Ver Rutinas de Clientes | ✅    | ✅    | ⚠️ Solo asignados          | ❌            |
+| Editar Rutinas          | ✅    | ✅    | ⚠️ Solo asignados          | ❌            |
 
 ---
 
@@ -309,7 +340,7 @@ export class RolesGuard implements CanActivate {
     }
 
     const { user } = context.switchToHttp().getRequest();
-    
+
     // Verificar jerarquía de roles
     return this.checkRoleHierarchy(user.role, requiredRoles);
   }
@@ -324,9 +355,7 @@ export class RolesGuard implements CanActivate {
     };
 
     const userLevel = hierarchy[userRole];
-    const minRequiredLevel = Math.min(
-      ...requiredRoles.map(role => hierarchy[role])
-    );
+    const minRequiredLevel = Math.min(...requiredRoles.map((role) => hierarchy[role]));
 
     return userLevel >= minRequiredLevel;
   }
@@ -426,6 +455,7 @@ async createProduct(@Body() data: CreateProductDTO) {
 ## 🎯 6. Casos de Uso de Permisos
 
 ### Caso 1: Vendedor Intenta Editar Precio
+
 ```typescript
 // Request
 POST /api/products/123
@@ -442,6 +472,7 @@ HTTP 403 Forbidden
 ```
 
 ### Caso 2: Admin Intenta Hacer Override con Auditoría
+
 ```typescript
 // Request
 POST /api/sales/override
@@ -469,10 +500,13 @@ HTTP 201 Created
 ```
 
 ### Caso 3: Employee Intenta Ver Venta de Otro Vendedor
+
 ```typescript
 // Request
-GET /api/sales/xyz-789
-Headers: { Authorization: "Bearer <employee_token>" }
+GET / api / sales / xyz - 789;
+Headers: {
+  Authorization: 'Bearer <employee_token>';
+}
 
 // Validación
 const sale = await db.sales.findById('xyz-789');
@@ -492,6 +526,7 @@ if (tenant.settings.employees_can_see_all_sales) {
 ## 📊 7. Dashboard de Permisos (Admin UI)
 
 ### Vista de Gestión de Roles
+
 ```typescript
 interface RoleManagementView {
   tenant_id: string;
@@ -527,6 +562,7 @@ interface RoleManagementView {
 ## 🔐 8. Auditoría de Permisos
 
 ### Log de Intentos de Acceso Denegado
+
 ```sql
 CREATE TABLE permission_denials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -546,6 +582,7 @@ CREATE INDEX idx_permission_denials_user ON permission_denials(user_id, created_
 ```
 
 ### Alerta de Intentos Sospechosos
+
 ```typescript
 @Injectable()
 export class SecurityMonitorService {
@@ -564,7 +601,7 @@ export class SecurityMonitorService {
       await this.alertService.sendSecurityAlert({
         severity: 'HIGH',
         message: `Usuario ${user_id} tiene ${denials} denials de permiso en 5 min`,
-        action: 'REVIEW_USER_ACTIVITY'
+        action: 'REVIEW_USER_ACTIVITY',
       });
     }
   }
@@ -576,11 +613,13 @@ export class SecurityMonitorService {
 ## 📚 Referencias
 
 ### Documentos Relacionados
+
 - [DOMAIN_STATES.md](./DOMAIN_STATES.md) - Estados que restringen acciones
 - [BUSINESS_FLOWS.md](./BUSINESS_FLOWS.md) - Flujos que requieren permisos
 - [MODULE_BLUEPRINT.md](./MODULE_BLUEPRINT.md) - Patrón de implementación de guards
 
 ### Implementación Técnica
+
 - **NestJS Guards**: Para verificación de roles
 - **Supabase RLS**: Para aislamiento en base de datos
 - **Decorator Pattern**: Para permisos granulares

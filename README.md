@@ -29,24 +29,27 @@ npm run dev
 **Estado**: 🟢 Producción-Ready (Blindaje & Inmunidad Operativa)
 
 ### Core
+
 - ✅ **Next.js 16** con App Router y Turbopack
 - ✅ **TypeScript** estricto
 - ✅ **Tailwind CSS** & **Shadcn/UI**
 - ✅ **Multi-tenancy** & **Branding Dinámico**
 - ✅ **SuperAdmin Dashboard** centralizado
 - ✅ **Módulo de Inventario** adaptable (Motor Propio)
+- ✅ **Facturación Electrónica DIAN** via Alegra API (AES-256-GCM, logs inmutables)
 
 ### ✨ Características Estrella
 
-*   **Inventario Flexible**: Adaptable a retail, hostelería, gimnasios y más.
-*   **Aislamiento SaaS**: Clientes independientes con su propio branding y políticas RLS.
-*   **Gestión de Equipo**: Sistema de invitaciones por email y control de roles.
-*   **Infraestructura Pro**: Sentry para errores y Resend para correos transaccionales.
-- ✅ **Prettier** formateo automático de código
-- ✅ **Husky** pre-commit hooks
-- ✅ **lint-staged** linting en archivos staged
-- ✅ **Vitest** testing framework con React Testing Library
-- ✅ **GitHub Actions** CI/CD automatizado
+- **Inventario Flexible**: Adaptable a retail, hostelería, gimnasios y más.
+- **Aislamiento SaaS**: Clientes independientes con su propio branding y políticas RLS.
+- **Gestión de Equipo**: Sistema de invitaciones por email y control de roles.
+- **Infraestructura Pro**: Sentry para errores y Resend para correos transaccionales.
+
+* ✅ **Prettier** formateo automático de código
+* ✅ **Husky** pre-commit hooks
+* ✅ **lint-staged** linting en archivos staged
+* ✅ **Vitest** testing framework con React Testing Library
+* ✅ **GitHub Actions** CI/CD automatizado
 
 ## 📁 Estructura
 
@@ -78,13 +81,14 @@ docs/                 # Documentación del proyecto
 └── SHADCN_INVENTORY.md # Inventario de componentes
 ```
 
-
 ## 📚 Documentación
 
 ### Resumen Ejecutivo
+
 - **[Estado del Proyecto](./PROJECT_STATE.md)** - 🆕 Snapshot actual, hitos y pendientes (Leerme primero)
 
 ### Para Desarrolladores
+
 - **[Documentación Completa](./docs/PROJECT.md)** - Guía detallada del proyecto
 - **[Arquitectura](./docs/ARCHITECTURE.md)** - Arquitectura del sistema
 - **[Sistema de Diseño](./docs/DESIGN_SYSTEM.md)** - Tokens y paleta de colores
@@ -92,11 +96,13 @@ docs/                 # Documentación del proyecto
 - **[Guía para IA](./docs/AI_DEVELOPMENT_GUIDE.md)** - 🆕 Lineamientos para desarrollo con IA
 
 ### Para Gestión
+
 - **[Índice Maestro](./docs/INDEX.md)** - Guía de todos los documentos
 - **[Resumen Ejecutivo](./docs/EXECUTIVE_SUMMARY.md)** - Estado actual y métricas
 - **[Calidad y Testing](./docs/QUALITY_AND_TESTING.md)** - Guía de estandares y pruebas
 
 ### Referencia
+
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Solución de problemas comunes
 - **[Shadcn Inventory](./docs/SHADCN_INVENTORY.md)** - Componentes instalados
 
@@ -110,6 +116,7 @@ El proyecto incluye dos sistemas de personalización:
 ## 🛠️ Scripts
 
 ### Desarrollo
+
 ```bash
 npm run dev          # Servidor de desarrollo
 npm run build        # Build de producción
@@ -117,6 +124,7 @@ npm run start        # Servidor de producción
 ```
 
 ### Calidad de Código
+
 ```bash
 npm run type-check   # Verificar tipos TypeScript
 npm run lint         # Ejecutar ESLint
@@ -126,12 +134,14 @@ npm run format:check # Verificar formato
 ```
 
 ### Testing
+
 ```bash
 npm test             # Ejecutar tests
 npm run test:watch   # Ejecutar tests en modo watch
 ```
 
 ### Verificación Completa
+
 ```bash
 npm run check        # Ejecutar type-check, lint y test en paralelo
 ```
@@ -145,10 +155,10 @@ import { useModuleContext } from '@/providers';
 export default function Dashboard() {
   const { theme, setTheme } = useTheme();
   const { modules, toggleModule } = useModuleContext();
-  
+
   return (
     <div className="bg-background text-foreground">
-      <button 
+      <button
         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         className="bg-primary text-primary-foreground"
       >
@@ -182,12 +192,14 @@ npm test -- --coverage
 ## 🔧 Configuración de Calidad
 
 ### ESLint
+
 - Parser: `@typescript-eslint/parser`
 - Plugins: TypeScript, React, React Hooks, Import
 - Reglas: Estrictas para TypeScript y React
 - Configuración: `.eslintrc.cjs`
 
 ### Prettier
+
 - Print width: 100
 - Single quotes: true
 - Trailing comma: all
@@ -196,18 +208,21 @@ npm test -- --coverage
 - Configuración: `.prettierrc`
 
 ### Husky
+
 - Pre-commit: Ejecuta lint-staged
 - Configuración: `.husky/pre-commit`
 
 ## 🚀 CI/CD
 
 GitHub Actions configurado para:
+
 - ✅ Type checking
 - ✅ Linting
 - ✅ Testing
 - ✅ Building
 
 Se ejecuta en:
+
 - Push a `main` o `develop`
 - Pull requests a `main` o `develop`
 
@@ -244,6 +259,7 @@ Ver [PROJECT.md](./docs/PROJECT.md) para guías detalladas de desarrollo.
 ## 📦 Dependencias Principales
 
 ### Producción
+
 - `next` - Framework React
 - `react` & `react-dom` - Librería UI
 - `next-themes` - Gestión de temas
@@ -252,6 +268,7 @@ Ver [PROJECT.md](./docs/PROJECT.md) para guías detalladas de desarrollo.
 - `@radix-ui/*` - Componentes primitivos accesibles
 
 ### Desarrollo
+
 - `typescript` - Superset tipado de JavaScript
 - `eslint` - Linter de código
 - `prettier` - Formateador de código

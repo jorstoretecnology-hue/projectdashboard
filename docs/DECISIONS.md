@@ -1,4 +1,5 @@
 # DECISIONS.md
+
 > Decisiones arquitectónicas y justificación técnica del sistema.
 
 ---
@@ -10,6 +11,7 @@
 **Razón:** Para asegurar el flujo de caja del SaaS, es vital evitar que los clientes operen el sistema si tienen deudas pendientes, permitiendo únicamente la navegación hacia áreas de pago.
 
 **Implementación:**
+
 - Hook `useSubscriptionGuard`: Intercepta acciones de escritura.
 - Componente `SubscriptionBlockedOverlay`: Bloquea visualmente las pantallas operativas.
 - `TenantContext`: Centraliza el estado de suscripción para validación atómica.
@@ -23,6 +25,7 @@
 **Razón:** Cada política que consulta la tabla `profiles` dispara una query adicional en cascada. Con decenas de políticas, esto generaba latencias inaceptables (>500ms) en cada request.
 
 **Implementación:**
+
 - Refactor de `get_current_user_tenant_id()` para lectura de JWT pura.
 - Eliminación de sub-consultas en 89 políticas RLS.
 
@@ -65,3 +68,35 @@
 **Decisión:** El `tenant_id` corporativo debe obtenerse siempre de `user.app_metadata`.
 
 **Razón:** Seguridad. El JWT está firmado digitalmente; cualquier intento del cliente de enviar un `tenant_id` diferente en el body será ignorado por el backend y bloqueado por RLS.
+
+---
+
+## [2026-04-12] Integridad CASCADE en Perfiles
+
+**Decisión:** La relación entre `auth.users` y `public.profiles` debe ser `ON DELETE CASCADE`.
+
+**Razón:** Los perfiles huérfanos (sin usuario en auth) causan errores críticos en el panel de administración y desajustes en el conteo de licencias. El perfil no tiene sentido sin su credencial de acceso.
+
+---
+
+## [2026-04-12] Unificación de Roles (Single Source of Truth)
+
+**Decisión:** Eliminar la columna `role` y usar únicamente `app_role` (proveniente del JWT).
+
+**Razón:** Mantener dos columnas de rol causaba inconsistencias donde un usuario era 'ADMIN' en una tabla y 'EMPLOYEE' en otra, rompiendo el RLS.
+
+---
+
+## [2026-04-12] Cache de Plan con Sincronización vía Trigger
+
+**Decisión:** Mantener el campo `plan` en `tenants` (caché) pero sincronizado automáticamente mediante el trigger `trg_sync_tenant_plan` desde la tabla `subscriptions`.
+
+**Razón:** Permite que el middleware valide límites de plan sin realizar un JOIN con la tabla de suscripciones en cada request, mejorando la latencia en ~20ms.
+
+---
+
+## [2026-04-12] UI de Gestión de Módulos con Estados Optimistas
+
+**Decisión:** Implementar la gestión de módulos con actualizaciones optimistas (`toggleModule`) que revierten en caso de error.
+
+**Razón:** Mejora la experiencia del superadmin al gestionar múltiples empresas, proporcionando feedback instantáneo sin esperar la respuesta del servidor en cada toggle.

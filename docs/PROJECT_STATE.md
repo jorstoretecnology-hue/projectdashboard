@@ -1,7 +1,7 @@
 # PROJECT_STATE.md
 
-> Última actualización: Abril 11, 2026 — Sesión 5
-> Motor de Suscripciones y Add-ons
+> Última actualización: Abril 12, 2026 — Sesión 7 (v6.1.1)
+> Hardening de DB, Integridad CASCADE y Gestión de Módulos completada.
 
 ---
 
@@ -29,11 +29,12 @@
 
 ### Sistema de Módulos
 
-- ✅ 16 módulos en `modules_catalog` (incluye dian)
+- ✅ 17 módulos en `modules_catalog` (incluye dian)
 - ✅ `activate_modules_for_tenant()` con núcleo universal por plan + industria
 - ✅ Dashboard renderiza módulos activos dinámicamente desde DB
 - ✅ Sidebar dinámico por tenant
 - ✅ 13 tenants actualizados con módulos correctos
+- ✅ **Módulo `dian` completo**: UI `/dian`, Alegra provider, encriptación AES-256-GCM, logs inmutables
 
 ### Base de Datos — COMPLETAMENTE LIMPIA ✅
 
@@ -42,6 +43,9 @@
 - ✅ Trigger `fn_sync_sale_total_on_discount` recreado con INTEGER
 - ✅ Schemas Zod actualizados con `.int()` en todos los campos monetarios
 - ✅ Módulo `dian` en `modules_catalog` y en `MODULE_DEFINITIONS`
+- ✅ **Hardening v6.1.1**: Perfiles huérfanos eliminados, CASCADE Auth-Profiles, FK sales SET NULL.
+- ✅ **Integridad Crítica**: Triggers de sincronización de planes y asignación de app_role OK.
+- ✅ **Admin UI**: Panel de toggle de módulos funcional con optimismo.
 
 ### Módulos con UI funcional
 
@@ -78,12 +82,13 @@
 
 ### Pending / Known Issues
 
-| #   | Issue                           | Notas                                    |
-| --- | ------------------------------- | ---------------------------------------- |
-| 1   | Fotos base64 → Supabase Storage | InspectionCamera aún guarda base64       |
-| 2   | Regenerar database.types.ts     | work-orders.service.ts usa as unknown as |
-| 3   | UI Billing page                 | Consumir vw_tenant_billing_summary       |
-| 4   | Página /dian                    | Módulo en catálogo pero sin página       |
+| #   | Issue                           | Notas                                                  |
+| --- | ------------------------------- | ------------------------------------------------------ |
+| 1   | Fotos base64 → Supabase Storage | InspectionCamera aún guarda base64                     |
+| 2   | Regenerar database.types.ts     | work-orders.service.ts usa as unknown as               |
+| 3   | UI Billing page                 | Consumir vw_tenant_billing_summary                     |
+| 4   | ~~Página /dian~~                | ✅ **RESUELTO** — UI creada con provider Alegra + logs |
+| 5   | Aplicar migración DIAN en DB    | `20260412000001_add_dian_module.sql`                   |
 
 ### Cómo consumir vw_tenant_billing_summary
 

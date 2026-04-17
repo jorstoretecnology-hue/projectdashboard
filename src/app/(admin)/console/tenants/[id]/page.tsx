@@ -1,12 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
-import { Building2, Users, Package, ScrollText, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react'
+import { Building2, Users, Package, ScrollText, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
+
+import { TenantModules } from '@/components/admin/TenantModules'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 
 interface TenantUser {
@@ -35,12 +37,6 @@ interface Industry {
   slug: string
   name: string
   description: string | null
-}
-
-interface Specialty {
-  slug: string
-  name: string
-  icon: string | null
 }
 
 interface Tenant {
@@ -246,38 +242,11 @@ export default async function TenantDetailPage({ params }: Props) {
 
         {/* Modules Tab */}
         <TabsContent value="modules" className="mt-6">
-          <Card className="bg-slate-900/50 border-slate-800">
-            <CardHeader>
-              <CardTitle>Módulos del Tenant</CardTitle>
-              <CardDescription>Módulos activos e inactivos para esta organización.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {(modules as unknown as TenantModule[])?.map((mod) => (
-                  <div
-                    key={mod.module_slug}
-                    className={cn(
-                      "flex items-center justify-between px-4 py-3 rounded-xl border transition-all",
-                      mod.is_active
-                        ? "bg-primary/5 border-primary/30"
-                        : "bg-muted/5 border-border/30 opacity-50"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Package size={16} className={mod.is_active ? "text-primary" : "text-muted-foreground"} />
-                      <span className="text-sm font-bold uppercase">{mod.module_slug}</span>
-                    </div>
-                    <Badge variant={mod.is_active ? "default" : "outline"} className="text-[10px]">
-                      {mod.is_active ? 'ACTIVO' : 'INACTIVO'}
-                    </Badge>
-                  </div>
-                ))}
-                {(!modules || modules.length === 0) && (
-                  <p className="text-slate-500 col-span-full text-center py-8">No hay módulos asignados.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <TenantModules
+            tenantId={id}
+            initialModules={(modules as unknown as TenantModule[]) ?? []}
+            currentPlan={(typedTenant.plan as 'free' | 'starter' | 'professional' | 'enterprise') || 'free'}
+          />
         </TabsContent>
 
         {/* Audit Tab */}

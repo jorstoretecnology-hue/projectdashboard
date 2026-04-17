@@ -15,6 +15,7 @@
 ## ⚡ PRIMERO: Lee en Este Orden (15 minutos)
 
 ### Minuto 1-5: Contexto General
+
 1. **[CONTEXTO_DEL_PROYECTO.md](./CONTEXTO_DEL_PROYECTO.md)** ← **EMPIEZA AQUÍ**
    - Qué es este proyecto (elevator pitch)
    - [ARCHITECTURE_SUMMARY.md](./technical/ARCHITECTURE_SUMMARY.md) (Arquitectura)
@@ -22,6 +23,7 @@
    - Conceptos fundamentales
 
 ### Minuto 5-10: Estado Actual
+
 2. **[PROGRESS_TRACKER.md](./PROGRESS_TRACKER.md)** ← **LEE ESTO SEGUNDO**
    - Qué se hizo en la última sesión
    - Qué toca hacer ahora
@@ -29,20 +31,22 @@
    - Próximos pasos concretos
 
 ### Minuto 10-15: Tu Ruta Según Rol
+
 3. **Selecciona tu ruta:**
 
-| Si eres... | Lee esto... | Tiempo |
-|------------|-------------|--------|
-| **IA nueva** | [operations/AI_QUICKSTART.md](./operations/AI_QUICKSTART.md) | 5 min |
+| Si eres...        | Lee esto...                                                      | Tiempo |
+| ----------------- | ---------------------------------------------------------------- | ------ |
+| **IA nueva**      | [operations/AI_QUICKSTART.md](./operations/AI_QUICKSTART.md)     | 5 min  |
 | **Desarrollador** | [technical/MODULE_BLUEPRINT.md](./technical/MODULE_BLUEPRINT.md) | 10 min |
-| **Arquitecto** | [../ARCHITECTURE_SUMMARY.md](../ARCHITECTURE_SUMMARY.md) | 15 min |
-| **Security** | [security/quick-reference.md](./security/quick-reference.md) | 5 min |
+| **Arquitecto**    | [../ARCHITECTURE_SUMMARY.md](../ARCHITECTURE_SUMMARY.md)         | 15 min |
+| **Security**      | [security/quick-reference.md](./security/quick-reference.md)     | 5 min  |
 
 ---
 
 ## 📚 Rutas de Lectura por Contexto
 
 ### 🛠️ Si Vas a Desarrollar una Feature Nueva
+
 ```
 1. technical/MODULE_BLUEPRINT.md         ← Patrón a seguir
 2. technical/DATABASE_SCHEMA.md          ← Estructura de DB
@@ -51,6 +55,7 @@
 ```
 
 ### 🐛 Si Vas a Arreglar un Bug
+
 ```
 1. security/SECURITY_CHECKLIST.md        ← Verificar seguridad
 2. technical/BUSINESS_FLOWS.md           ← Entender el flujo
@@ -58,6 +63,7 @@
 ```
 
 ### 🔐 Si Vas a Tocar Autenticación/Permisos
+
 ```
 1. security/SECURITY_CHECKLIST.md        ← CRÍTICO
 2. security/PERMISSIONS_MATRIX.md        ← Matriz de roles
@@ -65,12 +71,14 @@
 ```
 
 ### 🧪 Si Vas a Escribir Tests
+
 ```
 1. operations/QA_GUIDE.md                ← Estándares de testing
 2. technical/API_SPECIFICATION.md        ← Contrato de API
 ```
 
 ### 📈 Si Eres Gestión/Producto
+
 ```
 1. strategy/PRODUCT_STRATEGY.md          ← Visión del producto
 2. strategy/ROADMAP_12M.md               ← Roadmap 12 meses
@@ -139,6 +147,7 @@ docs/
 ## 🎯 Estado Actual del Proyecto (Resumen)
 
 ### ✅ Completado (Versión 4.7.0)
+
 - [x] Next.js 16 con App Router y Turbopack
 - [x] Autenticación Supabase (Email + Google OAuth)
 - [x] Onboarding progresivo de 3 pasos
@@ -157,20 +166,22 @@ docs/
 - [x] Testing con Vitest (~60% cobertura)
 
 ### 🔒 Security Audit - 18 Marzo 2026
-| Métrica | Valor | Estado |
-|---------|-------|--------|
-| Type Errors | 0 | ✅ |
-| Tests Passing | 24/24 | ✅ |
-| Vulnerabilidades | 7 (3 high) | ⚠️ |
-| Console.log | 0 (migrados) | ✅ |
-| Select(*) | 0 | ✅ |
-| Any Types | 0 (core) | ✅ |
+
+| Métrica          | Valor        | Estado |
+| ---------------- | ------------ | ------ |
+| Type Errors      | 0            | ✅     |
+| Tests Passing    | 24/24        | ✅     |
+| Vulnerabilidades | 7 (3 high)   | ⚠️     |
+| Console.log      | 0 (migrados) | ✅     |
+| Select(\*)       | 0            | ✅     |
+| Any Types        | 0 (core)     | ✅     |
 
 ### 🚧 En Progreso / Próximamente
+
 - [x] **Pagos con MercadoPago** (P0 - Fase 11) - Infraestructura Completa
+- [x] **Facturación electrónica Colombia** — UI `/dian`, Alegra provider, DB migration lista
 - [ ] Internacionalización (i18n)
 - [ ] Fase 13: Refinamiento de RLS (Sedes/Locations)
-- [ ] Facturación electrónica Colombia
 - [ ] Módulo de membresías (gym)
 
 ---
@@ -208,11 +219,13 @@ npm run security:validate # Validar reporte JSON
 ## 📞 Contacto y Soporte
 
 ### Canales de Comunicación
+
 - **GitHub Issues:** Bugs y feature requests
 - **Slack Antigravity:** Canal #dashboard-universal
 - **Email:** soporte@antigravity.com
 
 ### Horarios de Soporte
+
 - **Lunes a Viernes:** 9:00 AM - 6:00 PM (Bogotá)
 - **Sábados:** 9:00 AM - 1:00 PM (Bogotá)
 - **Emergencias:** 24/7 vía Slack
@@ -222,6 +235,7 @@ npm run security:validate # Validar reporte JSON
 ## 🎯 Próximos Pasos Concretos
 
 ### Prioridad P0 (Esta semana)
+
 1. **Ejecutar migraciones SQL en Supabase**
    - [ ] `20260314000000_activate_modules_for_tenants.sql`
    - [ ] `20260314000001_get_tenant_price.sql`
@@ -241,14 +255,14 @@ npm run security:validate # Validar reporte JSON
 
 ## 📊 Métricas de Código
 
-| Métrica | Valor |
-|---------|-------|
-| Líneas totales | ~25,000 |
-| Archivos TypeScript | ~220 |
-| Componentes React | ~110 |
-| Endpoints API | ~15 |
-| Tablas DB | ~20 |
-| Cobertura de tests | ~60% |
+| Métrica             | Valor   |
+| ------------------- | ------- |
+| Líneas totales      | ~25,000 |
+| Archivos TypeScript | ~220    |
+| Componentes React   | ~110    |
+| Endpoints API       | ~15     |
+| Tablas DB           | ~20     |
+| Cobertura de tests  | ~60%    |
 
 ---
 
@@ -266,15 +280,15 @@ npm run security:validate # Validar reporte JSON
 
 ## 📈 Próximos Hitos
 
-| Hito | Fecha Estimada | Estado |
-|------|----------------|--------|
-| v4.7.0 - Pagos MercadoPago | Marzo 2026 | 🚧 En desarrollo |
-| v4.8.0 - Módulo de Reservas | Abril 2026 | 📋 Planificado |
-| v4.9.0 - Facturación Electrónica | Mayo 2026 | 📋 Planificado |
-| v5.0.0 - Multi-sede + i18n | Junio 2026 | 🎯 En planificación |
+| Hito                                  | Fecha Estimada | Estado                                          |
+| ------------------------------------- | -------------- | ----------------------------------------------- |
+| v4.7.0 - Pagos MercadoPago            | Marzo 2026     | 🚧 En desarrollo                                |
+| v4.8.0 - Módulo de Reservas           | Abril 2026     | 📋 Planificado                                  |
+| v4.9.0 - Facturación Electrónica DIAN | Abril 2026     | ✅ UI + Provider listo — pendiente migración DB |
+| v5.0.0 - Multi-sede + i18n            | Junio 2026     | 🎯 En planificación                             |
 
 ---
 
 **¡Bienvenido al proyecto! 🚀**
 
-*¿Tienes dudas? Empieza por [CONTEXTO_DEL_PROYECTO.md](./CONTEXTO_DEL_PROYECTO.md)*
+_¿Tienes dudas? Empieza por [CONTEXTO_DEL_PROYECTO.md](./CONTEXTO_DEL_PROYECTO.md)_
