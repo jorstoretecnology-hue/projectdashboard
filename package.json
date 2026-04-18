@@ -1,6 +1,7 @@
 {
   "name": "proyect-dashboard",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,9 +14,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "husky install",
+    "ai:migrate": "node ai-core/migrate-esm.js",
     "check": "npm-run-all -p type-check lint test",
     "create-superadmin": "node scripts/create-superadmin.js",
-    "security:audit": "qwen --prompt docs/SECURITY_AUDIT_PROMPT.md --output docs/SECURITY_PIPELINE_$(date +'%Y%m%d').md",
+    "security:audit": "node gemini-cli.js docs/security/SECURITY_AUDIT_PROMPT.md",
     "security:validate": "node scripts/validate-security-report.js"
   },
   "lint-staged": {
@@ -80,6 +82,7 @@
     "@typescript-eslint/parser": "^7.0.2",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.23",
+    "dotenv": "^17.4.2",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.1.0",
     "eslint-config-prettier": "^9.1.0",

@@ -4,3 +4,7 @@ dist
 coverage
 .out
 reactshine-components-main
+ai-core/
+scripts/
+gemini-cli.js
+.agents/

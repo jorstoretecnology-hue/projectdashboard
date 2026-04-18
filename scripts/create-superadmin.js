@@ -2,10 +2,11 @@
 // SOLO ejecutar desde el servidor con acceso a .env.local
 // Uso: npm run create-superadmin -- email@dominio.com MiPassword123!
 
-require('dotenv').config({ path: '.env.local' })
-const { createClient } = require('@supabase/supabase-js')
-const crypto = require('crypto')
-const readline = require('readline')
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
+import readline from 'readline';
 
 // ── VALIDACIONES DE ENTORNO ──────────────────────────────────────────────────
 
