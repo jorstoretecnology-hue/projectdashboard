@@ -1,5 +1,6 @@
-import { Customer } from '../types';
-import { CreateCustomerDTO, UpdateCustomerDTO, CustomerQueryDTO } from '@/lib/api/schemas/customers';
+import type { CreateCustomerDTO, UpdateCustomerDTO, CustomerQueryDTO } from '@/lib/api/schemas/customers';
+
+import type { Customer } from '../types';
 
 /**
  * Interfaz del Repositorio de Clientes
@@ -38,7 +39,7 @@ export interface ICustomerRepository {
   /**
    * Crear un nuevo cliente
    */
-  create(data: CreateCustomerDTO, tenantId: string): Promise<Customer>;
+  create(data: CreateCustomerDTO & { data_consent_at?: string; data_consent_ip?: string; }, tenantId: string): Promise<Customer>;
 
   /**
    * Actualizar un cliente existente

@@ -4,6 +4,22 @@
 
 ---
 
+## [2026-04-18] Sesión 9 — Inmunidad Operativa & Compliance Legal (v6.2.0)
+
+### ⚖️ Compliance de Ley 1581 (Tratamiento de Datos)
+
+- **Auditoría Legal**: Se agregó un checkbox obligatorio al formulario de registro de clientes que exige la aceptación de política de uso de datos.
+- **Rastreo de IP**: Creada Server APi `/api/client-ip` que rastrea de manera agnóstica la IP del registro extrayendo `x-forwarded-for`.
+- **Integridad de Datos**: Se inyecta la IP (`data_consent_ip`) y el timestamp de validación (`data_consent_at`) de manera segura, ininterrumpida y persistente a través del Service Action antes de guardar el cliente.
+
+### 🛡️ Subscription & Billing Guard
+
+- **Hook Central de Restricciones**: Desarrollo de `useSubscriptionGuard.ts` que valida el Addon del tenant y examina periodicamente el uso de recursos contra la base de datos de cuotas (`tenant_quotas`).
+- **Bloqueos Cautelares de Modulos**: Despliegue del componente premium `SubscriptionBlockedOverlay.tsx`, un overlay destructivo Glassmorphism. Este componente se acciona visualmente (blur y candado) si el tenant cae en mora o sobrepasa los recursos asignados de un módulo.
+- **Seguridad Server-Side (RPC)**: Añadida barrera estricta al POST handler de `/api/v1/sales`. Todas las transacciones RPC del POS se abortan anticipadamente con código 403 `ACCESO_DENEGADO` bajo intentos de bypass.
+- **Resolución Crítica de Tipos TypeScript**: Erradicación definitiva de los errores `never` mediante el aplanamiento de `src/lib/supabase/database.types.ts`. Se eliminó la dependencia del archivo corrompido `src/types/supabase.ts` y se reconstruyó manualmente el esquema completo (Tablas, Vistas y RPCs) como una fuente de verdad independiente, estabilizando el IDE y el proceso de build.
+- **Limpieza de Espacio de Trabajo**: Removidos procesos bloqueantes (Node.js) y archivos basura (`.tmp`, `.mi...`) que impedían la edición fluida de tipos.
+
 ## [2026-04-12] Sesión 7.1 — Integridad & Control Total (v6.1.1)
 
 ### 🛡️ Hardening de Base de Datos

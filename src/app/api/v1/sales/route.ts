@@ -1,11 +1,13 @@
-import { NextRequest } from 'next/server';
-import { withAuth, AuthenticatedContext } from '@/lib/auth/api-wrapper';
+import type { NextRequest } from 'next/server';
+
 import { apiSuccess } from '@/lib/api/response';
-import { validateBody, validateQuery } from '@/lib/api/validation';
 import { 
   createSaleSchema, 
   saleQuerySchema 
 } from '@/lib/api/schemas/sales';
+import { validateBody, validateQuery } from '@/lib/api/validation';
+import { withAuth } from '@/lib/auth/api-wrapper';
+import type { AuthenticatedContext } from '@/lib/auth/api-wrapper';
 import { SalesService } from '@/modules/sales/sales.service';
 
 /**
@@ -28,6 +30,21 @@ const getHandler = async (req: NextRequest, ctx: AuthenticatedContext) => {
 const postHandler = async (req: NextRequest, ctx: AuthenticatedContext) => {
   // 1. Validar Payload (Items, customer, etc)
   const data = await validateBody(req, createSaleSchema);
+
+  // 1.5 Validar estado de suscripción (Subscription Guard)
+  const { data: subData, error: subError } = await ctx.supabase
+    .from('subscriptions')
+    .select('status')
+    .eq('tenant_id', ctx.tenantId)
+    .single();
+
+  if (!subError && subData) {
+    if (subData.status === 'past_due' || subData.status === 'unpaid' || subData.status === 'canceled') {
+      return new Response(JSON.stringify({ 
+        error: "ACCESO_DENEGADO: Tu suscripción está inactiva o presenta un pago pendiente. Módulo bloqueado." 
+      }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
 
   // 2. Service (RPC Transaction)
   const service = new SalesService(ctx.supabase, ctx.tenantId);

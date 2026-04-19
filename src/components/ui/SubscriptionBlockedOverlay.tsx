@@ -1,42 +1,54 @@
 'use client';
 
+import { ShieldAlert, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import type { SubscriptionStatus } from '@/providers/TenantContext';
 
 interface Props {
-  status: SubscriptionStatus;
+  title?: string;
+  message?: string;
+  type?: 'blocked' | 'warning';
+  onAction?: () => void;
+  actionText?: string;
 }
 
-export function SubscriptionBlockedOverlay({ status }: Props) {
+export function SubscriptionBlockedOverlay({ 
+  title = "Acceso Restringido", 
+  message = "Tu suscripción no incluye acceso a este módulo o hay un pago pendiente.", 
+  type = 'blocked',
+  onAction,
+  actionText = "Ir a Facturación"
+}: Props) {
   const router = useRouter();
 
-  const message =
-    status === 'past_due'
-      ? 'Tu suscripción tiene un pago pendiente. Regulariza tu cuenta para continuar.'
-      : 'Tu suscripción está suspendida. Contacta a soporte.';
+  const handleAction = () => {
+    if (onAction) {
+      onAction();
+    } else {
+      router.push('/billing');
+    }
+  };
+
+  const isWarning = type === 'warning';
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 50,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '1rem',
-        background: 'rgba(0,0,0,0.7)',
-        backdropFilter: 'blur(4px)',
-        borderRadius: '0.75rem',
-      }}
-    >
-      <p style={{ color: 'white', textAlign: 'center', maxWidth: '320px' }}>
+    <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center p-6 bg-background/80 backdrop-blur-md rounded-xl border ${isWarning ? 'border-amber-500/50' : 'border-destructive/50'}`}>
+      <div className={`p-4 rounded-full mb-4 ${isWarning ? 'bg-amber-500/10 text-amber-500' : 'bg-destructive/10 text-destructive'}`}>
+        {isWarning ? <AlertTriangle className="w-12 h-12" /> : <ShieldAlert className="w-12 h-12" />}
+      </div>
+      <h2 className="text-2xl font-bold mb-2 text-center">{title}</h2>
+      <p className="text-muted-foreground text-center max-w-sm mb-6">
         {message}
       </p>
-      <Button onClick={() => router.push('/billing')}>Ir a Facturación</Button>
+      <Button 
+        onClick={handleAction} 
+        variant={isWarning ? "default" : "destructive"}
+        size="lg"
+        className="font-semibold shadow-lg transition-transform hover:scale-105"
+      >
+        {actionText}
+      </Button>
     </div>
   );
 }

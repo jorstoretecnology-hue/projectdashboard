@@ -1,21 +1,17 @@
-import { createClient } from '@/lib/supabase/client'
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { Database } from "@/lib/supabase/database.types"
-import { ICustomerRepository } from "../interfaces/ICustomerRepository"
-import { SupabaseCustomerRepository } from "../repositories/SupabaseCustomerRepository"
-import { Customer, CustomerFormValues } from "../types"
+
 import { quotaEngine } from "@/core/quotas/engine"
 import { AuditLogService } from "@/core/security/audit.service"
 import { logger } from "@/lib/logger"
+import { createClient } from '@/lib/supabase/client'
+import type { Database } from "@/lib/supabase/database.types"
 
-type DBCustomer = Database['public']['Tables']['customers']['Row']
+import type { ICustomerRepository } from "../interfaces/ICustomerRepository"
+import { SupabaseCustomerRepository } from "../repositories/SupabaseCustomerRepository"
+import type { Customer, CustomerFormValues } from "../types"
 
-// Interface para campos extendidos de customers que no están en database.types
-interface ExtendedCustomerFields {
-  identification_type?: string
-  identification_number?: string
-  city?: string
-}
+
+
 
 /**
  * CustomersService Wrapper con Lógica de Negocio Extendida
@@ -48,7 +44,7 @@ export class EnhancedCustomersService {
     }
   }
 
-  async create(data: CustomerFormValues, tenantId: string): Promise<Customer> {
+  async create(data: CustomerFormValues & { data_consent_at?: string; data_consent_ip?: string }, tenantId: string): Promise<Customer> {
     await quotaEngine.assertCanConsume(tenantId, "maxCustomers")
 
     try {

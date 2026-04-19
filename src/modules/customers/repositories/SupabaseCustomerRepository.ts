@@ -1,21 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { ICustomerRepository } from '../interfaces/ICustomerRepository';
-import { Customer } from '../types';
-import {
+
+import type {
   CreateCustomerDTO,
   UpdateCustomerDTO,
-  CustomerQueryDTO,
+  CustomerQueryDTO} from '@/lib/api/schemas/customers';
+import {
   fromDbCustomer,
   toDbCustomer,
 } from '@/lib/api/schemas/customers';
-import { Database, Json } from '@/lib/supabase/database.types';
+import type { Database } from '@/lib/supabase/database.types';
 
-type DBCustomer = Database['public']['Tables']['customers']['Row'];
+import type { ICustomerRepository } from '../interfaces/ICustomerRepository';
+import type { Customer } from '../types';
+
 type DBCustomerInsert = Database['public']['Tables']['customers']['Insert'];
 type DBCustomerUpdate = Database['public']['Tables']['customers']['Update'];
-
-const CUSTOMER_FIELDS =
-  'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website' as const;
 
 /**
  * Implementación concreta del Repositorio de Clientes para Supabase
@@ -95,7 +94,7 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
       throw error;
     }
 
-    return fromDbCustomer(data as any);
+    return fromDbCustomer(data as Record<string, unknown>);
   }
 
   async findByEmail(email: string, tenantId: string): Promise<Customer | null> {
@@ -112,19 +111,19 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
     if (error) throw error;
     if (!data) return null;
 
-    return fromDbCustomer(data as any);
+    return fromDbCustomer(data as Record<string, unknown>);
   }
 
-  async create(data: CreateCustomerDTO, tenantId: string): Promise<Customer> {
+  async create(data: CreateCustomerDTO & { data_consent_at?: string; data_consent_ip?: string; }, tenantId: string): Promise<Customer> {
     // Convertir de camelCase (frontend) a snake_case (database)
     const dbData = {
-      ...toDbCustomer(data),
+      ...toDbCustomer({ ...data, tenant_id: tenantId }),
       tenant_id: tenantId,
     };
 
     const { data: newCustomer, error } = await this.supabase
       .from('customers')
-      .insert(dbData as any)
+      .insert(dbData as DBCustomerInsert)
       .select(
         'id, tenant_id, first_name, last_name, name, email, phone, created_at, updated_at, metadata, deleted_at, location_id, identification_type, identification_number, city, company_name, tax_id, address, notes, status, website',
       )
@@ -132,16 +131,16 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
 
     if (error) throw error;
 
-    return fromDbCustomer(newCustomer as any);
+    return fromDbCustomer(newCustomer);
   }
 
   async update(id: string, data: UpdateCustomerDTO, tenantId: string): Promise<Customer> {
     // Convertir de camelCase (frontend) a snake_case (database)
-    const dbData = toDbCustomer(data as any);
+    const dbData = toDbCustomer({ ...data, tenant_id: tenantId } as CreateCustomerDTO & { tenant_id: string });
 
     const { data: updated, error } = await this.supabase
       .from('customers')
-      .update(dbData as any)
+      .update(dbData as DBCustomerUpdate)
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .select(
@@ -151,7 +150,7 @@ export class SupabaseCustomerRepository implements ICustomerRepository {
 
     if (error) throw error;
 
-    return fromDbCustomer(updated as any);
+    return fromDbCustomer(updated);
   }
 
   async delete(id: string, tenantId: string): Promise<void> {

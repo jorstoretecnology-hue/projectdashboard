@@ -1,14 +1,18 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShoppingBag, TrendingUp, Calendar, Loader2, Plus } from "lucide-react"
+import { useMemo, useState } from "react"
+
+import { POSDialog } from "@/components/sales/POSDialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { SubscriptionBlockedOverlay } from "@/components/ui/SubscriptionBlockedOverlay"
+import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard"
 import { cn } from "@/lib/utils"
 import { salesService } from "@/modules/sales/services/sales.service"
-import { Sale } from "@/modules/sales/types"
-import { Badge } from "@/components/ui/badge"
-import { POSDialog } from "@/components/sales/POSDialog"
-import { Button } from "@/components/ui/button"
+import type { Sale } from "@/modules/sales/types"
 
 interface SalesClientProps {
   initialSales: Sale[]
@@ -19,6 +23,7 @@ export function SalesClient({ initialSales, tenantId }: SalesClientProps) {
   const [sales, setSales] = useState<Sale[]>(initialSales)
   const [isLoading, setIsLoading] = useState(false)
   const [isPOSOpen, setIsPOSOpen] = useState(false)
+  const { state, canAccess, quotaRemaining } = useSubscriptionGuard('sales')
 
   const loadSales = async () => {
     setIsLoading(true)
@@ -39,8 +44,22 @@ export function SalesClient({ initialSales, tenantId }: SalesClientProps) {
   }, [sales])
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 relative min-h-[60vh]">
+      {!canAccess && state !== 'loading' && (
+        <SubscriptionBlockedOverlay />
+      )}
+
+      {state === 'quota_warning' && (
+        <Alert variant="destructive" className="bg-amber-50 border-amber-500 text-amber-900 absolute top-0 left-0 right-0 z-40 shadow-md">
+          <AlertTitle className="font-bold">¡Atención! Cuota de ventas casi agotada</AlertTitle>
+          <AlertDescription>
+            Te queda muy poca cuota de ventas en tu plan actual. Por favor, actualiza tu suscripción o adquiere un paquete adicional para evitar bloqueos.
+            {quotaRemaining !== null && <span className="font-bold ml-2">({quotaRemaining} ventas restantes)</span>}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex items-center justify-between mt-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Ventas</h1>
           <p className="text-muted-foreground">Gestiona tus transacciones y movimientos de caja.</p>

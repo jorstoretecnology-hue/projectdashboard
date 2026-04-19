@@ -1,9 +1,13 @@
 "use client"
 
-import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { createCustomerSchema, type CustomerFormValues, IdentificationTypeEnum } from "@/modules/customers/types"
+import { Loader2 } from "lucide-react"
+import { useMemo } from "react"
+import { useForm, type Resolver } from "react-hook-form"
+import { z } from "zod"
+
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -13,18 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useMemo } from "react"
-import { z } from "zod"
-import { Loader2 } from "lucide-react"
-import { useTenant } from "@/providers"
-
 import { getIndustryConfig } from "@/config/industries"
+import { createCustomerSchema, type CustomerFormValues } from "@/modules/customers/types"
+import { useTenant } from "@/providers"
 
 interface CustomerFormProps {
   defaultValues?: Partial<CustomerFormValues>
   onSubmit: (data: CustomerFormValues) => Promise<void>
   onCancel: () => void
   isSubmitting?: boolean
+  isEdit?: boolean
 }
 
 export function CustomerForm({
@@ -32,12 +34,15 @@ export function CustomerForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  isEdit = false,
 }: CustomerFormProps) {
   const { currentTenant } = useTenant();
   
   // Obtener configuración de industria para campos dinámicos de clientes
-  const industryConfig = currentTenant?.industryType ? getIndustryConfig(currentTenant.industryType) : null;
-  const customerFields = industryConfig?.customerFields || [];
+  const customerFields = useMemo(() => 
+    currentTenant?.industryType ? getIndustryConfig(currentTenant.industryType).customerFields : [],
+    [currentTenant?.industryType]
+  );
 
   // Construir esquema de validación dinámico combinando el base con los metadatos de la industria
   const dynamicSchema = useMemo(() => {
@@ -45,14 +50,10 @@ export function CustomerForm({
 
     const metadataShape: Record<string, z.ZodTypeAny> = {};
     customerFields.forEach(field => {
-      // Usar la validación definida en la config o z.string() por defecto para evitar any
       let fieldSchema = field.validation || z.string();
-
-      // Si el campo no es requerido, hacerlo opcional en el esquema
       if (!field.required) {
         fieldSchema = fieldSchema.optional().or(z.literal(''));
       }
-
       metadataShape[field.key] = fieldSchema;
     });
 
@@ -91,16 +92,10 @@ export function CustomerForm({
           Datos de Contacto
         </h3>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">Nombre</Label>
-            <Input id="firstName" {...register("firstName")} placeholder="Ej: Juan" />
-            {errors.firstName && <p className="text-xs text-destructive">{errors.firstName.message}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Apellido</Label>
-            <Input id="lastName" {...register("lastName")} placeholder="Ej: Pérez" />
-            {errors.lastName && <p className="text-xs text-destructive">{errors.lastName.message}</p>}
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="name">Nombre Completo</Label>
+            <Input id="name" {...register("name")} placeholder="Ej: Juan Pérez" />
+            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-2 sm:col-span-2">
@@ -111,7 +106,8 @@ export function CustomerForm({
 
           <div className="space-y-2">
             <Label htmlFor="phone">Teléfono</Label>
-            <Input id="phone" {...register("phone")} placeholder="+54 9 11..." />
+            <Input id="phone" {...register("phone")} placeholder="+57 300..." />
+            {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -133,18 +129,18 @@ export function CustomerForm({
         </div>
       </div>
 
-      {/* Sección 2: Información de Empresa */}
+      {/* Sección 2: Información de Identificación */}
       <div className="space-y-4 pt-2">
         <h3 className="text-sm font-semibold border-b pb-1 flex items-center gap-2">
-          <span className="bg-primary/10 text-primary p-1 rounded">🏢</span>
-          Información Corporativa
+          <span className="bg-primary/10 text-primary p-1 rounded">🆔</span>
+          Identificación y Empresa
         </h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="identificationType">Tipo de ID (LATAM)</Label>
+            <Label htmlFor="identificationType">Tipo de ID</Label>
             <Select
               defaultValue={defaultValues?.identificationType || "CC"}
-              onValueChange={(val) => setValue("identificationType", val as any)}
+              onValueChange={(val) => setValue("identificationType", val as "CC" | "NIT" | "CE" | "RUT" | "PASAPORTE" | "TI" | "OTHER")}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar tipo" />
@@ -153,20 +149,20 @@ export function CustomerForm({
                 <SelectItem value="CC">Cédula de Ciudadanía (CC)</SelectItem>
                 <SelectItem value="NIT">NIT (Empresas)</SelectItem>
                 <SelectItem value="CE">Cédula de Extranjería</SelectItem>
-                <SelectItem value="RUT">RUT (Tributario)</SelectItem>
+                <SelectItem value="RUT">RUT</SelectItem>
                 <SelectItem value="PASAPORTE">Pasaporte</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="identificationNumber">Número de Identificación</Label>
+            <Label htmlFor="document">Número de Documento</Label>
             <Input 
-              id="identificationNumber" 
-              {...register("identificationNumber")} 
-              placeholder="Sin puntos ni guiones" 
+              id="document" 
+              {...register("document")} 
+              placeholder="Ej: 123456789" 
             />
-            {errors.identificationNumber && <p className="text-xs text-destructive">{errors.identificationNumber.message}</p>}
+            {errors.document && <p className="text-xs text-destructive">{errors.document.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -175,14 +171,8 @@ export function CustomerForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="taxId" className="text-muted-foreground">ID Fiscal Adicional (Opcional)</Label>
-            <Input id="taxId" {...register("taxId")} placeholder="RUC, VAT..." />
-          </div>
-
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="website">Sitio Web</Label>
-            <Input id="website" {...register("website")} placeholder="https://www.empresa.com" />
-            {errors.website && <p className="text-xs text-destructive">{errors.website.message}</p>}
+            <Label htmlFor="taxId">ID Fiscal / RUT (Opcional)</Label>
+            <Input id="taxId" {...register("taxId")} placeholder="NIT con dígito de verificación" />
           </div>
         </div>
       </div>
@@ -192,7 +182,7 @@ export function CustomerForm({
         <div className="space-y-4 pt-2">
           <h3 className="text-sm font-semibold border-b pb-1 flex items-center gap-2">
             <span className="bg-primary/10 text-primary p-1 rounded">🧩</span>
-            Información Específica del Negocio ({industryConfig?.name || 'General'})
+            Información Específca ({industryConfig?.name || 'General'})
           </h3>
           <div className="grid gap-4 sm:grid-cols-2">
             {customerFields.map((field) => (
@@ -249,20 +239,46 @@ export function CustomerForm({
       <div className="space-y-4 pt-2">
         <h3 className="text-sm font-semibold border-b pb-1 flex items-center gap-2">
           <span className="bg-primary/10 text-primary p-1 rounded">📍</span>
-          Logística y Notas
+          Ubicación y Notas
         </h3>
         <div className="grid gap-4">
           <div className="space-y-2">
-            <Label htmlFor="address">Dirección de Entrega / Facturación</Label>
-            <Input id="address" {...register("address")} placeholder="Calle, Ciudad, Provincia..." />
+            <Label htmlFor="address">Dirección</Label>
+            <Input id="address" {...register("address")} placeholder="Calle, Ciudad, Barrio..." />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notas o Comentarios Internos</Label>
-            <Input id="notes" {...register("notes")} placeholder="Detalles sobre preferencias, historial..." />
+            <Input id="notes" {...register("notes")} placeholder="Detalles sobre el cliente..." />
           </div>
         </div>
       </div>
+
+      {/* Ley 1581 - Protección de Datos */}
+      {!isEdit && (
+        <div className="space-y-4 pt-4 border-t">
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="data_consent_accepted" 
+              onCheckedChange={(checked) => setValue("data_consent_accepted", checked === true)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor="data_consent_accepted"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Acepto la <a href="/politica-privacidad" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">política de tratamiento de datos personales</a>
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                En cumplimiento de la Ley 1581 de 2012 (Habeas Data Colombia).
+              </p>
+              {errors.data_consent_accepted && (
+                <p className="text-xs text-destructive">{errors.data_consent_accepted.message}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>

@@ -1,4 +1,5 @@
 import { PERMISSIONS } from "@/config/permissions"
+
 // Re-exportar schemas y tipos unificados desde lib/api/schemas/customers
 export {
   createCustomerSchema,

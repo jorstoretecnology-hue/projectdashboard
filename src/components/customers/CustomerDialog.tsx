@@ -1,6 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { toast } from "sonner"
+
+import { QuotaExceededDialog } from "@/components/billing/QuotaExceededDialog"
 import {
   Dialog,
   DialogContent,
@@ -8,13 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { CustomerForm } from "./CustomerForm"
-import { type CustomerFormValues, type Customer } from "@/modules/customers/types"
-import { createCustomerAction, updateCustomerAction } from "@/modules/customers/actions"
-import { useTenant } from "@/providers"
-import { toast } from "sonner"
 import { useQuotaError } from "@/hooks/use-quota-error"
-import { QuotaExceededDialog } from "@/components/billing/QuotaExceededDialog"
+import { createCustomerAction, updateCustomerAction } from "@/modules/customers/actions"
+import { type CustomerFormValues, type Customer } from "@/modules/customers/types"
+import { useTenant } from "@/providers"
+
+import { CustomerForm } from "./CustomerForm"
 
 interface CustomerDialogProps {
   open: boolean
@@ -92,6 +94,7 @@ export function CustomerDialog({
               onSubmit={handleSubmit}
               onCancel={() => onOpenChange(false)}
               isSubmitting={isSubmitting}
+              isEdit={isEdit}
             />
           </div>
         </DialogContent>

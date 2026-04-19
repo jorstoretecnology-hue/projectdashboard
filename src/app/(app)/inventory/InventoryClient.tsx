@@ -1,18 +1,14 @@
 "use client"
 
+import { Package, Loader2, DollarSign, AlertCircle, PackageCheck } from "lucide-react"
 import { useMemo, useState, useDeferredValue, useCallback } from "react"
-import { Package, Loader2, DollarSign, AlertCircle, PackageCheck, Plus } from "lucide-react"
 import { toast } from "sonner"
-import { Card, CardContent } from "@/components/ui/card"
-import { InventoryHeader } from "@/components/inventory/InventoryHeader"
-import { InventoryToolbar } from "@/components/inventory/InventoryToolbar"
+
 import { InventoryCard } from "@/components/inventory/InventoryCard"
 import { InventoryDialog } from "@/components/inventory/InventoryDialog"
-import { EmptyState } from "@/components/ui/empty-state"
-import { inventoryService } from "@/modules/inventory/services/inventory.service"
-import { deleteInventoryItemAction } from "@/modules/inventory/actions"
-import type { InventoryItem } from "@/modules/inventory/types"
-import { cn } from "@/lib/utils"
+import { InventoryHeader } from "@/components/inventory/InventoryHeader"
+import { InventoryToolbar } from "@/components/inventory/InventoryToolbar"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +19,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Card, CardContent } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
+import { SubscriptionBlockedOverlay } from "@/components/ui/SubscriptionBlockedOverlay"
+import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard"
+import { cn } from "@/lib/utils"
+import { deleteInventoryItemAction } from "@/modules/inventory/actions"
+import { inventoryService } from "@/modules/inventory/services/inventory.service"
+import type { InventoryItem } from "@/modules/inventory/types"
 
 interface InventoryClientProps {
   initialItems: InventoryItem[]
@@ -43,6 +47,9 @@ export function InventoryClient({ initialItems, tenantId }: InventoryClientProps
   
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Guard de suscripción
+  const { state: guardState, canAccess, quotaRemaining } = useSubscriptionGuard('inventory', 'maxInventory')
 
   // 2. Carga de Datos (Refetch)
   const loadInventory = useCallback(async () => {
@@ -125,7 +132,21 @@ export function InventoryClient({ initialItems, tenantId }: InventoryClientProps
   }, [selectedItem, loadInventory])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative min-h-[60vh]">
+      {!canAccess && guardState !== 'loading' && (
+        <SubscriptionBlockedOverlay />
+      )}
+
+      {guardState === 'quota_warning' && (
+        <Alert variant="destructive" className="bg-amber-50 border-amber-500 text-amber-900 absolute top-0 left-0 right-0 z-40 shadow-md">
+          <AlertTitle className="font-bold">¡Atención! Capacidad de inventario casi al límite</AlertTitle>
+          <AlertDescription>
+            Te queda muy poco espacio en inventario en tu plan actual. Por favor, actualiza tu suscripción o adquiere un paquete adicional para evitar bloqueos.
+            {quotaRemaining !== null && <span className="font-bold ml-2">({quotaRemaining} cupos restantes)</span>}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <InventoryHeader
         currentView={view}
         onViewChange={setView}
